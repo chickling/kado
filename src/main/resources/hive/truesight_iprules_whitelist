@@ -1,0 +1,19 @@
+CREATE  TABLE truesight_iprules_whitelist(
+  transactionnumber int,
+  ipintegerfrom bigint,
+  ipintegerto bigint,
+  ipfrom string,
+  ipto string,
+  status string,
+  indate string,
+  inuser string,
+  memo string)
+COMMENT 'Imported by sqoop on 2015/04/10 15:41:47'
+ROW FORMAT DELIMITED
+  FIELDS TERMINATED BY '\u0001'
+  LINES TERMINATED BY '\n'
+STORED AS INPUTFORMAT
+  'org.apache.hadoop.mapred.TextInputFormat'
+OUTPUTFORMAT
+  'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+LOCATION

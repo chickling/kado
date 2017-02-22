@@ -1,0 +1,24 @@
+!dbselect-config
+JDBCClassDriver: com.microsoft.sqlserver.jdbc.SQLServerDriver
+poolSize: 10
+dataSourceList:
+  - name: ST02CPS03
+    url: 'jdbc:sqlserver://ST02CPS03'
+    username: sa
+    passwd: Bigdata0123456
+
+  - name: ST02CPS04
+    url: 'jdbc:sqlserver://ST02CPS04'
+    username: sa
+    passwd: Bigdata0123456
+
+  - name: S7ECDB01
+    url: 'jdbc:sqlserver://ST02CPS04'
+    username: sa
+    passwd: Bigdata0123456
+
+  - name: S7MKRPT01
+    url: 'jdbc:sqlserver://S7MKRPT01'
+    username: yang
+    passwd: 1234
+

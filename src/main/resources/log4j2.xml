@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- // monitorInterval-->
+<configuration packages="com.chickling.bigdata" monitorInterval="5" status="error">
+    <Properties>
+        <Property name="logdir">logs</Property>
+    </Properties>
+    <appenders>
+
+        <Routing name="RoutingSMTPAppender">
+            <Routes pattern="$${ctx:RecipientName}">
+                <Route>
+                    <SMTP name="SMTP-${ctx:RecipientName}" subject="Job Failed info" to="${ctx:RecipientName}"
+                           smtpHost="st01smtp01.buyabs.corp" bufferSize="50">
+                        <PatternLayout pattern="%d{yyyy.MM.dd HH:mm:ss z} [%-5level] [%class{36}] %L %M - %msg%xEx%n" />
+                    </SMTP>
+                </Route>
+            </Routes>
+        </Routing>
+
+
+        <Routing name="RoutingAppender">
+            <Routes pattern="$${ctx:logFileName}">
+                <Route>
+                    <RollingFile name="Rolling-${ctx:logFileName}"
+                                 fileName="${logdir}/${ctx:logFileName}.log"
+                                 filePattern="${logdir}/${ctx:logFileName}.%i.log.gz">
+                        <PatternLayout pattern="%d{yyyy.MM.dd HH:mm:ss z} [%-5level] [%class{36}] %L %M - %msg%xEx%n" />
+                        <SizeBasedTriggeringPolicy size="10MB" />
+                        <DefaultRolloverStrategy max="3" />
+                    </RollingFile>
+                </Route>
+                <!-- By having this set to ${ctx:logFileName} it will match when filename
+                     is not set in the context -->
+                <!--<Route ref="consoleAppender" key="${ctx:logFileName}"/>-->
+            </Routes>
+        </Routing>
+        <!--===================Use to Get Log Dir  ,  Do not Remove This===============-->
+        <RollingFile name="getLogDir" fileName="${logdir}/init.log"
+                     filePattern="${logdir}/init-%i.log">
+            <PatternLayout
+                    pattern="%d{yyyy.MM.dd HH:mm:ss z} %-5level %class{36} %L %M - %msg%xEx%n" />
+            <!-- // PatternLayout pattern -->
+           <SizeBasedTriggeringPolicy size="10MB" />
+            <DefaultRolloverStrategy max="1" />
+        </RollingFile>
+
+
+
+        <!--<RollingFile name="Exmple" fileName="logs/${sys:logdir}/exmple.log"-->
+        <!--filePattern="logs/${sys:logdir}/exmple-%i.log">-->
+        <!--<PatternLayout-->
+        <!--pattern="%d{yyyy.MM.dd HH:mm:ss z} %-5level %class{36} %L %M - %msg%xEx%n" />-->
+        <!--<SizeBasedTriggeringPolicy size="10MB" />-->
+        <!--<DefaultRolloverStrategy max="3" />-->
+        <!--</RollingFile>-->
+
+        <RollingFile name="System" fileName="logs/System.log"
+                     filePattern="logs/System.log">
+            <PatternLayout
+                    pattern="%d{yyyy.MM.dd HH:mm:ss z} %-5level %class{36} %L %M - %msg%xEx%n" />
+            <SizeBasedTriggeringPolicy size="20MB" />
+            <DefaultRolloverStrategy max="5" />
+        </RollingFile>
+
+        <RollingFile name="Maintain" fileName="logs/maintain.log"
+                     filePattern="logs/maintain.log">
+            <PatternLayout
+                    pattern="%d{yyyy.MM.dd HH:mm:ss z} %-5level %class{36} %L %M - %msg%xEx%n" />
+            <SizeBasedTriggeringPolicy size="20MB" />
+            <DefaultRolloverStrategy max="5" />
+        </RollingFile>
+
+
+        <!-- //====================console=================== -->
+        <Console name="ConsolePrint" target="SYSTEM_OUT">
+            <PatternLayout
+                    pattern="%d{yyyy.MM.dd HH:mm:ss z} %-5level %class{36} %L %M - %msg%xEx%n" />
+        </Console>
+        <!-- // ======================SMTP  ===================== --> <!-- <FSMTP name="Mail" subject="Log4j2 Error Log" to="Ichang.I.Lin@newegg.com"
+			smtpHost="st01smtp01.buyabs.corp" bufferSize="50" limit="1" cycleSeconds="60"> 
+			<BurstFilter level="INFO" rate="1" maxBurst="5"/> </FSMTP> -->
+        <!--<FSMTP name="eMail" subject="Log4j2 Error Log" to="Jerome.J.Wu@newegg.com"-->
+               <!--smtpHost="st01smtp01.buyabs.corp" bufferSize="50" limit="1" cycleSeconds="60">-->
+        <!--</FSMTP>-->
+        <!--<LOGX name="LOGX" ConfFromL4j="true" LogType="2002:JSS_TEST" DataCenterLocation="1:E3" ServiceName="jss:jss"-->
+              <!--Host="172.22.29.20" Port="61110" >-->
+            <!--<PatternLayout/>-->
+            <!--<PatternLayout-->
+            <!--pattern="%d{yyyy.MM.dd HH:mm:ss z} %-5level %class{36} %L %M - %msg%xEx%n" />-->
+            <!--<filters>-->
+            <!--<ThresholdFilter level="ERROR"  onMatch="ACCEPT" />-->
+            <!--</filters>-->
+        <!--</LOGX>-->
+
+    </appenders>
+
+
+    <loggers>
+
+
+        <!--<logger name="eMail" additivity="true" level="ERROR">-->
+            <!--<appender-ref ref="eMail" />-->
+        <!--</logger>-->
+
+
+        <logger name="SMTPA" additivity="true" level="ERROR">
+            <appender-ref ref="RoutingSMTPAppender" />
+        </logger>
+
+        <!--<logger name="LOGX" additivity="true" level="DEBUG">-->
+            <!--<appender-ref ref="LOGX" />-->
+        <!--</logger>-->
+
+
+        <logger name="com.chickling.Maintenance" additivity="false" level="info">
+            <appender-ref ref="Maintain" />
+        </logger>
+
+
+        <root level="info">
+            <appender-ref level="info" ref="ConsolePrint" /> <!-- // ConsolePrint -->
+            <!--<appender-ref level="info" ref="Exmple" /> &lt;!&ndash; // ConsolePrint &ndash;&gt;-->
+            <appender-ref ref="RoutingAppender"  />
+
+            <appender-ref ref="System"/>
+            <!--<appender-ref ref="Maintain"/>-->
+            <!--<appender-ref level="DEBUG" ref="ReportFile"/> <appender-ref level="INFO"-->
+            <!--ref="Exmple"/>-->
+            <!-- appender-ref ref="Mail"/> -->
+        </root>
+    </loggers>
+</configuration>

@@ -1,0 +1,13 @@
+.svn
+.settings
+.idea
+.classpath
+.project
+*.zip
+*.tar.gz
+*.war
+*.iml
+target
+logs
+.sqlite
+.log

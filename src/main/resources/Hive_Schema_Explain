@@ -1,0 +1,294 @@
+# hive-schema sql
+
+## 1. truesight_page
+truesight traffic数据主表。相关介绍情况pdf文档。
+```sql
+CREATE EXTERNAL TABLE truesight_page(
+  x_location string,
+  x_record_type string,
+  x_page_id bigint,
+  x_session_id bigint,
+  x_server_id string,
+  x_page_name string,
+  cs_host string,
+  cs_uri_stem string,
+  cs_uri_query string,
+  cs_referrer string,
+  x_redirect_host string,
+  x_redirect_url string,
+  cs_cookie string,
+  sc_set_cookie string,
+  x_cs_post string,
+  x_start_time string,
+  x_start_time_utc bigint,
+  x_end_time string,
+  x_end_time_utc bigint,
+  c_ip string,
+  c_port int,
+  x_first_public_ip string,
+  s_ip string,
+  s_port int,
+  sc_bytes int,
+  x_throughput int,
+  x_tcp_packet_count int,
+  x_tcp_rtt_count int,
+  x_tcp_rtt int,
+  x_tcp_ooo int,
+  x_tcp_retrx int,
+  x_redirect_time int,
+  x_redirect_ssl_time int,
+  x_redirect_ssl_count string,
+  x_redirect_process_time int,
+  x_redirect_network_time int,
+  x_redirect_count int,
+  x_ssl_time int,
+  x_ssl_count int,
+  x_process_time int,
+  x_network_time int,
+  x_idle_time int,
+  x_e2e_time int,
+  cs_method string,
+  cs_version string,
+  x_sc_mimetype string,
+  sc_status int,
+  x_document boolean,
+  x_container boolean,
+  x_aborted boolean,
+  x_secure boolean,
+  x_secure_count int,
+  x_content_count int,
+  x_errored_count int,
+  x_slt_broken boolean,
+  x_nw_error_count int,
+  x_cl_error_count int,
+  x_sv_error_count int,
+  x_ap_error_count int,
+  x_ct_error_count int,
+  x_cu_error_count int,
+  x_nw_info_count int,
+  x_cl_info_count int,
+  x_sv_info_count int,
+  x_ap_info_count int,
+  x_ct_info_count int,
+  x_cu_info_count int,
+  x_errors string,
+  x_info string,
+  x_wp string,
+  cs_user_agent string,
+  x_first_public_geo_country string,
+  x_first_public_geo_country_string string,
+  x_first_public_geo_region string,
+  x_first_public_geo_region_string string,
+  x_first_public_geo_city string,
+  x_first_public_geo_metro_area string,
+  x_first_public_geo_organization string,
+  x_first_public_geo_isp string,
+  x_first_public_geo_dns_name string,
+  x_first_public_geo_latitude double,
+  x_first_public_geo_longitude double,
+  x_page_render_time int,
+  x_prm_instrumented string,
+  x_aborted_count int,
+  x_errored_aborted_count int,
+  x_akamai_download_time_sum int,
+  x_delivery_mode string,
+  x_object_delivery_origin_count int,
+  x_object_delivery_akacachemgt_count int,
+  x_object_delivery_akacachehit_count int,
+  x_object_delivery_akacachemiss_count int,
+  collectorfeednames string,
+  browser string,
+  os string,
+  trace string,
+  x_application_name string,
+  x_undefined_1 string,
+  x_undefined_2 string,
+  x_undefined_3 string,
+  x_undefined_4 string,
+  x_undefined_5 string,
+  x_undefined_6 string,
+  x_undefined_7 string,
+  x_undefined_8 string,
+  x_custom_mobilevisitor string,
+  x_custom_x_authtoken string,
+  x_custom_x_thirdparty_utma string,
+  x_custom_acceptlanguage string,
+  x_custom_continent string,
+  x_custom_referrer_name string)
+COMMENT 'Any question, please contact with Ric Dong'
+PARTITIONED BY (
+  dt string,
+  hour string)
+ROW FORMAT DELIMITED
+  FIELDS TERMINATED BY '\u0001'
+STORED AS INPUTFORMAT
+  'org.apache.hadoop.mapred.TextInputFormat'
+OUTPUTFORMAT
+  'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+LOCATION
+  'hdfs://nameservice1/user/ec/truesight/page'
+```
+
+##2. truesight_ipinfo
+IP数据库，表明IP段（最小值、最大值）的地址信息
+```sql
+CREATE EXTERNAL TABLE truesight_ipinfo(
+  ipstartint64 bigint,			-- 开始ip的长整型值
+  ipendint64 bigint,			-- 结束ip的长整型值
+  ipstart string,			-- 开始ip
+  ipend string,				-- 结束ip
+  org string,				-- ip的组织信息
+  countrycode string,			-- ip所在的国家编号
+  countryname string,			-- ip所在的国家名称
+  region string,			-- ip所在的区域编号，如美国的州、中国的省
+  cityname string,			-- ip所在的城市名称
+  zipcode string,			-- ip邮政编码
+  latitude float,			-- ip纬度
+  longitude float,			-- ip经度
+  statename string)			-- ip的region名称，主要指美国的州简称
+ROW FORMAT DELIMITED
+  FIELDS TERMINATED BY ','
+STORED AS INPUTFORMAT
+  'org.apache.hadoop.mapred.TextInputFormat'
+OUTPUTFORMAT
+  'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+LOCATION
+  'hdfs://nameservice1/user/ec/truesight/ipinfo_new'
+```
+
+data sample
+```txt
+16777216,16777471,1.0.0.0,1.0.0.255,Google,AU,Australia,,,,-27.0,133.0,
+16777472,16778239,1.0.1.0,1.0.3.255,,CN,China,,,,35.0,105.0,
+16778240,16778367,1.0.4.0,1.0.4.127,Big Red Group,AU,Australia,07,Prahran,3181,-37.85,145.0,07
+16778368,16778495,1.0.4.128,1.0.4.255,Big Red Group,AU,Australia,07,Malvern East,3145,-37.8775,145.0624,07
+16778496,16778751,1.0.5.0,1.0.5.255,Big Red Group,AU,Australia,07,Melbourne,,-37.8139,144.9634,07
+16778752,16779263,1.0.6.0,1.0.7.255,Big Red Group,AU,Australia,,,,-27.0,133.0,
+16779264,16781311,1.0.8.0,1.0.15.255,China Telecom Guangdong,CN,China,30,Guangzhou,,23.1167,113.25,30
+16781312,16785407,1.0.16.0,1.0.31.255,i2ts,JP,Japan,40,Tokyo,,35.685,139.7514,40
+16785408,16793599,1.0.32.0,1.0.63.255,China Telecom Guangdong,CN,China,30,Guangzhou,,23.1167,113.25,30
+16793600,16798975,1.0.64.0,1.0.84.255,Energia Communications,JP,Japan,11,Hiroshima,,34.3963,132.4594,11
+16909056,16909311,1.2.3.0,1.2.3.255,Google,US,United States,WA,Mukilteo,98275,47.913,-122.3042,WA
+45551616,45559807,2.183.16.0,2.183.47.255,BUSHEHR temporary TELECOM CO for ADSL users,IR,Iran,22,Bushehr,,28.9684,50.8385,22
+50331904,50332415,3.0.1.0,3.0.2.255,General Electric Company,US,United States,CT,Fairfield,06828,41.1412,-73.2637,CT
+50332416,50332671,3.0.3.0,3.0.3.255,General Electric Company,US,United States,CA,Los Angeles,90001,33.9735,-118.2452,CA
+50332672,50679295,3.0.4.0,3.5.77.255,General Electric Company,US,United States,CT,Fairfield,06828,41.1412,-73.2637,CT
+50679296,50679551,3.5.78.0,3.5.78.255,General Electric Company,US,United States,CA,Los Angeles,90001,33.9735,-118.2452,CA
+50679552,51061247,3.5.79.0,3.11.33.255,General Electric Company,US,United States,CT,Fairfield,06828,41.1412,-73.2637,CT
+51061248,51061503,3.11.34.0,3.11.34.255,General Electric Company,US,United States,CA,Los Angeles,90001,33.9735,-118.2452,CA
+51061504,56503807,3.11.35.0,3.94.45.255,General Electric Company,US,United States,CT,Fairfield,06828,41.1412,-73.2637,CT
+56503808,56504063,3.94.46.0,3.94.46.255,General Electric Company,US,United States,IL,Chicago,60604,41.8776,-87.6272,IL
+```
+
+##3. truesight_ipinfo_amazon
+Amazon的IP数据库，将Amazon的IP段，转换为所有的单个IP。
+```sql
+CREATE EXTERNAL TABLE truesight_ipinfo_amazon(
+  c_ip_int64 bigint,			-- ip的长整型值
+  c_ip string,				-- ip字符串
+  org string,				-- ip的组织信息
+  countrycode string,			-- ip所在的国家编号
+  countryname string,			-- ip所在的国家名称
+  region string,			-- ip所在的区域编号，如美国的州、中国的省
+  cityname string,			-- ip所在的城市名称
+  zipcode string,			-- ip邮政编码
+  latitude float,			-- ip纬度
+  longitude float,			-- ip经度
+  statename string)			-- ip的region名称，主要指美国的州简称
+ROW FORMAT DELIMITED
+  FIELDS TERMINATED BY ','
+STORED AS INPUTFORMAT
+  'org.apache.hadoop.mapred.TextInputFormat'
+OUTPUTFORMAT
+  'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+LOCATION
+  'hdfs://nameservice1/user/ec/truesight/ipinfoamazon_new'
+```
+
+sample data
+```txt
+135434240,8.18.144.0,amazon,us,united states,wa,seattle,98101,47.6062,-122.3321,wa
+135434241,8.18.144.1,amazon,us,united states,wa,seattle,98101,47.6062,-122.3321,wa
+135434242,8.18.144.2,amazon,us,united states,wa,seattle,98101,47.6062,-122.3321,wa
+135434243,8.18.144.3,amazon,us,united states,wa,seattle,98101,47.6062,-122.3321,wa
+135434244,8.18.144.4,amazon,us,united states,wa,seattle,98101,47.6062,-122.3321,wa
+135434245,8.18.144.5,amazon,us,united states,wa,seattle,98101,47.6062,-122.3321,wa
+135434246,8.18.144.6,amazon,us,united states,wa,seattle,98101,47.6062,-122.3321,wa
+135434247,8.18.144.7,amazon,us,united states,wa,seattle,98101,47.6062,-122.3321,wa
+135434248,8.18.144.8,amazon,us,united states,wa,seattle,98101,47.6062,-122.3321,wa
+135434249,8.18.144.9,amazon,us,united states,wa,seattle,98101,47.6062,-122.3321,wa
+```
+
+##4. truesight_ip_whitelist
+IP WhiteList, 来自生产环境的S7ECDB01的[ECommerce].[dbo].[EC_CrawlerIPWhiteList]，通过Sqoop导入
+```sql
+CREATE  TABLE truesight_ip_whitelist(
+  transactionnumber int,		-- db的自增长编号
+  content string,			-- IP
+  status string,			-- 状态，A为Active
+  countrycode string,			-- CountryCode
+  memo string,				-- 备注
+  indate string,			-- 入库时间
+  inuser string,			-- 入库用户
+  lasteditdate string,			-- 最后修改时间
+  lastedituser string)			-- 最后修改用户
+COMMENT 'Imported by sqoop on 2015/04/10 11:06:57'
+ROW FORMAT DELIMITED
+  FIELDS TERMINATED BY '\u0001'
+  LINES TERMINATED BY '\n'
+STORED AS INPUTFORMAT
+  'org.apache.hadoop.mapred.TextInputFormat'
+OUTPUTFORMAT
+  'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+LOCATION
+  'hdfs://nameservice1/user/hive/warehouse/ec.db/truesight_ip_whitelist'
+```
+
+sample data
+```txt
+TransactionNumber	Content	Status	CountryCode	Memo	Indate	InUser	LastEditDate	LastEditUser
+1292133	54.229.111.56                                                                   	A	NULL	Request by Jim Chen for Printer Vendor	2015-09-10 15:32:50.517	tw79	2015-09-10 15:32:50.517	NULL
+1292132	209.15.226.174                                                                  	A	NULL	Request by Peter Zhai for Egress	2015-09-03 14:00:06.497	tw79	2015-09-03 14:00:06.497	NULL
+1292131	206.183.111.141                                                                 	A	NULL	Request by Peter Zhai for Egress	2015-09-03 14:00:06.480	tw79	2015-09-03 14:00:06.480	NULL
+1292130	195.78.229.18                                                                   	A	NULL	Request by Peter Zhai for Egress	2015-09-03 14:00:06.450	tw79	2015-09-03 14:00:06.450	NULL
+1292129	195.78.228.184                                                                  	A	NULL	Request by Peter Zhai for Egress	2015-09-03 14:00:06.400	tw79	2015-09-03 14:00:06.400	NULL
+1292128	180.149.247.163                                                                 	A	NULL	Request by Peter Zhai for Egress	2015-09-03 14:00:06.370	tw79	2015-09-03 14:00:06.370	NULL
+1292127	180.149.247.152                                                                 	A	NULL	Request by Peter Zhai for Egress	2015-09-03 14:00:06.287	tw79	2015-09-03 14:00:06.287	NULL
+```
+
+##5. truesight_iprules_whitelist
+以IP段表示的IP WhiteList, 来自生产环境的S7ECDB01的[ECommerce].[dbo].[EC_CrawlerIPRulesWhiteList]，通过Sqoop导入
+```sql
+CREATE  TABLE truesight_iprules_whitelist(
+  transactionnumber int,		-- db的自增长编号
+  ipintegerfrom bigint,			-- 开始ip的长整型值
+  ipintegerto bigint,			-- 结束ip的长整型值
+  ipfrom string,			-- 开始ip
+  ipto string,				-- 结束ip
+  status string,			-- 状态，A表示Active
+  indate string,			-- 入库时间
+  inuser string,			-- 入库用户
+  memo string)				-- 备注
+COMMENT 'Imported by sqoop on 2015/04/10 15:41:47'
+ROW FORMAT DELIMITED
+  FIELDS TERMINATED BY '\u0001'
+  LINES TERMINATED BY '\n'
+STORED AS INPUTFORMAT
+  'org.apache.hadoop.mapred.TextInputFormat'
+OUTPUTFORMAT
+  'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+LOCATION
+  'hdfs://nameservice1/user/hive/warehouse/ec.db/truesight_iprules_whitelist'
+```
+
+sample data
+```txt
+TransactionNumber	IPIntegerFrom	IPIntegerTo	IPFrom	IPTo	Status	InDate	InUser	Memo
+1	1089054208	1089060863	64.233.166.0	64.233.191.255	A	2012-02-28 11:33:39.730	USEC	GoogleBot
+2	1113980928	1113985023	66.102.0.0	66.102.15.255	A	2012-02-28 11:33:39.730	USEC	GoogleBot
+3	1123631104	1123639295	66.249.64.0	66.249.95.255	A	2012-02-28 11:33:39.730	USEC	GoogleBot
+4	1208926208	1208942591	72.14.192.0	72.14.255.255	A	2012-02-28 11:33:39.730	USEC	GoogleBot
+5	1249705984	1249771519	74.125.0.0	74.125.255.255	A	2012-02-28 11:33:39.730	USEC	GoogleBot
+6	3512041472	3512074239	209.85.128.0	209.85.255.255	A	2012-02-28 11:33:39.730	USEC	GoogleBot
+7	3639549952	3639558143	216.239.32.0	216.239.63.255	A	2012-02-28 11:33:39.730	USEC	GoogleBot
+```

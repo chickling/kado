@@ -1,0 +1,20 @@
+CREATE EXTERNAL TABLE truesight_ipinfo_amazon(
+  c_ip_int64 bigint,
+  c_ip string,
+  org string,
+  countrycode string,
+  countryname string,
+  region string,
+  cityname string,
+  zipcode string,
+  latitude float,
+  longitude float,
+  statename string)
+ROW FORMAT DELIMITED
+  FIELDS TERMINATED BY ','
+STORED AS INPUTFORMAT
+  'org.apache.hadoop.mapred.TextInputFormat'
+OUTPUTFORMAT
+  'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+LOCATION
+  'hdfs://nameservice1/user/ec/truesight/ipinfoamazon_new'

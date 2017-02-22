@@ -1,0 +1,102 @@
+<web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+
+    <listener>
+        <listener-class>com.chickling.boot.Init</listener-class>
+    </listener>
+    <!--<context-param>-->
+        <!--<param-name>hive.metastore.warehouse.dir</param-name>-->
+        <!--<param-value>/user/hive/warehouse</param-value>-->
+    <!--</context-param>-->
+
+    <!--<context-param>-->
+        <!--<param-name>log.hdfs.path</param-name>-->
+        <!--<param-value>/tmp/presto-joblog</param-value>-->
+    <!--</context-param>-->
+
+    <!--<context-param>-->
+        <!--<param-name>csv.tmp.hdfs.path</param-name>-->
+        <!--<param-value>/tmp/presto-csvtemp</param-value>-->
+    <!--</context-param>-->
+
+    <!--<context-param>-->
+        <!--<param-name>csv.local.path</param-name>-->
+        <!--<param-value>/home/MERCURY/ecappservice/presto_temp</param-value>-->
+    <!--</context-param>-->
+
+    <!--<context-param>-->
+        <!--<param-name>database</param-name>-->
+        <!--<param-value>presto_temp</param-value>-->
+    <!--</context-param>-->
+
+    <!--<context-param>-->
+        <!--<param-name>prestoURL</param-name>-->
+        <!--<param-value>http://172.16.31.62:8080</param-value>-->
+
+    <!--</context-param>-->
+
+    <!--<context-param>-->
+        <!--<param-name>prestoCatalog</param-name>-->
+        <!--<param-value>hive</param-value>-->
+    <!--</context-param>-->
+
+    <!--<context-param>-->
+        <!--<param-name>dbLocation</param-name>-->
+        <!--<param-value>jdbc:sqlite:PrestoJobPortal.sqlite</param-value>-->
+    <!--</context-param>-->
+
+    <!--<context-param>-->
+        <!--<param-name>machineLocation</param-name>-->
+        <!--<param-value>http://localhost:8889</param-value>-->
+    <!--</context-param>-->
+
+    <!--<context-param>-->
+        <!--<param-name>not.support.batch.db</param-name>-->
+        <!--<param-value>S7BIDB08</param-value>-->
+    <!--</context-param>-->
+
+    <!--<context-param>-->
+        <!--<param-name>importBatchSize</param-name>-->
+        <!--<param-value>10000</param-value>-->
+    <!--</context-param>-->
+
+    <!--<context-param>-->
+        <!--<param-name>expiration</param-name>-->
+        <!--<param-value>7</param-value>-->
+
+    <!--</context-param>-->
+
+    <!--<context-param>-->
+        <!--<param-name>deleteLogTTL</param-name>-->
+        <!--<param-value>30</param-value>-->
+    <!--</context-param>-->
+
+    <!--FreeMarker Restful Service filter -->
+    <filter>
+        <filter-name>jersey</filter-name>
+        <filter-class>org.glassfish.jersey.servlet.ServletContainer</filter-class>
+        <init-param>
+            <param-name>javax.ws.rs.Application</param-name>
+            <param-value>com.chickling.config.JerseyConfiguration</param-value>
+        </init-param>
+        <init-param>
+            <!--this value setting prefix path under "target/classes" with .ftl files dir , ex : .target/classes/views/XXXX.ftl-->
+            <param-name>jersey.config.server.mvc.templateBasePath.freemarker</param-name>
+            <param-value>views</param-value>
+        </init-param>
+
+        <!--static file-->
+        <init-param>
+            <param-name>jersey.config.servlet.filter.staticContentRegex</param-name>
+            <param-value>/.*html|/.*js|/.*css|.*jpg|.*png|.*json|.*ttf|.*woff|.*ftl|.*woff2</param-value>
+        </init-param>
+
+    </filter>
+    <filter-mapping>
+        <filter-name>jersey</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+</web-app>
