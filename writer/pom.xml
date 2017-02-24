@@ -1,0 +1,93 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.chickling</groupId>
+        <artifactId>Kado</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>writer</artifactId>
+
+    <dependencies>
+        <!--<dependency>-->
+            <!--<groupId>com.newegg.ec.bigdata</groupId>-->
+            <!--<artifactId>dbselect</artifactId>-->
+            <!--<version>0.9.9.4</version>-->
+        <!--</dependency>-->
+        <dependency>
+            <groupId>com.microsoft.sqlserver</groupId>
+            <artifactId>sqljdbc4</artifactId>
+            <version>4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mchange</groupId>
+            <artifactId>c3p0</artifactId>
+            <version>0.9.5.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.chickling</groupId>
+            <artifactId>main</artifactId>
+            <version>1.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <finalName>${artifactId}-${version}</finalName>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.0.0</version>
+
+                <configuration>
+                    <!--<appendAssemblyId>false</appendAssemblyId>-->
+                    <!-- get all project dependencies -->
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <!-- MainClass in mainfest make a executable jar -->
+                    <!--<filters>-->
+                        <!--<filter></filter>-->
+                    <!--</filters>-->
+                    <outputDirectory>../main/lib</outputDirectory>
+                </configuration>
+                <executions>
+
+                    <execution>
+                        <id>make-assembly</id>
+                        <!-- bind to the packaging phase -->
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.3</version>
+                <configuration>
+                    <!--<fork>true</fork>-->
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <!--<executable>E:\1_Program\jdk8u45-x64\jdk8u45\bin\javac</executable>-->
+                    <!--<executable>D:\Software\jdk8u45-x64\jdk8u45\bin\javac</executable>-->
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
