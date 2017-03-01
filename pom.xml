@@ -10,9 +10,50 @@
 
   <modules>
     <module>writer</module>
-    <module>main</module>
+    <module>base</module>
+    <module>portal</module>
+    <!--<module>main</module>-->
   </modules>
+<dependencies>
+  <!--log4j2-->
+  <dependency>
+    <groupId>org.apache.logging.log4j</groupId>
+    <artifactId>log4j-api</artifactId>
+    <version>2.2</version>
+  </dependency>
+  <dependency>
+    <groupId>org.apache.logging.log4j</groupId>
+    <artifactId>log4j-core</artifactId>
+    <version>2.2</version>
+  </dependency>
+  <!--Yaml-->
+  <dependency>
+    <groupId>org.yaml</groupId>
+    <artifactId>snakeyaml</artifactId>
+    <version>1.17</version>
+  </dependency>
+  <!-- hadoop CDH 5.4.0-->
 
+
+  <!--SQL Server -->
+  <!--<dependency>-->
+  <!--<groupId>com.microsoft.sqlserver</groupId>-->
+  <!--<artifactId>sqljdbc4</artifactId>-->
+  <!--<version>4.0</version>-->
+  <!--</dependency>-->
+  <!--<dependency>-->
+  <!--<groupId>com.mchange</groupId>-->
+  <!--<artifactId>c3p0</artifactId>-->
+  <!--<version>0.9.5.2</version>-->
+  <!--</dependency>-->
+  <!--<dependency>-->
+    <!--<groupId>org.apache.commons</groupId>-->
+    <!--<artifactId>commons-csv</artifactId>-->
+    <!--<version>1.2</version>-->
+    <!--<scope>test</scope>-->
+  <!--</dependency>-->
+
+</dependencies>
 
   <build>
       <plugins>

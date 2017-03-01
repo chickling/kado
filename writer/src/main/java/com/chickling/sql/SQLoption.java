@@ -1,16 +1,19 @@
 package com.chickling.sql;
 
-import com.chickling.boot.Init;
-import com.google.common.base.Strings;
-import com.chickling.dbselect.DBConnectionManager;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import com.chickling.util.YamlConfig;
+import com.newegg.ec.db.DBConnectionManager;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.util.Strings;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by gl08 on 2016/1/6.
@@ -112,7 +115,13 @@ public class SQLoption {
                 Statement statement = conn.createStatement();
                 statement.setQueryTimeout(3600);
 
-                if (Init.getNotbatchdb().contains(connnName)){
+//                String nobatchdb=System.getProperty("nobatchdb");
+                String nobatchdb= YamlConfig.instance.getNotbatchdb();
+                Set<String> noBatchDB=new HashSet<>();
+                if (!Strings.isNotEmpty(nobatchdb))
+                        noBatchDB.addAll(Arrays.asList(nobatchdb.split(",")));
+
+                if (noBatchDB.contains(connnName)){
                     for (String sql : sqlList) {
                         try {
                             statement.execute(sql);

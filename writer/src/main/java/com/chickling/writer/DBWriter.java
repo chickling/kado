@@ -1,10 +1,10 @@
 package com.chickling.writer;
 
-import com.chickling.boot.Init;
-import com.chickling.dbselect.ManagerConfig;
-import com.chickling.models.job.bean.JobLog;
-import com.chickling.models.writer.ResultWriter;
+import com.chickling.bean.job.JobLog;
+import com.chickling.face.ResultWriter;
 import com.chickling.sql.ImportDB;
+import com.chickling.util.YamlConfig;
+import com.newegg.ec.db.ManagerConfig;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,7 +29,7 @@ public class DBWriter implements ResultWriter {
     private int resultCount;
     private String insertsql;
     private String exception="";
-
+    private int batchSize=500;
     private ArrayList<String> locationList=new ArrayList<>();
 
     {
@@ -41,7 +41,8 @@ public class DBWriter implements ResultWriter {
             System.out.println(val.getName());
             this.locationList.add(val.getName());
         }
-        Init.setLocationList(locationList);
+        System.setProperty("locationlist",this.locationList.toString());
+        this.batchSize= YamlConfig.instance.getImportBatchSize();
     }
 
     @Override
@@ -62,11 +63,11 @@ public class DBWriter implements ResultWriter {
     @Override
     public Integer call()   {
 
-        String connName= Init.getLocationList().get(this.location_id);
+        String connName= this.locationList.get(this.location_id);
         log.info("Start Insert Result to SQL Server : [ "+connName+" ]");
         ImportDB importDB = null;
         try {
-            importDB = new ImportDB(new String(Base64.getDecoder().decode(this.insertsql), "UTF-8"), this.jobLog.getJoboutput(),connName, this.resultCount, Init.getImportBatchSize());
+            importDB = new ImportDB(new String(Base64.getDecoder().decode(this.insertsql), "UTF-8"), this.jobLog.getJoboutput(),connName, this.resultCount, this.batchSize);
             importDB.execute();
             if (!importDB.isSuccess()){
                 log.error("Import to DB  Error!! ");
