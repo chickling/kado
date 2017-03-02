@@ -1,2 +1,2 @@
 importBatchSize: "10000"
-notbatchdb: ""
+notbatchdb: "S7BIDB08"
