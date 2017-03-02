@@ -314,18 +314,15 @@
   </profiles>
 
   <build>
-
+    <finalName>jobmanager</finalName>
       <plugins>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.3</version>
           <configuration>
-            <!--<fork>true</fork>-->
             <source>1.8</source>
             <target>1.8</target>
-            <!--<executable>E:\1_Program\jdk8u45-x64\jdk8u45\bin\javac</executable>-->
-            <!--<executable>D:\Software\jdk8u45-x64\jdk8u45\bin\javac</executable>-->
           </configuration>
         </plugin>
         <plugin>
@@ -336,7 +333,6 @@
             <warSourceDirectory>src/main/webapp</warSourceDirectory>
             <!-- excludes views at target/jobmanager/views-->
             <warSourceExcludes>views/**</warSourceExcludes>
-            <!--add views to /target/jobmanger/WEB-INF/classes/views -->
             <webResources>
               <resource>
                 <directory>src/main/webapp</directory>

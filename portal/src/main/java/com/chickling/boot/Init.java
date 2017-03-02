@@ -192,15 +192,10 @@ public class Init implements ServletContextListener{
             for (String injection: writerinjection.split("\\$")){
                 Class c=Class.forName(injection);
                 injectionMap.put(injection,(ResultWriter)c.newInstance());
-//                ResultWriter writer=(ResultWriter) c.newInstance();
             }
-
             if (!Strings.isNullOrEmpty(System.getProperty("locationlist"))){
                 locationList.addAll(new Gson().fromJson(System.getProperty("locationlist"),ArrayList.class));
             }
-
-
-
             if (!Strings.isNullOrEmpty(prestoURL)) {
                 sce.getServletContext().setAttribute("prestoURL", prestoURL);
             } else {
@@ -249,20 +244,6 @@ public class Init implements ServletContextListener{
                 sce.getServletContext().setAttribute("prestoCatalog", "");
                 throw new Exception("prestoCatalog set Error , please check your web.xml");
             }
-//
-//            if (!Strings.isNullOrEmpty(String.valueOf(importBatchSize))) {
-//                sce.getServletContext().setAttribute("importBatchSize", Integer.parseInt(importBatchSize));
-//            } else {
-//                sce.getServletContext().setAttribute("importBatchSize", 1000);
-//                throw new Exception("importBatchSize set Error , please check your web.xml");
-//            }
-//
-//            if (!Strings.isNullOrEmpty(notbatchdb)) {
-//                sce.getServletContext().setAttribute("not.support.batch.db", notbatchdb);
-//            } else {
-//                sce.getServletContext().setAttribute("not.support.batch.db", "");
-//            }
-
             if (!Strings.isNullOrEmpty(csvtmphdfsPath)) {
                 sce.getServletContext().setAttribute("csv.tmp.hdfs.path", csvtmphdfsPath);
             } else {
@@ -287,11 +268,7 @@ public class Init implements ServletContextListener{
             setExpiration(expiration);
             setDeleteLogTTL(deleteLogTTL);
             setPrestoCatalog(prestoCatalog);
-//            setImportBatchSize(Integer.parseInt(importBatchSize));
-//            setNotbatchdb(new HashSet<>(Arrays.asList(notbatchdb.split(","))));
             setCsvtmphdfsPath(csvtmphdfsPath);
-            //Notification.notification("Jerome.J.Wu@newegg.com","332");
-            //log.info(SiteURLBase);
 
             String sqliteSite="";
             if ( !Strings.isNullOrEmpty(System.getenv("sqlitedb")) ){
