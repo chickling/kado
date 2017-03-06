@@ -3,7 +3,6 @@ package com.chickling.util;
 import com.chickling.sqlite.ConnectionManager;
 import com.chickling.boot.Init;
 import org.apache.logging.log4j.Logger;
-
 import javax.mail.*;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
@@ -15,15 +14,18 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Properties;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.xml.XmlConfiguration;
 
 
 /**
  * Created by jw6v on 2016/1/11.
  */
 public class Notification {
-//ToDo: multiple recipients
+    //ToDo: multiple recipients
     private static Logger log= LogManager.getLogger(Notification.class);
     private static String recipients="";
+
     public synchronized static void notification(int JobHistoryID, String contents,String subject, String[] Recipients){
 
         String SQLQuery="SELECT Email from `main`.`Job_History`,`main`.`User` Where `JHID`=? and `Job_History`.`JobOwner`=`User`.`UID`";
@@ -51,7 +53,7 @@ public class Notification {
 
 
         // Recipient's email ID needs to be mentioned.
-       // String to = ;
+        // String to = ;
         InternetAddress[] internetAddresses=null;
         //InternetAddress singlrAddress;
         if(Recipients!=null) {
@@ -60,8 +62,8 @@ public class Notification {
             int count=0;
             for (String r:Recipients) {
                 try{
-                InternetAddress in=new InternetAddress(r);
-                internetAddresses[count]=in;
+                    InternetAddress in=new InternetAddress(r);
+                    internetAddresses[count]=in;
                     count++;
                 }catch(AddressException ae){
                     log.warn("Add the recipient "+r+"failed since "+ae);
@@ -71,19 +73,21 @@ public class Notification {
         else{
             try{
                 internetAddresses=new InternetAddress[1];
-            internetAddresses[0]=new InternetAddress(to);
+                internetAddresses[0]=new InternetAddress(to);
             }
             catch(AddressException e){
                 log.info(to +" send failed since that "+e);
                 return;
             }
         }
-        // Sender's email ID needs to be mentioned
         String from = "test";
 
         // Assuming you are sending email from localhost
-        String host = "st01smtp01.buyabs.corp";
-        //String host = "172.16.11.14";
+        String host = "127.0.0.1";
+        // get SMTP Host config from log4j2.xml;
+        LoggerContext ctx= (LoggerContext) LogManager.getContext();
+        XmlConfiguration xmlconfig= (XmlConfiguration) ctx.getConfiguration();
+        host=xmlconfig.getStrSubstitutor().getVariableResolver().lookup("smtphost");
         // Get system properties
         Properties properties = System.getProperties();
 
@@ -99,7 +103,7 @@ public class Notification {
             //from=System.getProperty("mail.user");
             from=System.getProperty("user.name")+"@"+localMachine.getHostName();
             // Create a default MimeMessage object.
-            //from="PrestoJobPortal@st01smtp01.buyabs.corp";
+            //from="Kado@st01smtp01.buyabs.corp";
             Message message = new MimeMessage(session);
 
             // Set From: header field of the header.
@@ -108,7 +112,7 @@ public class Notification {
             // Set To: header field of the header.
             message.addRecipients(Message.RecipientType.TO, internetAddresses);
 
-           // message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
+            // message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
 
             // Set Subject: header field
             message.setSubject(subject);
