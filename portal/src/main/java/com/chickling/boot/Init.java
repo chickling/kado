@@ -145,47 +145,24 @@ public class Init implements ServletContextListener{
         return injectionMap.get(className);
     }
 
-//    public static void setInjectionMap(Map<String, ResultWriter> injectionMap) {
-//        Init.injectionMap = injectionMap;
-//    }
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
 
-
-
-//        String siteURLBase=sce.getServletContext().getInitParameter("machineLocation")+sce.getServletContext().getContextPath();
-//        String expiration=sce.getServletContext().getInitParameter("expiration");
-//        String prestoURL=sce.getServletContext().getInitParameter("prestoURL");
-//        String database=sce.getServletContext().getInitParameter("database");
-//        String hivepath=sce.getServletContext().getInitParameter("hive.metastore.warehouse.dir");
-//        String logpath=sce.getServletContext().getInitParameter("log.hdfs.path");
-//        String dbLocation=sce.getServletContext().getInitParameter("dbLocation");
-//        String importBatchSize=sce.getServletContext().getInitParameter("importBatchSize");
-//        String prestoCatalog=sce.getServletContext().getInitParameter("prestoCatalog");
-//        String notbatchdb=sce.getServletContext().getInitParameter("not.support.batch.db");
-//        String csvtmphdfsPath=sce.getServletContext().getInitParameter("csv.tmp.hdfs.path");
-//        String csvlocalpath=sce.getServletContext().getInitParameter("csv.local.path");
-//        String deleteLogTTL=sce.getServletContext().getInitParameter("deleteLogTTL");
-//        String siteURLBase="";
         String siteURLBase=YamlLoader.instance.getSiteURLBase()+sce.getServletContext().getContextPath();
-//        String expiration="";
         String expiration=YamlLoader.instance.getExpiration();
         String prestoURL=YamlLoader.instance.getPrestoURL();
         String database=YamlLoader.instance.getDatabase();
         String hivepath=YamlLoader.instance.getHivepath();
         String logpath=YamlLoader.instance.getLogpath();
         String sqliteName=YamlLoader.instance.getSqliteName();
-//        String importBatchSize=YamlLoader.instance.getImportBatchSize();
         String prestoCatalog=YamlLoader.instance.getPrestoCatalog();
-//        String notbatchdb=YamlLoader.instance.getNotbatchdb();
         String csvtmphdfsPath=YamlLoader.instance.getCsvtmphdfsPath();
         String csvlocalpath=YamlLoader.instance.getCsvlocalPath();
         String deleteLogTTL=YamlLoader.instance.getDeleteLogTTL();
         String writerinjection=YamlLoader.instance.getWrtierinjection();
 
         try {
-
 
             injectionMap=new HashMap<>();
             //injection init
@@ -223,7 +200,7 @@ public class Init implements ServletContextListener{
             if (!Strings.isNullOrEmpty(sqliteName)) {
                 sce.getServletContext().setAttribute("sqliteName", sqliteName);
             } else {
-                sce.getServletContext().setAttribute("sqliteName", "PrestoJobPortal.sqlite");
+                sce.getServletContext().setAttribute("sqliteName", "Kado.sqlite");
                 throw new Exception("dbLocation not set Error , please check your web.xml");
             }
             if (!Strings.isNullOrEmpty(siteURLBase)) {

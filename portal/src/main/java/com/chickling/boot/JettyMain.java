@@ -23,8 +23,6 @@ public class JettyMain {
        System.out.println(warLocation.getPath() + "web.xml");
        app.setServer(server);
        app.setWar(warLocation.toExternalForm());
-
-
        server.setHandler(app);
        server.start();
        server.join();

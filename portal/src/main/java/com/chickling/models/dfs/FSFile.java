@@ -66,20 +66,6 @@ public abstract class FSFile {
 			throw new RuntimeException();
 		}
 	}
-//
-//	public static FSFile newInstance() {
-//		FSFile fsFile = threadLocal.get();
-//		if (fsFile == null) {
-//			if (HWI_PATH.toLowerCase().startsWith("hdfs:")) {
-//				fsFile = new HDFSFile();
-//			} else {
-//				fsFile = new LocalDFSFile();
-//			}
-//			threadLocal.set(fsFile);
-//		}
-//		return fsFile;
-//	}
-
 	public static FSFile newInstance(FSType type) {
 		FSFile fsFile = threadLocal.get();
 		if (fsFile == null) {
@@ -133,28 +119,6 @@ public abstract class FSFile {
 		}
 	}
 
-//	public Map<String,List> listHistoryFileNames() throws IOException {
-//		String filePath = HWI_PATH + "/history";
-//		List<String> historyDateNames = listChildFileNames(filePath);
-//		Map<String, List> AllFileNames= new HashMap<String, List>();
-//		if(null!=historyDateNames){
-//			for(int i=0;i<historyDateNames.size();i++){
-//				AllFileNames.put(historyDateNames.get(i), listChildFileNames(filePath+"/"+historyDateNames.get(i)));
-//			}
-//		}
-//		return AllFileNames;
-//	}
-
-//	public List<String> listUDFJarsFileNames() throws IOException {
-//		String filePath = UDF_LIB_PATH;
-//		return listChildFileNames(filePath);
-//	}
-//
-//	public List<String> listUDFSqlsFileNames() throws IOException {
-//		String filePath = UDF_SQL_PATH;
-//		return listChildFileNames(filePath);
-//	}
-
 	public boolean deleteFile(String filePath) throws IOException {
 		return fs.delete(new Path(filePath), true);
 	}
@@ -168,9 +132,6 @@ public abstract class FSFile {
 		return fileNames;
 	}
 
-//	public OutputStream createTempOutputStream(String fileName) throws IOException {
-//		return new FileOutputStream(TEMP_PATH + "/" + fileName);
-//	}
 
 	public OutputStream createOutputStream(String fileName) throws IOException {
 		Path file = new Path(HWI_PATH, fileName);
@@ -192,7 +153,6 @@ public abstract class FSFile {
 	public InputStream createInputStreamWithAbsoultePath(String filePath) throws IOException {
 		Path file = new Path(filePath);
 		if (fs.exists(file)) {
-//			System.out.println(file.toString());
 			return fs.open(file);
 		} else {
 			throw new IOException("Not exists file ..." + filePath);
@@ -242,14 +202,6 @@ public abstract class FSFile {
 		}
 		return 0;
 	}
-//
-//	public long getTempFileLength(String filePath) throws IOException {
-//		File tmpFile = new File(TEMP_PATH + "/" + filePath);
-//		if (tmpFile.exists()) {
-//			return tmpFile.length();
-//		}
-//		return 0;
-//	}
 
 	public List<String> readFile(String filePath) {
 		String line = "";
@@ -397,13 +349,6 @@ public abstract class FSFile {
 		}
 	}
 
-//	public void clearTmpFiles() {
-//		File tmpPath = new File(TEMP_PATH);
-//		for (File f : tmpPath.listFiles()) {
-//			f.delete();
-//		}
-//	}
-
 	public FileSystem getFs() {
 		return fs;
 	}
@@ -447,70 +392,7 @@ public abstract class FSFile {
 		log.info("Move HDFS  to Local is [ " + FileUtil.copy(fs,new Path(src),new File(dst),true, conf) + " ]");
 	}
 
-//
-//	public void copyUDFFileToBackup(String src) throws IOException {
-//		String dst=FSFile.UDF_BACKUP+"/"+src+"-"+ System.currentTimeMillis();
-//		FileUtil.copy(fs, new Path(src), fs, new Path(HWI_PATH, dst), Boolean.FALSE, conf);
-//	}
-//
-//	public void moveUDFFileToBackup(String src) throws IOException {
-//		String dst=FSFile.UDF_BACKUP+"/"+src+"-"+ System.currentTimeMillis();
-//		FileUtil.copy(fs, new Path(src), fs, new Path(HWI_PATH, dst), Boolean.TRUE, conf);
-//	}
-//*
-
-
-//	public void copyLocalToBackup(String src, String dst) throws IOException {
-//		FileUtil.copy(new File(src), fs, new Path(dst), false, conf);
-//	}
-
-//	public void delHistoryFile(String dataKey,String fileName) throws IOException {
-//		fs.delete(new Path(HWI_PATH + "/" + HISTORY_DATA +"/"+dataKey+ "/" + fileName), true);
-//		if(!existsChildFile(HWI_PATH + "/" + HISTORY_DATA +"/"+dataKey)){
-//			fs.delete(new Path(HWI_PATH + "/" + HISTORY_DATA +"/"+dataKey), true);
-//		}
-//	}
 
 	public abstract FileSystem genFileSysteam();
 
-//	public void listFiles() {
-//		try {
-//			fs.listStatus(new Path(HWI_PATH));
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//	}
-
-	public static void main(String[] args) throws IOException {
-		String newline=System.lineSeparator();
-		String columns="col1\001col2\001col3";
-		StringBuilder values=new StringBuilder();
-		ByteArrayOutputStream baos=new ByteArrayOutputStream();
-		baos.write(columns.getBytes());
-		baos.write(newline.getBytes());
-		values.append("0").append("\001").append("1").append("\001").append("3");
-		baos.write(values.toString().getBytes());
-		baos.write(newline.getBytes());
-		values=new StringBuilder();
-		values.append("4").append("\001").append("5").append("\001").append("6");
-		baos.write(values.toString().getBytes());
-		baos.write(newline.getBytes());
-		values=new StringBuilder();
-		values.append("7").append("\001").append("8").append("\001").append("9");
-		baos.write(values.toString().getBytes());
-		baos.write(newline.getBytes());
-		values=new StringBuilder();
-		values.append("10").append("\001").append("11").append("\001").append("12");
-		baos.write(values.toString().getBytes());
-		baos.write(newline.getBytes());
-		ByteArrayInputStream bais=new ByteArrayInputStream(baos.toByteArray());
-		InputStreamReader isReader=new InputStreamReader(bais);
-		BufferedReader br=new BufferedReader(isReader);
-
-		PrintWriter pw=new PrintWriter(new File("json"));
-
-		writeJSONFormat(pw, br);
-//		FSFile.newInstance().listUDFJarsFileNames();
-	}
 }

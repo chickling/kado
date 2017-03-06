@@ -41,32 +41,6 @@ public class PrestoUtil {
         this.exception.append(exception).append("\n");
     }
 
-//    public static void deleteHiveTables(String database)  {
-////        System.setProperty("HADOOP_USER_NAME","hive");
-//        FSFile fsFile=FSFile.newInstance(FSFile.FSType.HDFS);
-//        if (Strings.isNullOrEmpty(Init.getHivepath()))
-//            Init.setHivepath("/user/hive/warehouse/");
-//        if (Strings.isNullOrEmpty(Init.getPrestoURL()))
-//            Init.setPrestoURL("http://10.16.46.198:8080");
-//        Init.setDatabase(database);
-//        ArrayList<String> tableList=new ArrayList<>();
-//        try {
-//            tableList = (ArrayList<String>) fsFile.listChildFileNames(Init.getHivepath()+database+".db/");
-//        }catch (Exception e){
-//            throw new Exception("List HDFS File Error With : "+e.fillInStackTrace().getMessage());
-//        }
-//        System.out.println("Total Table Size is " +tableList.size());
-//        for (int i =0 ;i<tableList.size();i++){
-//            String dropTable="DROP TABLE if EXISTS "+ database+"."+tableList.get(i);
-//            System.out.println("Drop--" + (i + 1) + "--Table : " + tableList.get(i));
-//            try {
-//                post(dropTable, PrestoContent.QUERY_UI, Init.getDatabase());
-//            }catch (Exception e){
-//                throw  new Exception("This table [ "+(database+"."+tableList.get(i))+" ] can not be Auto DELETE , please manual control with Presto CLI ");
-//            }
-//        }
-//
-//    }
 
 
     public String getQuery(Integer jobType, String... schema){

@@ -477,13 +477,6 @@ public class MessageFactory {
         return rtn;
     }
     public static String rtnDrawMessage(Map rs,int count,String status,String message){
-        //        {
-//            "count":1000,
-//                "data":{
-//            "yAxis1":[{"x":1,"y":10},{"x":2,"y":20}],
-//            "yAxis2":[{"x":1,"y":10},{"x":2,"y":20}]
-//        }
-//        }
         Map json=new LinkedHashMap();
         Gson gson=new Gson();
         json.put("status",status);

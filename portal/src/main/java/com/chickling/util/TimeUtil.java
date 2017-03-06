@@ -24,8 +24,6 @@ public class TimeUtil {
     public final static String SHORT_DAY_FORMAT = "dd";
     public final static String HOUR_FORMAT = "HH";
     public final static String LONG_FORMAT_1 = "yyyy-MM-dd HH:mm:ss";
-//    public final static String LONG_FORMAT_2 = "yyyy-MM-dd HH:mm";
-//    public final static String LONG_FORMAT_3 = "yyyy/MM/dd HH:mm";
 
 
     public static DateTime String2DateTime(String time){

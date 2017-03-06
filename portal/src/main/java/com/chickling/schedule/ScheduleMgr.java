@@ -25,7 +25,6 @@ import java.util.*;
 
 import static org.quartz.JobBuilder.*;
 
-//import org.quartz.CronScheduleBuilder;
 /**
  * Created by jw6v on 2015/11/27.
  */

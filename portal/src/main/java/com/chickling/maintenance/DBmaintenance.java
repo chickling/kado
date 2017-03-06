@@ -280,27 +280,5 @@ public class DBmaintenance {
         }
     }
 
-    public static void main(String[] args) {
-//        Init.setDBlocation("jdbc:sqlite:PrestoJobPortal.sqlite");
-//        Init.setExpiration("3");
-//        Init.setDatabase("temp");
-//        Init.setHivepath("/user/hive/warehouse");
-//        Init.setPrestoURL("http://10.16.46.191:8080");
-//        Init.setDeleteLogTTL("20");
-//        Init.setCsvlocalPath("D:\\data\\csvtemp");
-//        Init.setCsvtmphdfsPath("/tmp/presto-csvtemp");
-        DBmaintenance maintain=new DBmaintenance();
-//        maintain.deleteLocalLogOverTTL();
-//        maintain.deleteTempCSVOverTTL();
-        maintain.backupSQLiteDB();
-//        PrestoUtil util=new PrestoUtil();
-//        util.post("DROP TABLE if EXISTS "+Init.getDatabase()+".temp_00a42be74ecf42d092f1aea3820850",PrestoContent.USER_JOB,Init.getDatabase());
-//        if (util.isSuccess())
-//            System.out.print("success");
-//        else
-//            System.out.print(util.getException());
-////        DBmaintenance maintain=new DBmaintenance();
-//        maintain.deleteTempTableOverTTL();
-    }
 
 }
