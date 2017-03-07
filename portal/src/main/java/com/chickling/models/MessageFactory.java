@@ -264,7 +264,7 @@ public class MessageFactory {
         json.put("filepath",rs.getString("FilePath"));
         json.put("filename",rs.getString("FileName"));
         json.put("location_id",rs.getInt("StorageResources"));
-        json.put("location_name",Init.getLocationList().get(rs.getInt("StorageResources")));
+        json.put("location_name",Init.getLocationList().size()>rs.getInt("StorageResources")?Init.getLocationList().get(rs.getInt("StorageResources")):"");
         json.put("insertsql",rs.getString("DBSQL"));
         json.put("log",rs.getString("JobLogFile"));
         json.put("ResultCount",rs.getString("ResultCount"));

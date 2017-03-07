@@ -361,10 +361,14 @@
                         defaultValue=JData["list"][i]["id"];
                       itemHtml+='<div class="item" data-value="'+JData["list"][i]["id"]+'">'+JData["list"][i]["name"]+'</div>';
                     }
-                    $(".dropdown.location.db .menu").html(itemHtml);
-                    //$(".dropdown.location.db").dropdown();
-                    //alert(defaultValue);
-                    $(".db.dropdown").dropdown();
+                    
+                    if(itemHtml!=""){
+                        $(".dropdown.location.db .menu").html(itemHtml);
+                        $(".db.dropdown").dropdown();
+                    }else{
+                        $("#save_to_db").hide();
+                    }
+
                     loadJobInfo();
                     loadRadioStatus();
                   } else {

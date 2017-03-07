@@ -7,7 +7,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <!-- Site Properities -->
-    <title>Anti-Crawler Dashboard</title>
+    <title>Kado Dashboard</title>
     <link rel="stylesheet" type="text/css" href="../dist/semantic.css">
     <link rel="stylesheet" type="text/css" href="../dist/nv.d3.css">
     <style type="text/css">

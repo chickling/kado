@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
   <!-- Site Properities -->
-  <title>Login Presto Job Portal</title>
+  <title>Login Kado</title>
 
   <link rel="stylesheet" type="text/css" href="dist/semantic.min.css">
 

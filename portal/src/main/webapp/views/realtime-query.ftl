@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
   <!-- Site Properities -->
-  <title>Anti-Crawler Dashboard</title>
+  <title>Kado Dashboard</title>
 
   <link rel="stylesheet" type="text/css" href="../dist/semantic.css">
   <link href="https://fonts.googleapis.com/css?family=Raleway:400,300,600,800,900" rel="stylesheet" type="text/css">

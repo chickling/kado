@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <!-- Site Properities -->
-    <title>Anti-Crawler Dashboard</title>
+    <title>Kado Dashboard</title>
     <link rel="stylesheet" type="text/css" href="../dist/components/reset.css">
     <link rel="stylesheet" type="text/css" href="../dist/components/site.css">
     <link rel="stylesheet" type="text/css" href="../dist/semantic.css">
@@ -263,7 +263,7 @@
           </div>
           <p style="text-align: right;">Local File Output Path:${localpath}</p>
           </div>
-          <div style="margin-top:10px;">
+          <div style="margin-top:10px;" id="save_to_db">
             <i class="icon database big" style="margin-right: 8px;"></i>
             <div class="ui  checkbox db storage">
               <input name="storage"  type="checkbox"  value="2">

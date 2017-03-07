@@ -2,7 +2,7 @@
     <div class="ui container" style="width:100%">
         <a  class="item" id="project"> <i class="icon large sidebar"></i></a>
         <a href="#" class="header item">
-            <i class="icon send large"></i>Presto Job Manager
+            <i class="icon send large"></i>Kado
         </a>        
         <a href="${layer}status" class="item <#if status??>${status}</#if>"> <i class="icon large browser"></i>Status</a>
         <a href="${layer}joblist" class="item <#if job??>${job}</#if>"> <i class="icon large suitcase"></i>Job</a>
@@ -12,7 +12,7 @@
             <i class="icon user large"></i>
             <font id="displayName">Eugene</font><i class="dropdown icon"></i>
             <div class="menu">
-                <a class="item" href="#" id="fullName">Eugene.Y.Yan<br>Dev</a>
+                <a class="item" href="#" id="fullName">Eugene.Yan<br>Dev</a>
                 <div class="divider"></div>
                 <div class="header">Account</div>
                 <a class="item" href="${layer}usermanage" id="accountManage"><i class="icon unlock alternate"></i>Account Manage</a>

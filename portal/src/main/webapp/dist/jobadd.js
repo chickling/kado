@@ -49,7 +49,6 @@
       $('.ui.checkbox.storage').change(function() {
           loadRadioStatus();
       });
-      //["a@b.c","d@e.f"]
       $("#ReportEmail").val('');
       $('#ReportEmail').multiple_emails({
           theme: "SemanticUI"
@@ -64,8 +63,6 @@
 
   function saveJob() {
       if (checkInputInfo()) {
-          // $('#editor_form').dimmer('show');
-
           var addJson = {};
           var message = "";
           // Add job basic info
@@ -104,31 +101,6 @@
             addJson["ReportWhileEmpty"]="false";
           }
 
-          //Add Storage Setting
-          // var storage = $('[name="storage"]:checked').val();
-          // if (storage == 1) {
-          //     //
-          //     addJson["storage"] = true;
-          //     addJson["save_type"] = "HDFS";
-          //     addJson["insertsql"] = "";
-          //     addJson["location_id"] = "0";
-          //     //Set Value
-          //     addJson["filepath"] = $(".input.file.fpath input").val();
-          //     addJson["filename"] = $(".input.file.fname input").val();
-
-          // } else if (storage == 2) {
-          //     addJson["storage"] = true;
-          //     addJson["save_type"] = "DB";
-          //     addJson["filepath"] = "";
-          //     addJson["filename"] = "";
-          //     addJson["location_id"] = $(".dropdown.db.location").dropdown("get value");;
-          //     //Set Value
-          //     addJson["insertsql"] = $.base64Encode($(".input.insert.sql input").val());
-          // } else {
-          //     addJson["storage"] = false;
-          //     addJson["save_type"] = "";
-          //     addJson["location_id"] = "0";
-          // }
           //Add Storage Setting
          if($(".checkbox.db").checkbox('is checked')||$(".checkbox.csv").checkbox('is checked')){
             //clear
@@ -223,23 +195,7 @@
   function checkInputInfo() {
       clearError();
       //check storage
-      //var storage = $('[name="storage"]:checked').val();
       var message = "";
-      // if (storage == 1) {
-      //     if ($(".input.file.fname input").val() == "") {
-      //         message += "File Name can not be empty \n";
-      //         $(".input.file.fname").addClass("error");
-      //     }
-      //     if ($(".input.file.fpath input").val() == "") {
-      //         message += "File Path can not be empty \n";
-      //         $(".input.file.fpath").addClass("error");
-      //     }
-      // } else if (storage == 2) {
-      //     if ($(".input.insert.sql input").val() == "") {
-      //         message += "Insert SQL can not be empty \n";
-      //         $(".input.insert.sql").addClass("error");
-      //     }
-      // }
       if ($(".checkbox.csv").checkbox("is checked")) {
          if ($(".input.file.fname input").val() == "") {
              message += "File Name can not be empty \n";
@@ -254,12 +210,12 @@
              $(".file.segment").addClass("error");
          }
      }
-    if ($(".checkbox.db").checkbox("is checked")) {
+      if($(".checkbox.db").checkbox("is checked")) {
          if ($(".input.insert.sql input").val() == "") {
              message += "Insert SQL can not be empty \n";
              $(".input.insert.sql").addClass("error");
          }
-     }
+      }
       //check Job Visibility Level
       if ($(".dropdown.level input").val() == "") {
           $(".dropdown.level").addClass("error");
@@ -315,7 +271,7 @@
    * 
    */
   function loadRadioStatus() {
- if ($(".checkbox.csv").checkbox("is checked")) {
+  if ($(".checkbox.csv").checkbox("is checked")) {
          $(".input.file").removeClass("disabled");
          $(".file.hdfs").removeClass("disabled");
          $(".file.local").removeClass("disabled");         
@@ -349,11 +305,13 @@
                               defaultValue = JData["list"][i]["id"];
                           itemHtml += '<div class="item" data-value="' + JData["list"][i]["id"] + '">' + JData["list"][i]["name"] + '</div>';
                       }
-                      $(".dropdown.location.db .menu").html(itemHtml);
-                      //$(".dropdown.location.db").dropdown();
-                      //alert(defaultValue);
-                      $(".db.dropdown").dropdown();
-                      $(".db.dropdown").dropdown('set selected', defaultValue.toString());
+                      if(itemHtml!=""){
+                        $(".dropdown.location.db .menu").html(itemHtml);
+                        $(".db.dropdown").dropdown();
+                        $(".db.dropdown").dropdown('set selected', defaultValue.toString());
+                      }else{
+                        $("#save_to_db").hide();
+                      }
                   } else {
                       if (JData["message"].checkPermission())
                           alert("[" + JData["status"] + "]\n" + JData["message"]);
@@ -466,30 +424,10 @@
          //$('.file.segment.hdfs').checkbox("uncheck");
          $('.file.segment.local').checkbox("check");
          }
-//         $('.ui.left.icon.input.file.fpath').addClass('disabled');
-//     }else{
-//              $(".file.location.hdfs").one("click",function(){
-//                  if(!$('.file.segment.hdfs').checkbox("is checked")){
-//                     $('.ui.left.icon.input.file.fpath').addClass('disabled');
-//                   }else
-//                      $('.ui.left.icon.input.file.fpath').removeClass('disabled');
-//                })
-//            if($('.file.segment.local').checkbox("is checked"))
-//                    $('.ui.left.icon.input.file.fpath').removeClass('disabled');
-//     }
-
   });
  $(".file.location.local").click(function(){
      if(!$('.file.segment.hdfs').checkbox("is checked")&&$('.file.segment.local').checkbox("is checked")){
              //$('.file.segment.local').checkbox("uncheck");
          $('.file.segment.hdfs').checkbox("check");
     }
-//         $('.ui.left.icon.input.file.fpath').removeClass('disabled');
-//     }else{
-//         if($('.file.segment.hdfs').checkbox("is checked"))
-//            $('.ui.left.icon.input.file.fpath').removeClass('disabled');
-//         else
-//            $('.ui.left.icon.input.file.fpath').addClass('disabled');
-//     }
-
   });

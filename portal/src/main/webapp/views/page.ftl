@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
   <!-- Site Properties -->
-  <title>Newegg Presto Job Manager</title>
+  <title>Kado</title>
   <link rel="stylesheet" type="text/css" href="dist/semantic.css">
 
   <style type="text/css">
@@ -120,7 +120,7 @@
   <div class="ui container">
     <a class="active item">Home</a>
     <a class="item" onclick="showMenu()">Function</a>
-    <a class="item" href="http://confluence.newegg.org/display/BIG/Usage">Usage</a>
+    <a class="item" href="">Usage</a>
     <div class="right menu">
       <div class=" right ui simple dropdown item user">
          <i class="icon user large"></i><font class="displayName"></font><i class="dropdown icon"></i>
@@ -142,7 +142,7 @@
 <div class="ui vertical inverted sidebar menu">
   <a class="active item">Home</a>
   <a class="item" onclick="showMenu()">Function</a>
-  <a class="item" href="http://confluence.newegg.org/display/BIG/Usage">Usage</a>
+  <a class="item" href="">Usage</a>
   
 </div>
 <div class="ui sidebar inverted vertical menu" style="transition-duration: 0.15s;">
@@ -158,39 +158,6 @@
       </div>
 
     </a>
-    <#-- <a class="item">      
-      <div class="header">Domain Category</div>
-      <div class="menu">
-
-        <a class="item" href="">
-          Newegg.com
-        </a>
-
-        <a class="item" href="">
-          Newegg B2B
-        </a>
-        <a class="item" href="">
-          Newegg Mobile
-        </a>
-
-      </div>
-
-    </a>
-    <a class="item">      
-      <div class="header">Price Page</div>
-      <div class="menu">
-
-        <a class="item" href="">
-          Price Page
-        </a>
-
-        <a class="item" href="">
-          Login Page
-        </a>
-
-      </div>
-
-    </a> -->
     <a class="item">      
       <div class="header">Job Manager</div>
       <div class="menu">
@@ -221,11 +188,7 @@
         </a>
         <a class="active item">Home</a>
         <a class="item" onclick="showMenu()">Function</a>
-        <a class="item" href="http://confluence.newegg.org/display/BIG/Usage"> Usage </a>
-        <#-- <div class="right item">
-          <a class="ui inverted button login" href="login">Log in</a>
-          
-        </div> -->
+        <a class="item" href=""> Usage </a>
         <div class=" right ui simple dropdown item user top">
          <i class="icon user large"></i><font class="displayName"></font><i class="dropdown icon"></i>
         <div class="menu" style="margin-top: -10px;">          
@@ -247,7 +210,7 @@
       <i class="icon cloud big"></i>
       </h1>
       <h1 class="ui inverted header" style="margin-top: 0px;">      
-        Presto Job Manager
+        Kado
       
       <h2>Submit your query, and "Hey presto !"</h2>
       <a class="ui huge primary button" href="queryui">Query Now <i class="right arrow icon"></i></a>
@@ -301,12 +264,6 @@
       <h3 class="ui header">View your Job execution state</h3>
       <p><i class="icon heartbeat huge"></i></p>
       <a class="ui large button" href="status">View Status</a>
-      <!--<h4 class="ui horizontal header divider">
-        <a href="#">Case Studies</a>
-      </h4>
-      <h3 class="ui header">Did We Tell You About Our Bananas?</h3>
-      <p>Yes I know you probably disregarded the earlier boasts as non-sequitor filler content, but its really true. It took years of gene splicing and combinatory DNA research, but our bananas can really dance.</p>
-      <a class="ui large button">I'm Still Quite Interested</a>-->
     </div>
   </div>
 
@@ -329,8 +286,8 @@
           </div>
         </div>
         <div class="seven wide column">
-          <h4 class="ui inverted header">Newegg 2016</h4>
-          <p>TC Big Data Team</p>
+          <a href="https://github.com/chickling" class="item">Chickling 2017</a>
+          <a href="https://github.com/chickling/kado" class="item">Kado Team</a>
         </div>
       </div>
     </div>
@@ -361,13 +318,11 @@
         var dname=$.cookie('username').split(".")[0];
         $(".displayName").html(dname);
         $(".displayName").attr("onclick",'');
-        //$(".ui.simple.item").addClass("dropdown");
         $(".fullName").html($.cookie('username')+"<br>"+$.cookie('group'));
         
       }else{
         $(".displayName").html("Log in");
         $(".displayName").attr("onclick",'document.location="login";');
-        //$(".ui.simple.item").removeClass("dropdown");
         $(".ui.simple.item .menu").hide();
       }
       hideAccountManage();

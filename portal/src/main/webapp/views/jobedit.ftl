@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <!-- Site Properities -->
-    <title>Anti-Crawler Dashboard</title>
+    <title>Kado Dashboard</title>
     <link rel="stylesheet" type="text/css" href="../dist/components/reset.css">
     <link rel="stylesheet" type="text/css" href="../dist/components/site.css">
     <link rel="stylesheet" type="text/css" href="../dist/semantic.css">
@@ -240,16 +240,6 @@
                 @{Timestamp}.csv
               </div>
             </div>
-<#--             <div class="ui  multiple selection dropdown file">
-              <input name="country" type="hidden">
-              <i class="dropdown icon"></i>
-              <div class="default text">Select Location</div>
-              <div class="menu">
-              <div class="item" data-value="hdfs">HDFS</div>
-              <div class="item" data-value="local">Local</div>
-
-            </div>
-           </div> -->
           <div class="ui  checkbox file segment hdfs location" style="padding-top: 10px; padding-bottom: 10px;">
               <input type="checkbox" tabindex="0" class="hidden" value="1" name="storage_location">
               <label>HDFS</label>
@@ -261,7 +251,7 @@
                     <p style="text-align: right;">Local File Output Path:${localpath}</p>
 
           </div>
-          <div style="margin-top:10px;">
+          <div style="margin-top:10px;" id="save_to_db">
             <i class="icon database big" style="margin-right: 8px;"></i>
             <div class="ui  checkbox db storage">
               <input name="storage" checked="checked" type="checkbox"  value="2">
@@ -279,7 +269,6 @@
                 <i class="dropdown icon"></i>
                 <div class="menu">
                   <div class="item" value="1"></div>
-                  <#-- <div class="item">Replace by column name</div> -->
                 </div>
               </div>
             </div>
