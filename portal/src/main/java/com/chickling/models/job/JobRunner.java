@@ -761,13 +761,6 @@ public class JobRunner   implements Callable<Boolean> {
             localWriter.init(parameter);
             resultCode += (int) localWriter.call();
         }
-//            DB binary 001
-        if ("1".equals(activeWriter.get(2))) {
-            name = "com.chickling.writer.DBWriter";
-            ResultWriter dbWriter =Init.getInjectionInstance(name);
-            dbWriter.init(parameter);
-            resultCode += (int) dbWriter.call();
-        }
 
         return resultCode > 0;
     }

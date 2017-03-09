@@ -1,20 +1,22 @@
-prestoURL: "http://172.16.157.11:8080"
+# Local
+prestoURL: "http://localhost:8080"
+siteURLBase: "http://localhost:8889"
+csvlocalPath: "/home/user/presto_temp"
+# HDFS  or Hive
 database: "presto_temp"
 hivepath: "/user/hive/warehouse"
 logpath: "/tmp/presto-joblog"
-siteURLBase: "http://localhost:8889"
 expiration: "7"
 prestoCatalog: "hive"
 csvtmphdfsPath: "/tmp/presto-csvtemp"
-csvlocalPath: "/home/MERCURY/ecappservice/presto_temp"
 deleteLogTTL: "30"
 sqliteName: "Kado.sqlite"
-wrtierinjection: "com.chickling.writer.DBWriter$com.chickling.models.writer.HdfsWriter$com.chickling.models.writer.LocalWriter"
+wrtierinjection: "com.chickling.models.writer.HdfsWriter$com.chickling.models.writer.LocalWriter"
 
 #   Scheduled
 scheduleLogDir: "/logs/Schedule/"
 
 # backup SQLite DB to HDFS
-sqliteLOCALpath: "D:\\0_projects\\Kado\\src\\main\\resources\\Kado.sqlite"
+#sqliteLOCALpath: "D:\\projects\\Kado\\src\\main\\resources\\Kado.sqlite"
 sqliteHDFSpath: "/tmp"
-#sqliteHDFSpath: "/user/ec/presto_backup"
+sqliteHDFSpath: "/user/ec/presto_backup"
