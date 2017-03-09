@@ -35,14 +35,10 @@ public class YamlConfig {
         this.notbatchdb = notbatchdb;
     }
 
-
     static {
         loadYaml();
-        //initialTableInfoMap();
     }
-
     private static void loadYaml() {
-//        String yamlPath =YamlConfig.class.getResource("/").getPath()+"dbconfig.yaml";
         try {
             String yamlPath =Thread.currentThread().getContextClassLoader().getResource("dbconfig.yaml").getPath();
             logger.info("Loading configuration from " + yamlPath);
