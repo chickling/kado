@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration monitorInterval="5" status="error">
+    <Properties>
+        <Property name="logdir">logs</Property>
+        <Property name="smtphost">st01smtp01.buyabs.corp</Property>
+    </Properties>
+    <appenders>
+        <!-- Setting for send Job Report Email-->
+        <Routing name="RoutingSMTPAppender">
+            <Routes pattern="$${ctx:RecipientName}">
+                <Route>
+                    <SMTP name="SMTP-${ctx:RecipientName}" subject="Job Failed info" to="${ctx:RecipientName}"
+                          smtpHost="${smtphost}" bufferSize="50">
+                        <PatternLayout pattern="%d{yyyy.MM.dd HH:mm:ss z} [%-5level] [%class{36}] %L %M - %msg%xEx%n" />
+                    </SMTP>
+                </Route>
+            </Routes>
+        </Routing>
+        <Routing name="RoutingAppender">
+            <Routes pattern="$${ctx:logFileName}">
+                <Route>
+                    <RollingFile name="Rolling-${ctx:logFileName}"
+                                 fileName="${logdir}/${ctx:logFileName}.log"
+                                 filePattern="${logdir}/${ctx:logFileName}.%i.log.gz">
+                        <PatternLayout pattern="%d{yyyy.MM.dd HH:mm:ss z} [%-5level] [%class{36}] %L %M - %msg%xEx%n" />
+                        <SizeBasedTriggeringPolicy size="10MB" />
+                        <DefaultRolloverStrategy max="3" />
+                    </RollingFile>
+                </Route>
+
+            </Routes>
+        </Routing>
+        <!--===================Use to Get Log Dir  ,  Do not Remove This===============-->
+        <RollingFile name="getLogDir" fileName="${logdir}/init.log"
+                     filePattern="${logdir}/init-%i.log">
+            <PatternLayout
+                    pattern="%d{yyyy.MM.dd HH:mm:ss z} %-5level %class{36} %L %M - %msg%xEx%n" />
+            <!-- // PatternLayout pattern -->
+            <SizeBasedTriggeringPolicy size="10MB" />
+            <DefaultRolloverStrategy max="1" />
+        </RollingFile>
+        <RollingFile name="System" fileName="logs/system.log"
+                     filePattern="logs/system.log">
+            <PatternLayout
+                    pattern="%d{yyyy.MM.dd HH:mm:ss z} %-5level %class{36} %L %M - %msg%xEx%n" />
+            <SizeBasedTriggeringPolicy size="20MB" />
+            <DefaultRolloverStrategy max="5" />
+        </RollingFile>
+
+        <RollingFile name="Maintain" fileName="logs/maintain.log"
+                     filePattern="logs/maintain.log">
+            <PatternLayout
+                    pattern="%d{yyyy.MM.dd HH:mm:ss z} %-5level %class{36} %L %M - %msg%xEx%n" />
+            <SizeBasedTriggeringPolicy size="20MB" />
+            <DefaultRolloverStrategy max="5" />
+        </RollingFile>
+
+        <!-- //====================console=================== -->
+        <Console name="ConsolePrint" target="SYSTEM_OUT">
+            <PatternLayout
+                    pattern="%d{yyyy.MM.dd HH:mm:ss z} %-5level %class{36} %L %M - %msg%xEx%n" />
+        </Console>
+    </appenders>
+    <loggers>
+
+        <logger name="SMTPA" additivity="true" level="ERROR">
+            <appender-ref ref="RoutingSMTPAppender" />
+        </logger>
+
+        <logger name="com.chickling.maintenance" additivity="false" level="info">
+            <appender-ref ref="Maintain" />
+        </logger>
+
+        <root level="info">
+            <appender-ref level="info" ref="ConsolePrint" />
+            <appender-ref ref="RoutingAppender"  />
+            <appender-ref ref="System"/>
+        </root>
+    </loggers>
+</configuration>

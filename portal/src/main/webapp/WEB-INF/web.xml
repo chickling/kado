@@ -1,0 +1,35 @@
+<web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+
+    <listener>
+        <listener-class>com.chickling.boot.Init</listener-class>
+    </listener>
+    <!--FreeMarker Restful Service filter -->
+    <filter>
+        <filter-name>jersey</filter-name>
+        <filter-class>org.glassfish.jersey.servlet.ServletContainer</filter-class>
+        <init-param>
+            <param-name>javax.ws.rs.Application</param-name>
+            <param-value>com.chickling.config.JerseyConfiguration</param-value>
+        </init-param>
+        <init-param>
+            <!--this value setting prefix path under "target/classes" with .ftl files dir , ex : .target/classes/views/XXXX.ftl-->
+            <param-name>jersey.config.server.mvc.templateBasePath.freemarker</param-name>
+            <param-value>views</param-value>
+        </init-param>
+
+        <!--static file-->
+        <init-param>
+            <param-name>jersey.config.servlet.filter.staticContentRegex</param-name>
+            <param-value>/.*html|/.*js|/.*css|.*jpg|.*png|.*json|.*ttf|.*woff|.*ftl|.*woff2</param-value>
+        </init-param>
+
+    </filter>
+    <filter-mapping>
+        <filter-name>jersey</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+</web-app>
