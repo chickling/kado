@@ -127,7 +127,6 @@ public class Notification {
 
         }catch (MessagingException | UnknownHostException | UnsupportedEncodingException ex) {
             log.info("Reciever is: "+recipients+" "+ex);
-            //ex.printStackTrace();
         }
     }
 
