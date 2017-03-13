@@ -26,7 +26,7 @@
     <a class="item">
         <div class="header">Pages</div>
         <div class="menu">
-            <a class="item" href="index">
+            <a class="item" href="${layer}index">
           Index
         </a>
         </div>
