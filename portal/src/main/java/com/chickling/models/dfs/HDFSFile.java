@@ -3,7 +3,6 @@ package com.chickling.models.dfs;
 import org.apache.hadoop.fs.FileSystem;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * 

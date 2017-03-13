@@ -3,7 +3,6 @@ package com.chickling.util;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 
-import java.text.DateFormat;
 import java.util.Date;
 
 /**

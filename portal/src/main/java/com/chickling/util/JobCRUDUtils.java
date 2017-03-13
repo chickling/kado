@@ -488,7 +488,6 @@ public class JobCRUDUtils {
         //INSERT SQL
         stat = ConnectionManager.getInstance().getConnection().prepareStatement(UpdateJobHistorySql);
         stat.setString(1, JobStartTime);
-        //stat.setInt(2, Integer.parseInt(token));//token
         stat.setString(2, JobStopTime);
         stat.setInt(3, JobStatus);
         stat.setInt(4, JobProgress);

@@ -20,7 +20,6 @@ import java.util.HashMap;
 public class LocalWriter implements ResultWriter {
 
     private Logger log=LogManager.getLogger(LocalWriter.class);
-//    private  Logger log=LogManager.getLogger("RoutingAppender");
 
     private JobLog jobLog;
 
@@ -57,7 +56,6 @@ public class LocalWriter implements ResultWriter {
 
         if(!sourceDir.endsWith("/"))
             sourceDir=sourceDir+"/";
-//        log.info("Start Save CSV Format Result  to HDFS Path :  "+csvResultPath);
 
         OrcFileUtil orcFileUtil= OrcFileUtil.newInstance();
 
