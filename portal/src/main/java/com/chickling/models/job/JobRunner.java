@@ -464,7 +464,7 @@ public class JobRunner   implements Callable<Boolean> {
                             content.append("<p><h4><a href='"+Init.getSiteURLBase() + "/query/get/result/file/"+jobHistoryid+"/"+new Auth().generateDownloadToken(jobHistoryid)+ "'>Download Result CSV File...</a></h4></p>");
                         }
                     }
-                    content.append("<p>" + TimeUtil.getCurrentTime() + " Send From <a href='" + Init.getSiteURLBase()+"'>Presto Job Manager</a></p>");
+                    content.append("<p>" + TimeUtil.getCurrentTime() + " Send From <a href='" + Init.getSiteURLBase()+"'>Kado</a></p>");
                     content.append("</body></html>");
                     String[] recipients=job.getReportEmail().split(";");
                     Notification.notification(jobHistoryid, content.toString(), "(info)[Job Report][" + jobHistoryid+"]"+job.getJobname(), recipients);

@@ -16,43 +16,43 @@
   </property>
   <property>
     <name>ha.zookeeper.quorum</name>
-    <value>e11hdp01.mercury.corp:2181,e11hdp02.mercury.corp:2181,e11hdp03.mercury.corp:2181,e11hdp04.mercury.corp:2181,e11hdp05.mercury.corp:2181</value>
+    <value>e11bkdhdp01.mercury.corp:2181,e11bkdhdp02.mercury.corp:2181,e11bkdhdp03.mercury.corp:2181,e11bkdhdp04.mercury.corp:2181,e11bkdhdp05.mercury.corp:2181</value>
   </property>
   <property>
     <name>dfs.ha.namenodes.nameservice1</name>
-    <value>namenode230,namenode267</value>
+    <value>namenode363,namenode400</value>
   </property>
   <property>
-    <name>dfs.namenode.rpc-address.nameservice1.namenode230</name>
-    <value>e11hdp01.mercury.corp:8020</value>
+    <name>dfs.namenode.rpc-address.nameservice1.namenode363</name>
+    <value>e11bkdhdp01.mercury.corp:8020</value>
   </property>
   <property>
-    <name>dfs.namenode.servicerpc-address.nameservice1.namenode230</name>
-    <value>e11hdp01.mercury.corp:8022</value>
+    <name>dfs.namenode.servicerpc-address.nameservice1.namenode363</name>
+    <value>e11bkdhdp01.mercury.corp:8022</value>
   </property>
   <property>
-    <name>dfs.namenode.http-address.nameservice1.namenode230</name>
-    <value>e11hdp01.mercury.corp:50070</value>
+    <name>dfs.namenode.http-address.nameservice1.namenode363</name>
+    <value>e11bkdhdp01.mercury.corp:50070</value>
   </property>
   <property>
-    <name>dfs.namenode.https-address.nameservice1.namenode230</name>
-    <value>e11hdp01.mercury.corp:50470</value>
+    <name>dfs.namenode.https-address.nameservice1.namenode363</name>
+    <value>e11bkdhdp01.mercury.corp:50470</value>
   </property>
   <property>
-    <name>dfs.namenode.rpc-address.nameservice1.namenode267</name>
-    <value>e11hdp02.mercury.corp:8020</value>
+    <name>dfs.namenode.rpc-address.nameservice1.namenode400</name>
+    <value>e11bkdhdp02.mercury.corp:8020</value>
   </property>
   <property>
-    <name>dfs.namenode.servicerpc-address.nameservice1.namenode267</name>
-    <value>e11hdp02.mercury.corp:8022</value>
+    <name>dfs.namenode.servicerpc-address.nameservice1.namenode400</name>
+    <value>e11bkdhdp02.mercury.corp:8022</value>
   </property>
   <property>
-    <name>dfs.namenode.http-address.nameservice1.namenode267</name>
-    <value>e11hdp02.mercury.corp:50070</value>
+    <name>dfs.namenode.http-address.nameservice1.namenode400</name>
+    <value>e11bkdhdp02.mercury.corp:50070</value>
   </property>
   <property>
-    <name>dfs.namenode.https-address.nameservice1.namenode267</name>
-    <value>e11hdp02.mercury.corp:50470</value>
+    <name>dfs.namenode.https-address.nameservice1.namenode400</name>
+    <value>e11bkdhdp02.mercury.corp:50470</value>
   </property>
   <property>
     <name>dfs.replication</name>

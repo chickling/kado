@@ -51,21 +51,6 @@ public class ImportDB {
     public void setBatchSize(int batchSize) {
         this.batchSize = batchSize;
     }
-
-
-//    private  void init(){
-//        ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-//        InputStream input = classloader.getResourceAsStream("dbselect-config.yaml");
-//        Yaml yaml = new Yaml();
-//        ManagerConfig contactMap = yaml.loadAs(input,ManagerConfig.class);
-//            for (ManagerConfig.DataSource val : contactMap.getDataSourceList()) {
-//                System.out.println(val.getName());
-//                locationList.add(val.getName());
-//            }
-//
-//
-//    }
-
     /**
      * @param importSQL         import SQL String
      * @param prestoDirpath               where is the orc file Path  on HDFS  ,
@@ -129,13 +114,8 @@ public class ImportDB {
         try {
             Class c = Class.forName("com.chickling.models.dfs.OrcFileUtil");
             orcFile=(OrcFile) c.newInstance();
-
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+           log.error(ExceptionUtils.getStackTrace(e));
         }
 
         assert orcFile != null;
@@ -147,12 +127,6 @@ public class ImportDB {
                 String original = matcher.group(0);
                 String relpace = original.replaceAll("#\\{", "VALUES(").replaceAll("}", ")");
                 List<Integer> fieldIndex = parseFieldsIndex(sql);
-                //Create Orc File InputStream
-//                OrcFileUtil orc = OrcFileUtil.newInstance();
-//                ByteArrayInputStream stream = orc.readORCFiles(getPrestoDirpath(), OrcFileUtil.TYPE.HDFS, startRow, getBatchSize());
-//                InputStreamReader inReader = new InputStreamReader(stream);
-//                BufferedReader br = new BufferedReader(inReader);
-
 
                 try (
                         ByteArrayInputStream stream = orcFile.getInputStream(getPrestoDirpath(), startRow, getBatchSize());
@@ -190,13 +164,11 @@ public class ImportDB {
                     }
 
                     // batch Import Data to DB
-//                    log.info("---Batch SQL is : [ "+sqlList +" ] ----");
                     boolean isBatchSuccess=startImport(sqlList);
                     if (isBatchSuccess) {
                         // set Next Batch Start Row
                         if (sqlList.size() < getBatchSize()) {
                             // if rows less than batchSize , is last batch  , set startRow to END
-//                            startRow = getImportCount();
                             log.info("Import to DB Process is : " + 100 + " % ");
                             log.info("Import to DB Finished !!");
                             setSuccess(true);
@@ -211,9 +183,6 @@ public class ImportDB {
                         setSuccess(false);
                         break;
                     }
-//                    br.close();
-//                    inReader.close();
-//                    stream.close();
                 } catch (IOException e) {
                     log.error(ExceptionUtils.getStackTrace(e));
                     break;
@@ -223,13 +192,8 @@ public class ImportDB {
             log.info("Total Row is : "+getImportCount()+" , Batch Size is : "+getBatchSize());
             while (startRow < getImportCount()) {
 
-                //String original = matcher.group(0);
-                //String relpace = original.replaceAll("#\\{", "VALUES(").replaceAll("}", ")");
                 List<Integer> fieldIndex = parseFieldsIndex(sql);
                 //Create Orc File InputStream
-//                ByteArrayInputStream stream = orc.readORCFiles(getPrestoDirpath(), OrcFileUtil.TYPE.HDFS, startRow, getBatchSize());
-//                InputStreamReader inReader = new InputStreamReader(stream);
-//                BufferedReader br = new BufferedReader(inReader);
                 try (
                         ByteArrayInputStream stream =orcFile.getInputStream(getPrestoDirpath(), startRow, getBatchSize());
                         InputStreamReader inReader = new InputStreamReader(stream);
@@ -266,12 +230,10 @@ public class ImportDB {
                     }
 
                     // batch Import Data to DB
-//                    log.info("---Batch SQL is : [ "+sqlList +" ] ----");
                     boolean isBatchSuccess=startImport(sqlList);
                     if (isBatchSuccess) {
                         // set Next Batch Start Row
                         if (sqlList.size() < getBatchSize()) {
-                            // if rows less than batchSize , is last batch  , set startRow to END
 //                            startRow = getImportCount();
                             log.info("Update to DB Process is : " + 100 + " % ");
                             log.info("Update to DB Finished !!");
@@ -287,9 +249,6 @@ public class ImportDB {
                         setSuccess(false);
                         break;
                     }
-//                    br.close();
-//                    inReader.close();
-//                    stream.close();
                 } catch (IOException e) {
                     log.error(ExceptionUtils.getStackTrace(e));
                     break;

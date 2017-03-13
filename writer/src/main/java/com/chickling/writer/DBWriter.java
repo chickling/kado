@@ -22,7 +22,6 @@ import java.util.HashMap;
 public class DBWriter implements ResultWriter {
 
     private Logger log=LogManager.getLogger(DBWriter.class);
-//    private  Logger log=LogManager.getLogger("RoutingAppender");
 
     private JobLog jobLog;
     private int location_id;

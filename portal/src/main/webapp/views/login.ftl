@@ -38,7 +38,7 @@
     <h2 class="ui teal image header">
       <i class="icon dashboard big"></i>
       <div class="content">
-        Log-in to Presto Job Portal
+        Log-in to Kado
       </div>
     </h2>
     <div class="ui large form">
