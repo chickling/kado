@@ -31,7 +31,6 @@ public class ChartCRUDUtils {
 
     public synchronized static String addChart(Map<String,String> input,String token){
         PreparedStatement stat = null;
-        //ResultSet rs = null;
         String QuerySQL="";
 
         try {
@@ -58,15 +57,14 @@ public class ChartCRUDUtils {
 
             }
         }catch(SQLException sqle){
-                log.error(sqle.toString() + ";SQL:" + QuerySQL);
-                return MessageFactory.rtnChartMessage("error", TimeUtil.getCurrentTime(), sqle.getMessage(), "");
-            }
+            log.error(sqle.toString() + ";SQL:" + QuerySQL);
+            return MessageFactory.rtnChartMessage("error", TimeUtil.getCurrentTime(), sqle.getMessage(), "");
+        }
 
     }
 
     public synchronized static String deleteChart(int ChartID,int jobID,String token){
         PreparedStatement stat = null;
-        //ResultSet rs = null;
 
         String QuerySQL = "";
         try {
@@ -81,7 +79,6 @@ public class ChartCRUDUtils {
             } else {
                 return MessageFactory.rtnChartMessage("error", TimeUtil.getCurrentTime(), "Permission Denied", Integer.toString(ChartID));
             }
-            //stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
             QuerySQL=stat.toString();
             stat.setInt(1, ChartID);
             stat.execute();
@@ -95,7 +92,6 @@ public class ChartCRUDUtils {
     }
     public synchronized static String deleteChartbyJob(int jobID,String token){
         PreparedStatement stat = null;
-        //ResultSet rs = null;
 
         String QuerySQL = "";
         try {
@@ -122,10 +118,9 @@ public class ChartCRUDUtils {
     }
     public synchronized static String updateChart( Map input,int jobID,String token){
         PreparedStatement stat = null;
-        ResultSet rs = null;
-        String QuerySQL ="";;
+        String QuerySQL ="";
         try {
-        //INSERT SQL
+            //INSERT SQL
             Auth au = new Auth();
             if (!(Boolean) au.verify(token).get(4)) {
                 return MessageFactory.rtnChartMessage("error", TimeUtil.getCurrentTime(), "Permission denied", "");
@@ -136,14 +131,13 @@ public class ChartCRUDUtils {
             } else {
                 return MessageFactory.rtnJobMessage("error", TimeUtil.getCurrentTime(), "Permission denied", Integer.toString(jobID));
             }
-       // stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
-        stat.setString(1, input.get("Type").toString());
-        //stat.setInt(2, Integer.parseInt(token));//token
-        stat.setString(2, input.get("Chart_Name").toString());
-        stat.setString(3,input.get("Chart_Setting").toString());
-        stat.setInt(4, ((Double) input.get("ChartID")).intValue());
-        stat.executeUpdate();
-        stat.close();
+
+            stat.setString(1, input.get("Type").toString());
+            stat.setString(2, input.get("Chart_Name").toString());
+            stat.setString(3,input.get("Chart_Setting").toString());
+            stat.setInt(4, ((Double) input.get("ChartID")).intValue());
+            stat.executeUpdate();
+            stat.close();
             log.info( "Status:success; TimeStamp:"+TimeUtil.getCurrentTime());
             return MessageFactory.rtnChartMessage("success", TimeUtil.getCurrentTime(), "", "");
         }
@@ -164,12 +158,12 @@ public class ChartCRUDUtils {
             if (!(Boolean) au.verify(token).get(4)) {// check login
                 return MessageFactory.rtnChartListMessage("error", "","permission denied", "",new ArrayList());
             } else if(((Integer) au.verify(token).get(0) == 2)||(au.groupMatch(token, JobID))){
-            stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
-            stat.setInt(1, JobID);
-            QuerySQL=stat.toString();
-            rs = stat.executeQuery();
-            List<Map> rtn = MessageFactory.rtnChartMessage(rs);
-            stat.close();
+                stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
+                stat.setInt(1, JobID);
+                QuerySQL=stat.toString();
+                rs = stat.executeQuery();
+                List<Map> rtn = MessageFactory.rtnChartMessage(rs);
+                stat.close();
                 return MessageFactory.rtnChartListMessage("success", "","", "",rtn);
             }else{
                 return MessageFactory.rtnChartListMessage("error", "","permission denied", "",new ArrayList());
@@ -177,7 +171,6 @@ public class ChartCRUDUtils {
         }
         catch(SQLException sqle){
             log.error(sqle.toString()+";SQL:"+QuerySQL);
-            //return MessageFactory.rtnJobMessage("error", TimeUtil.getCurrentTime(), sqle.getMessage(), "");
             return MessageFactory.rtnChartListMessage("error", "",sqle.toString(), "",new ArrayList());
         }
 
@@ -200,29 +193,24 @@ public class ChartCRUDUtils {
                 int jobID=0;
                 HashMap<String,String> rtn = new HashMap<>();
                 if(rs.next()){
-                jobID=rs.getInt("Number");
-                rtn.put("ChartID",Integer.toString(rs.getInt("Number")));
-                rtn.put("JobID",Integer.toString(rs.getInt("JobID")));
-                rtn.put("Type",rs.getString("Type"));
-                rtn.put("Chart_Name",rs.getString("Chart_Name"));
-                rtn.put("Chart_Setting",rs.getString("Chart_Setting"));
-                stat.close();
+                    jobID=rs.getInt("Number");
+                    rtn.put("ChartID",Integer.toString(rs.getInt("Number")));
+                    rtn.put("JobID",Integer.toString(rs.getInt("JobID")));
+                    rtn.put("Type",rs.getString("Type"));
+                    rtn.put("Chart_Name",rs.getString("Chart_Name"));
+                    rtn.put("Chart_Setting",rs.getString("Chart_Setting"));
+                    stat.close();
                 }
                 if(((Integer) au.verify(token).get(0) == 2)||(au.groupMatch(token, jobID))){
-
                     return MessageFactory.rtnChartInfoMessage("success","","","",rtn);
-                    //return rtn;
                 }else{
                     return MessageFactory.rtnChartInfoMessage("error", "","permission denied", "",new HashMap());
-                    //return new HashMap<>();
                 }
             }
         }
         catch(SQLException sqle){
             log.error(sqle.toString()+";SQL:"+QuerySQL);
-            //return MessageFactory.rtnJobMessage("error", TimeUtil.getCurrentTime(), sqle.getMessage(), "");
             return MessageFactory.rtnChartInfoMessage("error", "",sqle.toString(), "",new HashMap());
-            //return new HashMap<>();
         }
     }
 

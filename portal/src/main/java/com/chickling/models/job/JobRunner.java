@@ -358,8 +358,6 @@ public class JobRunner   implements Callable<Boolean> {
                     Thread.sleep(PrestoContent.JOB_STATUS_INTERVAL);
 
                 } while(jobRunning);
-//                log.info("Job Status is "+jobHistory.getJob_status());
-//                log.info("Job Process is "+jobHistory.getProgress());
 
                 if ("FINISHED".equals(jobstatus)) {
                     jobHistory.setJob_status(PrestoContent.FINISH.toString());
@@ -397,7 +395,6 @@ public class JobRunner   implements Callable<Boolean> {
                     parameter.put("location_id",job.getLocation_id());
                     parameter.put("insertsql",job.getInsertsql());
                     parameter.put("resultCount",resultCount);
-//                    parameter.put("batchsize",Init.getImportBatchSize());
                     // start Writer
                     //
                     if(!doWriter(activeWriter,parameter)){
@@ -427,7 +424,6 @@ public class JobRunner   implements Callable<Boolean> {
                     log.info("Insert Final Info to Job_History and Job_Log");
                     if (isdelete)
                         jobHistory.setJob_status(PrestoContent.FAILED.toString());
-//                    log.info("Job Status is  : ["+jobHistory.getJob_status()+"]=parseInt :  ["+Integer.parseInt(jobHistory.getJob_status())+"] and Job Process is : ["+jobHistory.getProgress()+"]=parseInt :  ["+Integer.parseInt(jobHistory.getProgress())+"]");
                     log.info("Job Status is  : ["+("1".equalsIgnoreCase(jobHistory.getJob_status()) ? "Success" : "Failed")+"] and Job Process is : ["+jobHistory.getProgress()+"% ]");
                     JobCRUDUtils.UpdateJobHistory(jobHistoryid, jobHistory.getStart_time(), TimeUtil.getCurrentTime(), Integer.parseInt(jobHistory.getJob_status()), Integer.parseInt(jobHistory.getProgress()));
                     JobCRUDUtils.UpdateJobLog(jobLogid, resultCount, jobOutPut, true);
@@ -635,7 +631,6 @@ public class JobRunner   implements Callable<Boolean> {
         assert !Strings.isNullOrEmpty(UserLevel);
 
         this.userLevel=Integer.parseInt(UserLevel);
-        //this.userToken=autoken;
         this.jobid=jobID;
         this.jobType=jobType;
         this.scheduleHistoryID=ScheduleHistoryID;
@@ -669,8 +664,6 @@ public class JobRunner   implements Callable<Boolean> {
         //********************************************
         String sparetor=File.separator;
         FSFile hdfs=FSFile.newInstance(FSFile.FSType.HDFS);
-//        FSFile localfs=FSFile.newInstance(FSFile.FSType.LocalFs);
-//        String localLogPath=JobRunner.class.getResource("/")+ThreadContext.get("logFileName");
         LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
         Configuration config = ctx.getConfiguration();
         RollingFileAppender app= (RollingFileAppender) config.getAppender("getLogDir");
@@ -761,6 +754,13 @@ public class JobRunner   implements Callable<Boolean> {
             localWriter.init(parameter);
             resultCode += (int) localWriter.call();
         }
+//            DB binary 001
+        if ("1".equals(activeWriter.get(2))) {
+            name = "com.chickling.writer.DBWriter";
+            ResultWriter dbWriter =Init.getInjectionInstance(name);
+            dbWriter.init(parameter);
+            resultCode += (int) dbWriter.call();
+        }
 
         return resultCode > 0;
     }
@@ -785,8 +785,6 @@ public class JobRunner   implements Callable<Boolean> {
             log.info("upload Results to Customize  Path Complete");
         }else
             log.info("No Results need to  upload");
-
-
         return true;
     }
 

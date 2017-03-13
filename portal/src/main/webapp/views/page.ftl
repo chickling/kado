@@ -120,7 +120,7 @@
   <div class="ui container">
     <a class="active item">Home</a>
     <a class="item" onclick="showMenu()">Function</a>
-    <a class="item" href="">Usage</a>
+    <a class="item" href="https://github.com/chickling/kado/wiki">Usage</a>
     <div class="right menu">
       <div class=" right ui simple dropdown item user">
          <i class="icon user large"></i><font class="displayName"></font><i class="dropdown icon"></i>
@@ -142,7 +142,7 @@
 <div class="ui vertical inverted sidebar menu">
   <a class="active item">Home</a>
   <a class="item" onclick="showMenu()">Function</a>
-  <a class="item" href="">Usage</a>
+  <a class="item" href="https://github.com/chickling/kado/wiki">Usage</a>
   
 </div>
 <div class="ui sidebar inverted vertical menu" style="transition-duration: 0.15s;">
@@ -188,7 +188,7 @@
         </a>
         <a class="active item">Home</a>
         <a class="item" onclick="showMenu()">Function</a>
-        <a class="item" href=""> Usage </a>
+        <a class="item" href="https://github.com/chickling/kado/wiki"> Usage </a>
         <div class=" right ui simple dropdown item user top">
          <i class="icon user large"></i><font class="displayName"></font><i class="dropdown icon"></i>
         <div class="menu" style="margin-top: -10px;">          

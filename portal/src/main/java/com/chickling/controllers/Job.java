@@ -198,10 +198,7 @@ public class Job {
     @Path("/manage/list/")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getJobList(@HeaderParam("AUTHORIZATION") String token){
-        Type type = new TypeToken<Map>() {}.getType();
-        Gson gson = new Gson();
         try {
-
             return Response.ok(JobCRUDUtils.getJobList(token)).build();
         }catch (JsonSyntaxException e){
             log.warn(ExceptionUtils.getStackTrace(e));
@@ -339,7 +336,6 @@ public class Job {
 
         try {
             return Response.ok(JobCRUDUtils.getHasResultJobHistory(jobid, token)).build();
-
         }catch (JsonSyntaxException e){
             log.warn(ExceptionUtils.getStackTrace(e));
             System.out.println(e.getMessage());
@@ -398,7 +394,6 @@ public class Job {
             if ((Boolean) auth.verify(token).get(4) == true) {
                 List dbLocation= Init.getLocationList();
                 List<Map> list=new ArrayList<>();
-
                 for (int i=0;i<dbLocation.size();i++){
                     Map location=new LinkedHashMap<>();
                     location.put("id", i);
@@ -422,7 +417,6 @@ public class Job {
             log.warn(ExceptionUtils.getStackTrace(e));
             return Response.ok(MessageFactory.rtnJobMessage("error", "", "sql error", "")).build();
         }
-
     }
 
 }

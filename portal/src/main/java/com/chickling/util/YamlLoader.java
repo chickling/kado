@@ -34,10 +34,10 @@ public class YamlLoader {
 	private  String sqliteHDFSpath="";
 	private  String sqliteLOCALpath="";
 	private String wrtierinjection="";
+	private String downloadToken="";
 
 	static {
 		loadYaml();
-		//initialTableInfoMap();
 	}
 
 	private static void loadYaml() {
@@ -180,6 +180,14 @@ public class YamlLoader {
 
 	public void setWrtierinjection(String wrtierinjection) {
 		this.wrtierinjection = wrtierinjection;
+	}
+
+	public String getDownloadToken() {
+		return downloadToken;
+	}
+
+	public void setDownloadToken(String downloadToken) {
+		this.downloadToken = downloadToken;
 	}
 
 	@Override

@@ -4,12 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.chickling.models.Auth;
-import com.chickling.models.ControlManager;
 import com.chickling.models.MessageFactory;
 import com.chickling.util.ChartCRUDUtils;
 import com.chickling.util.DrawUtils;
-import com.chickling.util.JobCRUDUtils;
-import com.chickling.util.TemplateCRUDUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,8 +17,6 @@ import javax.ws.rs.core.Response;
 import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
