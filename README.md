@@ -1,10 +1,10 @@
 # Welcome to Kado
 ## Kado is a Presto GUI for query Hive Data and Scheuduled Tasks
-<div style="text-align:center">
+
 <img
-  src="https://github.com/chickling/kado/raw/master/doc/images/kado_start.png" width="80%"
+  src="https://github.com/chickling/kado/raw/master/doc/images/kado_start.png" 
 />
-</div>
+
 see the User Manual  for Kado
 
 ## Overview
