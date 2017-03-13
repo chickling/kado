@@ -42,15 +42,13 @@ public class Monitor {
         Type stringStringMap = new TypeToken<Map<String, String>>(){}.getType();
         Map<String,String> map = gson.fromJson(json, stringStringMap);
         return Response.ok(gson.toJson(prestoUtil.getNode(0,null))).build();
-        }
-
+    }
 
     @GET
     @Path("query")
     @Produces(MediaType.APPLICATION_JSON)
     public Response monitoQuery(@Context ServletContext context){
         PrestoUtil prestoUtil=new PrestoUtil();
-
         return Response.ok(gson.toJson(prestoUtil.getQuery(0,null))).build();
     }
 }

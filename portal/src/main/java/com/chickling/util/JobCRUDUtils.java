@@ -28,7 +28,6 @@ public class JobCRUDUtils {
     private final static String UpdateJobLogSql="UPDATE `main`.`Job_Log` SET `ResultCount`=?,`JobOutput`=?,`Valid`=? WHERE `JLID`=?;";
 
     private final static String UpdateJobHistorySql="UPDATE `main`.`Job_History` SET `JobStartTime`=?,`JobStopTime`=?,`JobStatus`=?,`JobProgress`=? WHERE `JHID`=?;";
-    // TODO: 2016/8/17
     private final static String InsertJobHistorySql="INSERT INTO `main`.`Job_History` (`JobID`,`PrestoID`,`JobOwner`,`JobLevel`,`JobStartTime`,`JobStopTime`," +
             "`JobStatus`,`JobProgress`,`JobLog`,`JobType`,`Report`,`ReportEmail`,`ReportLength`,`ReportFileType`,`ReportTitle`,`ReportWhileEmpty`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
     private final static String InsertJobLogSql="INSERT INTO `main`.`Job_Log` (`JobSQL`,`JobOutput`,`JobLogfile`,`JobStorageType`,`StorageResources`,`FilePath`," +
@@ -40,20 +39,13 @@ public class JobCRUDUtils {
     private final static String CheckJobID="SELECT * FROM `Job` WHERE `JobID`=?;";
     private final static String SelectAllJobSql= "SELECT * FROM(SELECT *, j.JobOwner UID FROM Job j LEFT JOIN (SELECT *, Max(JobStartTime) FROM Job_History WHERE JobStatus = 1 group by JobID) jh on j.JobID=jh.JobID ) jl ,User u WHERE u.UID=jl.uid;";
     private final static String SelectJobListSql ="SELECT * FROM(SELECT *, j.JobOwner UID FROM Job j LEFT JOIN (SELECT *, Max(JobStartTime) FROM Job_History WHERE JobStatus=1 group by JobID) jh on j.JobID=jh.JobID ) jl,User u WHERE jl.UID=u.UID AND (jl.UID in (Select UID From User WHERE Gid=?) or JobLevel=1);";
-    //private final static String SelectJobListSql ="SELECT * FROM(SELECT *, j.JobOwner UID FROM Job j LEFT JOIN (SELECT *, Max(JobStartTime) FROM Job_History WHERE JobStatus=1 group by JobID) jh on j.JobID=jh.JobID ) jl,User u WHERE jl.UID=u.UID AND jl.UID in (Select UID From User WHERE Gid=?);";
     private final static String SelectJobExecutionList="SELECT * FROM (SELECT *,j.JobOwner UID FROM Job_History jh INNER JOIN Job j ON j.JobID=jh.JobID WHERE UID in (Select UID From User WHERE Gid=?) or j.JobLevel=1 ORDER BY JobStartTime DESC limit ?) jhr,User u WHERE u.UID=jhr.JobOwner;";
-    //private final static String SelectJobExecutionList="SELECT * FROM (SELECT *,j.JobOwner UID FROM Job_History jh INNER JOIN Job j ON j.JobID=jh.JobID WHERE UID in (Select UID From User WHERE Gid=?) ORDER BY JobStartTime DESC limit ?) jhr,User u WHERE u.UID=jhr.JobOwner;";
     private final static String SelectAllJobExecutionList="SELECT * FROM (SELECT *,j.JobOwner UID FROM Job_History jh LEFT JOIN Job j ON jh.JobID=j.JobID ORDER BY jh.JobStartTime DESC limit ?) jhr,User u WHERE jhr.JobOwner =u.UID;";
     private final static String SelectHistoryJobList_time_user="SELECT * FROM (SELECT *, Job.JobOwner UID FROM Job LEFT JOIN Job_History ON Job.JobID=Job_History.JobID WHERE JobStartTime>? and JobStopTime<? and (UID in (Select UID From User WHERE Gid=?) or Job.JobLevel=1)) jhr,User u WHERE jhr.JobOwner =u.UID;";
     private final static String SelectHistoryJobList_jobID_user="SELECT * FROM (SELECT *,  Job.JobOwner UID FROM Job INNER JOIN Job_History ON Job.JobID=Job_History.JobID WHERE Job_History.JobID=? and (UID in (Select UID From User WHERE Gid=?) or Job.JobLevel=1)) jhr,User u WHERE jhr.JobOwner =u.UID;";
     private final static String SelectHistoryJobList_timeandjobId_user="SELECT * FROM (SELECT *, Job.JobOwner UID FROM Job INNER JOIN Job_History WHERE JobStartTime>? and JobStopTime<? and Job.JobID=? and (UID in (Select UID From User WHERE Gid=?) or Job.JobLevel=1)) jhr,User u WHERE jhr.JobOwner =u.UID;";
-
- //   private final static String SelectHistoryJobList_time="SELECT *, Job.JobOwner UID FROM Job INNER JOIN Job_History WHERE WHERE JobStartTime>? and JobStopTime<?";
-
     private final static String SelectHistoryJobList_time="SELECT * FROM (SELECT *, j.JobOwner UID FROM Job j LEFT JOIN Job_History jh ON j.JobID=jh.JobID WHERE JobStartTime>? and JobStopTime<?) jhl,User u WHERE jhl.JobOwner=u.UID";
-
     private final static String SelectHistoryJobList_jobID="SELECT * FROM (SELECT *,  Job.JobOwner UID FROM Job INNER JOIN Job_History ON Job.JobID=Job_History.JobID WHERE Job_History.JobID=?) jhl,User u WHERE jhl.JobOwner=u.UID";
-//    private final static String SelectHistoryJobList_timeandjobId="SELECT *, Job.JobOwner UID FROM Job INNER JOIN Job_History WHERE JobStartTime=? and JobStopTime=? and Job.JobID=?";
     private final static String SelectHistoryJobList_timeandjobId="SELECT * FROM (SELECT *, Job.JobOwner UID FROM Job INNER JOIN Job_History ON Job.JobID=Job_History.JobID WHERE JobStartTime>? and JobSopTime<? and Job.JobID=?) jhl,User u WHERE jhl.JobOwner=u.UID";
     private final static String SelectJobHistoryInfo="SELECT *  FROM (SELECT *,Job.JobOwner UID,Job_Log.JobSQL JobSQLLog FROM Job_History INNER JOIN Job INNER JOIN Job_Log ON Job_History.JobLog=Job_Log.JLID  AND Job.JobID=Job_History.JobID WHERE JHID=?) jhl,User u WHERE jhl.JobOwner=u.UID;";
     private final static String SelectJobHistoryInfo_user="SELECT *  FROM (SELECT *,Job.JobOwner UID,Job_Log.JobSQL JobSQLLog FROM Job_History INNER JOIN Job INNER JOIN Job_Log ON Job_History.JobLog=Job_Log.JLID  AND Job.JobID=Job_History.JobID WHERE JHID=? and (UID in (Select UID From User WHERE Gid=?) or Job.JobLevel=1)) jhl,User u WHERE jhl.JobOwner=u.UID;";
@@ -115,7 +107,6 @@ public class JobCRUDUtils {
     //TODO :report schema
     public synchronized static String updateJobtoDB(Map args,int JobID, String token) {
         PreparedStatement stat = null;
-        ResultSet rs = null;
         String QuerySQL = "";
     try {
         if (JobIsExist(JobID)) {
@@ -308,8 +299,6 @@ public class JobCRUDUtils {
 
             }
             //INSERT SQL
-
-            //stat.setInt(0,JobID);
             QuerySQL=stat.toString();
             rs = stat.executeQuery();
             String rtn = MessageFactory.JobStatusListMessage(rs, (Integer) info.get(2), (Integer) info.get(1), (String) info.get(3));
@@ -414,10 +403,7 @@ public class JobCRUDUtils {
     public static String getJobHistoryInfo(String token, int runid) {
         PreparedStatement stat = null;
         ResultSet rs = null;
-
         String QuerySQL = "";
-
-
         try {
 
             Auth au = new Auth();
@@ -435,8 +421,6 @@ public class JobCRUDUtils {
                 stat.setInt(2, (Integer) info.get(1));
             }
             //INSERT SQL
-
-            //stat.setInt(0,JobID);
             QuerySQL=stat.toString();
             rs = stat.executeQuery();
             String rtn = MessageFactory.JobHistoryInfoMessage(rs, (Integer) info.get(2), (Integer) info.get(1), (String) info.get(3));
@@ -501,7 +485,6 @@ public class JobCRUDUtils {
     public synchronized static void UpdateJobHistory(int JobHistoryID,String JobStartTime, String JobStopTime, int JobStatus, int JobProgress)throws SQLException{
 
         PreparedStatement stat = null;
-        ResultSet rs = null;
         //INSERT SQL
         stat = ConnectionManager.getInstance().getConnection().prepareStatement(UpdateJobHistorySql);
         stat.setString(1, JobStartTime);

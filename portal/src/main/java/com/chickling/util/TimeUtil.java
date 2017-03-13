@@ -49,7 +49,6 @@ public class TimeUtil {
 
     public static String getCurrentTime(){
         DateTime dt = new DateTime();
-//        return dt.toString("yyyy-MM-dd HH:mm:ss");
         return dt.toString(DATE_FORMAT);
 
     }
@@ -61,7 +60,6 @@ public class TimeUtil {
     }
     public static String getSaveHDFSTime(){
         return String.valueOf(new DateTime().getMillis());
-//        return new DateTime().toString(HDFS_SAVE_FORMAT);
     }
 
 

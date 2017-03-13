@@ -121,10 +121,6 @@ public class QueryUI {
                     Thread.sleep(200);
                     waitCount++;
                 }
-//                if (future.isDone()) {
-////                    System.out.println("Query:" + future.get());
-//                    return Response.ok(MessageFactory.rtnJobMessage("success", "", "success", "")).build();
-//                }
                 return Response.ok(MessageFactory.rtnJobHistoryMessage("error", "","Can't get JobHistoryIDs", "")).build();
             }else {
                 return Response.ok(MessageFactory.message("error", "Permission Denied")).build();
@@ -221,7 +217,6 @@ public class QueryUI {
                 ContentDisposition contentDisposition = ContentDisposition.type("attachment")
                         .fileName(controlManager.getFilenameFromPath(filePath) + ".csv").creationDate(new Date()).build();
                 return Response.ok(controlManager.getResultFile(controlManager.getResultCSVPath(filePath))).header("Content-Disposition", contentDisposition).build();
-
             } else {
                 log.warn("Get Result File Verify Error");
                 log.warn("JHID->"+jobrunid+";Token->"+token);
@@ -232,6 +227,5 @@ public class QueryUI {
             log.error(ExceptionUtils.getStackTrace(e));
             return Response.status(404).build();
         }
-
     }
 }

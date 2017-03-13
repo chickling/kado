@@ -92,9 +92,4 @@ private static final HashMap<String,Integer> TimeIndex=new HashMap<>();
 
         return rtn.trim();
     }
-
-//    public synchronized static String parseTemplate(String template) {
-//
-//
-//    }
 }

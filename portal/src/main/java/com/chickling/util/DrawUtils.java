@@ -18,11 +18,7 @@ import java.util.*;
  * Created by jw6v on 2017/1/25.
  */
 public class DrawUtils {
-
-    private static Logger log = LogManager.getLogger(DrawUtils.class);
-
     private int count=0;
-
     public String drawPie(Map datas, String table){
 
         List x_axis=(List) datas.get("axis");

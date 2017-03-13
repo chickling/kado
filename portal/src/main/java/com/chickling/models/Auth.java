@@ -2,6 +2,7 @@ package com.chickling.models;
 
 import com.chickling.sqlite.ConnectionManager;
 import com.chickling.bean.job.User;
+import com.chickling.util.YamlLoader;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,7 +18,6 @@ import java.util.ArrayList;
  * Created by jw6v on 2015/12/1.
  */
 public class Auth {
-//    private final String GetgidAdminSql="Select `Gid`,User.Admin, User.UID, User.UserName From User INNER JOIN User_Login on User.UID=User_Login.UID where User_Login.Token=? AND LogoutTime is null;";
     private final String GetgidAdminSql="Select * From User INNER JOIN User_Login on User.UID=User_Login.UID where User_Login.Token=? AND LogoutTime is null;";
 
     private static final String CheckJob="SELECT JobOwner FROM Job WHERE JobID=?;";
@@ -47,18 +47,11 @@ public class Auth {
             else
                 permission=1;
 
-
             user.setPermission(permission);
-            //rtn.add(0,permission);
             user.setGroupID(rs.getInt("Gid"));
-            //rtn.add(1,rs.getInt("Gid"));
             user.setUserID(rs.getInt("UID"));
-            //rtn.add(2,rs.getInt("UID"));
             user.setUserName(rs.getString("UserName"));
-            //rtn.add(3,rs.getString("UserName"));
             user.setLogIn(true);
-            //rtn.add(4,true);//login
-
         }
         else{
 
@@ -218,7 +211,7 @@ public class Auth {
         AccountManager am=new AccountManager();
         String token="";
         try {
-            token=am.sha256("a206379f7bffdcd01613869c448073ef98bfae8de4e17102b90f4758b2f316b7" + String.valueOf(jobrunid));
+            token=am.sha256(YamlLoader.instance.getDownloadToken() + String.valueOf(jobrunid));
         } catch (NoSuchAlgorithmException e) {
             log.error(ExceptionUtils.getStackTrace(e));
         } catch (UnsupportedEncodingException e) {

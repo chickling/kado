@@ -53,9 +53,7 @@ public class Notification {
 
 
         // Recipient's email ID needs to be mentioned.
-        // String to = ;
         InternetAddress[] internetAddresses=null;
-        //InternetAddress singlrAddress;
         if(Recipients!=null) {
 
             internetAddresses = new InternetAddress[Recipients.length];
@@ -103,7 +101,6 @@ public class Notification {
             //from=System.getProperty("mail.user");
             from=System.getProperty("user.name")+"@"+localMachine.getHostName();
             // Create a default MimeMessage object.
-            //from="Kado@st01smtp01.buyabs.corp";
             Message message = new MimeMessage(session);
 
             // Set From: header field of the header.

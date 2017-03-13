@@ -33,9 +33,7 @@ public class PrestoContent {
     public final static Long JOB_RESULT_SIZE = 10 * 1024 * 1024 * 1024L;  //10G
 
 
-    //    public final static Pattern SQL_PASER=Pattern.compile("((((CREATE|create)|(DROP|drop))\\s*((table|TABLE)(\\s*(if\\s*((exists|EXISTS)|((not|NOT)\\s*(exists|EXISTS))))|)))|((insert|INSERT)\\s*(into|INTO)))\\s*([\\w.]+)");
     public final static Pattern SQL_PASER = Pattern.compile("(((delete|DELETE)\\s*(FROM|from))|((((CREATE|create)|(DROP|drop))\\s*((table|TABLE)(\\s*(if\\s*((exists|EXISTS)|((not|NOT)\\s*(exists|EXISTS))))|)))|((insert|INSERT)\\s*(into|INTO))))\\s*([\\w.]+)");
-    //    public final static Pattern RESULT_SAVE_PATH=Pattern.compile("([/\\w]*+)");
     public final static Pattern LIMIT_CHECK = Pattern.compile("limit\\s+[0-9]+");
     public final static Pattern CONDITION_LAST_HOUR_CONST = Pattern.compile("\\$LAST\\s*([\\d]+)\\s*HOUR\\s*\\$");  //	$last 24 hour$
     public final static Pattern CONDITION_BETWEEN_LAST_CONST = Pattern.compile("\\$BETWEEN\\s*LAST\\s*([[+-]?\\d]+)\\s*AND\\s*([+-]?[\\d]+)\\s*HOUR\\s*\\$");  // $between last 72 and 2 hour$

@@ -24,7 +24,6 @@ public class TemplateCRUDUtils {
 
     public synchronized static boolean addSqlTemplate(int jobID, ArrayList<Map<String,String>> templateMaps){
         PreparedStatement stat = null;
-        //ResultSet rs = null;
         String QuerySQL="";
         try {
             stat = ConnectionManager.getInstance().getConnection().prepareStatement(InsertSQLTemplate);
@@ -47,8 +46,6 @@ public class TemplateCRUDUtils {
 
     public synchronized static boolean deleteSqlTemplate(int jobID){
         PreparedStatement stat = null;
-        //ResultSet rs = null;
-
         String QuerySQL = DeleteSQLTemplate;
         try {
             stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
@@ -84,7 +81,6 @@ public class TemplateCRUDUtils {
         }
         catch(SQLException sqle){
             log.error(sqle.toString()+";SQL:"+QuerySQL);
-            //return MessageFactory.rtnJobMessage("error", TimeUtil.getCurrentTime(), sqle.getMessage(), "");
             return new ArrayList<>();
         }
     }

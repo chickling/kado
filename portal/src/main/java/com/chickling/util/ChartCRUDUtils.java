@@ -118,8 +118,7 @@ public class ChartCRUDUtils {
     }
     public synchronized static String updateChart( Map input,int jobID,String token){
         PreparedStatement stat = null;
-        ResultSet rs = null;
-        String QuerySQL ="";;
+        String QuerySQL ="";
         try {
             //INSERT SQL
             Auth au = new Auth();

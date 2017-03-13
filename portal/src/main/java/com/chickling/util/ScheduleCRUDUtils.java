@@ -42,10 +42,8 @@ public class ScheduleCRUDUtils {
     private final static String SelectHistoryScheduleList_time_user="SELECT * FROM (SELECT *, Schedule_History.ScheduleOwner UID FROM Schedule INNER JOIN Schedule_History WHERE  Schedule_History.ScheduleStartTime>? and Schedule_History.ScheduleStopTime<? and (UID in (Select UID From User WHERE Gid=?) or  Schedule_History.ScheduleLevel=1)) jhr,User u WHERE jhr.ScheduleOwner =u.UID;";
     private final static String SelectHistoryScheduleList_ScheduleID_user="SELECT * FROM (SELECT *,  Schedule_History.ScheduleOwner UID,Schedule_History.ScheduleStartTime RScheduleStartTime FROM Schedule INNER JOIN Schedule_History ON Schedule.ScheduleID=Schedule_History.ScheduleID WHERE Schedule_History.ScheduleID=? and (UID in (Select UID From User WHERE Gid=?) or Schedule.ScheduleLevel=1)) shl,User u WHERE shl.UID =u.UID;";
     private final static String SelectHistoryScheduleList_timeandScheduleId_user="SELECT * FROM (SELECT *, Schedule_History.ScheduleOwner UID FROM Schedule INNER JOIN Schedule_History WHERE Schedule_History.ScheduleStartTime>? and Schedule_History.ScheduleStopTime<? and Schedule_History.ScheduleID=? and(UID in (Select UID From User WHERE Gid=?) or Schedule.ScheduleLevel=1)) shl,User u WHERE shl.UID =u.UID ;";
-
     private final static String SelectHistoryScheduleList_time="SELECT * FROM (SELECT *, Schedule_History.ScheduleOwner UID,Schedule_History.ScheduleStartTime RScheduleStartTime FROM Schedule INNER JOIN Schedule_History ON Schedule.ScheduleID=Schedule_History.ScheduleID WHERE Schedule_History.ScheduleStartTime>? and Schedule_History.ScheduleStopTime<? ) shl,User u WHERE shl.UID =u.UID;";
     private final static String SelectHistoryScheduleList_ScheduleID="SELECT * FROM (SELECT *,  Schedule_History.ScheduleOwner UID,Schedule_History.ScheduleStartTime RScheduleStartTime FROM Schedule INNER JOIN Schedule_History ON Schedule.ScheduleID=Schedule_History.ScheduleID WHERE Schedule.ScheduleID=?) shl,User u WHERE shl.UID =u.UID;";
-
     private final static String SelectHistoryScheduleList_timeandScheduleId="SELECT * FROM (SELECT *, Schedule_History.ScheduleOwner UID,Schedule_History.ScheduleStartTime RScheduleStartTime FROM Schedule INNER JOIN Schedule_History ON Schedule.ScheduleID=Schedule_History.ScheduleID WHERE Schedule_History.ScheduleStartTime>? and Schedule_History.ScheduleStopTime<? and Schedule.ScheduleID=?) shl,User u WHERE shl.UID =u.UID;";
     private final static String SelectScheduleHistoryInfo="SELECT * FROM (SELECT *,Schedule_History.ScheduleOwner UID,Schedule_History.ScheduleStartTime RScheduleStartTime FROM Schedule_History INNER JOIN Schedule WHERE SHID=?) shl,User u WHERE shl.UID =u.UID;";
     private final static String SelectScheduleHistoryInfo_user="SELECT * FROM (SELECT *,Schedule_History.ScheduleOwner UID,Schedule_History.ScheduleStartTime RScheduleStartTime FROM Schedule_History INNER JOIN Schedule WHERE SHID=? and (UID in (Select UID From User WHERE Gid=?) or Schedule.ScheduleLevel=1)) shl,User u WHERE shl.UID =u.UID;";
@@ -118,9 +116,9 @@ public class ScheduleCRUDUtils {
                 return MessageFactory.rtnScheduleMessage("error", TimeUtil.getCurrentTime(), "Permission denied", "");
             }
         }catch(SQLException sqle){
-                log.error(sqle.toString()+";SQL:"+QuerySQL);
-                return MessageFactory.rtnJobMessage("error", TimeUtil.getCurrentTime(), sqle.getMessage(), "");
-            }
+            log.error(sqle.toString()+";SQL:"+QuerySQL);
+            return MessageFactory.rtnJobMessage("error", TimeUtil.getCurrentTime(), sqle.getMessage(), "");
+        }
 
     }
 
@@ -141,7 +139,6 @@ public class ScheduleCRUDUtils {
                 /**if schedule is exit**/
                 Boolean singleJob = false;
 
-                ResultSet rs = null;
                 ArrayList stime = null;
                 Auth au = new Auth();
                 ArrayList<Object> userInfo = au.verify(token);
@@ -172,9 +169,7 @@ public class ScheduleCRUDUtils {
                     return MessageFactory.rtnScheduleMessage("error", TimeUtil.getCurrentTime(), "Permission Denied", Integer.toString(ScheduleID));
                 }
                 /**INSERT SQL**/
-                //stat = DBConnectionManager.getInstance().getConnection().prepareStatement(UpdateJobSql);
                 stat.setString(1, ((String) args.get("schedule_name")));//name
-                //stat.setInt(2, (Integer) userInfo.get(2));//owner
                 stat.setInt(2, (Integer.parseInt((String) args.get("schedule_level"))));//level
                 stat.setString(3, ((String) args.get("memo")));//memo
                 stat.setInt(4, 0);//status
@@ -332,7 +327,6 @@ public class ScheduleCRUDUtils {
         String QuerySQL="SELECT * FROM Schedule_Time WHERE `ScheduleID`=?";
         PreparedStatement stat = null;
         ResultSet rs = null;
-        //HashMap<String,String> element=new HashMap<>();
         ArrayList<LinkedHashMap<String,String>> rtn=new ArrayList<>();
         stat=ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
         stat.setInt(1,ScheduleID);
@@ -397,7 +391,6 @@ public class ScheduleCRUDUtils {
 
     public synchronized static String deleteSchedule(int ScheduleID,String token) {
         PreparedStatement stat = null;
-        ResultSet rs = null;
 
         String QuerySQL = "";
         try {
@@ -556,11 +549,6 @@ public class ScheduleCRUDUtils {
                 json.put("memo", rs.getString("ScheduleMemo"));
                 json.put("notification", rs.getString("Notification"));
                 json.put("schedule_mode", rs.getString("ScheduleTimeType"));
-//            if(rs.getString("ScheduleTimeType").equals("single")){
-//                json.put("mod_set","");
-//            }
-//
-//            json.put("runjob","");
                 json.put("startwith", rs.getString("StartWith"));
                 json.put("every", rs.getInt("TimeEvery"));
                 json.put("unit", rs.getString("TimeEveryType"));
@@ -571,7 +559,6 @@ public class ScheduleCRUDUtils {
                         json.put("last_runtime", rs.getString("ScheduleStartTime"));
                         json.put("runingtime", TimeUtil.getRunTime(TimeUtil.String2DateTime(rs.getString("ScheduleStartTime")),
                                 TimeUtil.String2DateTime(rs.getString("ScheduleStopTime"))));
-
                     } catch (NullPointerException npe) {
                         json.put("last_runtime", "");
                         if (rs.getString("ScheduleStartTime") != null) {
@@ -620,184 +607,171 @@ public class ScheduleCRUDUtils {
         String QuerySQL="";
         try{
 
-        Auth au=new Auth();
-        ArrayList<Object> info =au.verify(token);
-        //Boolean admin=(Boolean)info.get(0);
-        if(!((Boolean)info.get(4))){
-            return MessageFactory.rtnScheduleMessage("error", TimeUtil.getCurrentTime(), "Permission Denied", ScheduleID);
-        }
-        else if(!(start.equals("")||stop.equals("")||ScheduleID.equals(""))){
-            if((Integer)info.get(0)>1) {
-                QuerySQL = SelectHistoryScheduleList_timeandScheduleId;
-                stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
-                stat.setString(1, start);
-                stat.setString(2, stop);
-                stat.setInt(3, Integer.parseInt(ScheduleID));
+            Auth au=new Auth();
+            ArrayList<Object> info =au.verify(token);
+            //Boolean admin=(Boolean)info.get(0);
+            if(!((Boolean)info.get(4))){
+                return MessageFactory.rtnScheduleMessage("error", TimeUtil.getCurrentTime(), "Permission Denied", ScheduleID);
             }
-            else{
-                QuerySQL = SelectHistoryScheduleList_timeandScheduleId_user;
-                stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
-                stat.setString(1, start);
-                stat.setString(2, stop);
-                stat.setInt(3, Integer.parseInt(ScheduleID));
-                stat.setInt(4,(Integer)info.get(1));
-            }
-        }
-        else if(!ScheduleID.equals(""))
-        {
-            if((Integer)info.get(0)>1) {
-                QuerySQL = SelectHistoryScheduleList_ScheduleID;
-                stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
-               // stat.setString(1, start);
-               // stat.setString(2, stop);
-                stat.setInt(1, Integer.parseInt(ScheduleID));
-            }
-            else{
-                QuerySQL = SelectHistoryScheduleList_ScheduleID_user;
-                stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
-                //stat.setString(1, start);
-                //stat.setString(2, stop);
-                stat.setInt(1, Integer.parseInt(ScheduleID));
-                stat.setInt(2,(Integer)info.get(1));
-            }
-        }
-        else if(!(start.equals("")||stop.equals(""))){
-            if((Integer)info.get(0)>1) {
-                QuerySQL = SelectHistoryScheduleList_time;
-                stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
-                stat.setString(1, start);
-                stat.setString(2, stop);
-                //stat.setInt(3, Integer.parseInt(ScheduleID));
-            }
-            else{
-                QuerySQL = SelectHistoryScheduleList_time_user;
-                stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
-                stat.setString(1, start);
-                stat.setString(2, stop);
-                stat.setInt(3, Integer.parseInt(ScheduleID));
-                stat.setInt(4,(Integer)info.get(1));
-            }
-        }
-        else{
-            DateTime dt=new DateTime();
-            return MessageFactory.rtnScheduleMessage("error", dt.toString("yyyy-MM-dd HH:mm:ss.SSS"), "illegal parameter", ScheduleID);
-        }
-            QuerySQL=stat.toString();
-        rs=stat.executeQuery();
-        ArrayList<Map> list=new ArrayList<>();
-        while(rs.next()){
-            Map json=new LinkedHashMap();
-            json.put("schedule_runid",rs.getInt("SHID"));
-            json.put("schedule_id",rs.getInt("ScheduleID"));
-            json.put("schedule_name",rs.getString("ScheduleName"));
-            json.put("schedule_Level",rs.getInt("ScheduleLevel"));
-            json.put("memo",rs.getString("ScheduleMemo"));
-            json.put("notification",rs.getString("Notification"));
-            json.put("schedule_status",rs.getString("ScheduleStatus"));
-            json.put("schedule_mode",rs.getString("ScheduleTimeType"));
-//            if(rs.getString("ScheduleTimeType").equals("single")){
-//                json.put("mod_set","");
-//            }
-//
-//            json.put("runjob","");
-            json.put("startwith", rs.getString("StartWith"));
-            json.put("every",rs.getInt("TimeEvery"));
-            json.put("unit",rs.getString("TimeEveryType"));
-            json.put("time",rs.getInt("TimeCycle"));
-            json.put("each",rs.getInt("TimeEach"));
-
-
-            json.put("start_time",rs.getString("RScheduleStartTime"));
-            json.put("stop_time",rs.getString("ScheduleStopTime"));
-            if(!((rs.getString("RScheduleStartTime")==null)||(rs.getString("RScheduleStartTime").equals(""))) ){
-                try {
-                    json.put("last_runtime", rs.getString("RScheduleStartTime"));
-                    json.put("runingtime", TimeUtil.getRunTime(TimeUtil.String2DateTime(rs.getString("RScheduleStartTime")),
-                            TimeUtil.String2DateTime(rs.getString("ScheduleStopTime"))));
-                } catch (NullPointerException npe) {
-                    json.put("last_runtime", "");
-                    if (rs.getString("RScheduleStartTime") != null) {
-                        json.put("runingtime", TimeUtil.getRunTime(TimeUtil.String2DateTime(rs.getString("RScheduleStartTime")),
-                                TimeUtil.String2DateTime(TimeUtil.getCurrentTime())));
-                    } else {
-                        json.put("runingtime", "0");
-                    }
-                }catch (IllegalArgumentException e){
-                    json.put("last_runtime", "");
-                    if (rs.getString("RScheduleStartTime") != null) {
-                        json.put("runingtime", TimeUtil.getRunTime(TimeUtil.String2DateTime(rs.getString("RScheduleStartTime")),
-                                TimeUtil.String2DateTime(TimeUtil.getCurrentTime())));
-                    } else {
-                        json.put("runingtime", "0");
-                    }
+            else if(!(start.equals("")||stop.equals("")||ScheduleID.equals(""))){
+                if((Integer)info.get(0)>1) {
+                    QuerySQL = SelectHistoryScheduleList_timeandScheduleId;
+                    stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
+                    stat.setString(1, start);
+                    stat.setString(2, stop);
+                    stat.setInt(3, Integer.parseInt(ScheduleID));
+                }
+                else{
+                    QuerySQL = SelectHistoryScheduleList_timeandScheduleId_user;
+                    stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
+                    stat.setString(1, start);
+                    stat.setString(2, stop);
+                    stat.setInt(3, Integer.parseInt(ScheduleID));
+                    stat.setInt(4,(Integer)info.get(1));
                 }
             }
-            json.put("user", rs.getString("UserName"));
-            json.put("userid",rs.getString("UID"));
-            json.put("group", (Integer) info.get(2));
-
-
-
-            list.add(json);
-
-        }
-        stat.close();
-
-        for(Map m:list){
-            int id=(Integer) m.get("schedule_id");
-            m.put("runjob",getRunJob(id));
-            int hid=(Integer) m.get("schedule_runid");
-            m.put("runHistoryjob",getScheduleRunJob(hid));
-            if(((String)m.get("schedule_mode")).equals("single")){
-                m.put("mod_set",getscheduleTime(id));
+            else if(!ScheduleID.equals(""))
+            {
+                if((Integer)info.get(0)>1) {
+                    QuerySQL = SelectHistoryScheduleList_ScheduleID;
+                    stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
+                    stat.setInt(1, Integer.parseInt(ScheduleID));
+                }
+                else{
+                    QuerySQL = SelectHistoryScheduleList_ScheduleID_user;
+                    stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
+                    stat.setInt(1, Integer.parseInt(ScheduleID));
+                    stat.setInt(2,(Integer)info.get(1));
+                }
             }
+            else if(!(start.equals("")||stop.equals(""))){
+                if((Integer)info.get(0)>1) {
+                    QuerySQL = SelectHistoryScheduleList_time;
+                    stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
+                    stat.setString(1, start);
+                    stat.setString(2, stop);
+                }
+                else{
+                    QuerySQL = SelectHistoryScheduleList_time_user;
+                    stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
+                    stat.setString(1, start);
+                    stat.setString(2, stop);
+                    stat.setInt(3, Integer.parseInt(ScheduleID));
+                    stat.setInt(4,(Integer)info.get(1));
+                }
+            }
+            else{
+                DateTime dt=new DateTime();
+                return MessageFactory.rtnScheduleMessage("error", dt.toString("yyyy-MM-dd HH:mm:ss.SSS"), "illegal parameter", ScheduleID);
+            }
+            QuerySQL=stat.toString();
+            rs=stat.executeQuery();
+            ArrayList<Map> list=new ArrayList<>();
+            while(rs.next()){
+                Map json=new LinkedHashMap();
+                json.put("schedule_runid",rs.getInt("SHID"));
+                json.put("schedule_id",rs.getInt("ScheduleID"));
+                json.put("schedule_name",rs.getString("ScheduleName"));
+                json.put("schedule_Level",rs.getInt("ScheduleLevel"));
+                json.put("memo",rs.getString("ScheduleMemo"));
+                json.put("notification",rs.getString("Notification"));
+                json.put("schedule_status",rs.getString("ScheduleStatus"));
+                json.put("schedule_mode",rs.getString("ScheduleTimeType"));
+                json.put("startwith", rs.getString("StartWith"));
+                json.put("every",rs.getInt("TimeEvery"));
+                json.put("unit",rs.getString("TimeEveryType"));
+                json.put("time",rs.getInt("TimeCycle"));
+                json.put("each",rs.getInt("TimeEach"));
+                json.put("start_time",rs.getString("RScheduleStartTime"));
+                json.put("stop_time",rs.getString("ScheduleStopTime"));
+                if(!((rs.getString("RScheduleStartTime")==null)||(rs.getString("RScheduleStartTime").equals(""))) ){
+                    try {
+                        json.put("last_runtime", rs.getString("RScheduleStartTime"));
+                        json.put("runingtime", TimeUtil.getRunTime(TimeUtil.String2DateTime(rs.getString("RScheduleStartTime")),
+                                TimeUtil.String2DateTime(rs.getString("ScheduleStopTime"))));
+                    } catch (NullPointerException npe) {
+                        json.put("last_runtime", "");
+                        if (rs.getString("RScheduleStartTime") != null) {
+                            json.put("runingtime", TimeUtil.getRunTime(TimeUtil.String2DateTime(rs.getString("RScheduleStartTime")),
+                                    TimeUtil.String2DateTime(TimeUtil.getCurrentTime())));
+                        } else {
+                            json.put("runingtime", "0");
+                        }
+                    }catch (IllegalArgumentException e){
+                        json.put("last_runtime", "");
+                        if (rs.getString("RScheduleStartTime") != null) {
+                            json.put("runingtime", TimeUtil.getRunTime(TimeUtil.String2DateTime(rs.getString("RScheduleStartTime")),
+                                    TimeUtil.String2DateTime(TimeUtil.getCurrentTime())));
+                        } else {
+                            json.put("runingtime", "0");
+                        }
+                    }
+                }
+                json.put("user", rs.getString("UserName"));
+                json.put("userid",rs.getString("UID"));
+                json.put("group", (Integer) info.get(2));
+
+
+
+                list.add(json);
+
+            }
+            stat.close();
+
+            for(Map m:list){
+                int id=(Integer) m.get("schedule_id");
+                m.put("runjob",getRunJob(id));
+                int hid=(Integer) m.get("schedule_runid");
+                m.put("runHistoryjob",getScheduleRunJob(hid));
+                if(((String)m.get("schedule_mode")).equals("single")){
+                    m.put("mod_set",getscheduleTime(id));
+                }
+            }
+
+
+
+            String rtn=MessageFactory.scheduleListMessage(list);
+            return rtn;
+        }catch(SQLException sqle){
+            log.error(sqle.toString()+";SQL:"+QuerySQL);
+            return MessageFactory.rtnJobMessage("error", TimeUtil.getCurrentTime(), sqle.getMessage(), "");
         }
-
-
-
-        String rtn=MessageFactory.scheduleListMessage(list);
-        return rtn;
-    }catch(SQLException sqle){
-        log.error(sqle.toString()+";SQL:"+QuerySQL);
-        return MessageFactory.rtnJobMessage("error", TimeUtil.getCurrentTime(), sqle.getMessage(), "");
-    }
 
     }
 
     public static String getScheduleHistoryInfo(String token, int runid){
-//Schedule join Schedule history
+        //Schedule join Schedule history
         PreparedStatement stat = null;
         ResultSet rs = null;
         String QuerySQL="";
         try{
-        Gson gson = new Gson();
+            Gson gson = new Gson();
 
-        Auth au=new Auth();
-        ArrayList<Object> info =au.verify(token);
-        if(!(Boolean)au.verify(token).get(4)){
-            return MessageFactory.rtnScheduleMessage("error", TimeUtil.getCurrentTime(), "Permission denied", "");
-        }
-        else if((Integer)info.get(0)>1){
-            QuerySQL=SelectScheduleHistoryInfo;
-            stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
-            stat.setInt(1, runid);
-        }else{
-            QuerySQL=SelectScheduleHistoryInfo_user;
-            stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
-            stat.setInt(1, runid);
-            stat.setInt(2,(Integer) info.get(1));
-        }
-        //INSERT SQL
+            Auth au=new Auth();
+            ArrayList<Object> info =au.verify(token);
+            if(!(Boolean)au.verify(token).get(4)){
+                return MessageFactory.rtnScheduleMessage("error", TimeUtil.getCurrentTime(), "Permission denied", "");
+            }
+            else if((Integer)info.get(0)>1){
+                QuerySQL=SelectScheduleHistoryInfo;
+                stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
+                stat.setInt(1, runid);
+            }else{
+                QuerySQL=SelectScheduleHistoryInfo_user;
+                stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
+                stat.setInt(1, runid);
+                stat.setInt(2,(Integer) info.get(1));
+            }
+            //INSERT SQL
             QuerySQL=stat.toString();
-        //stat.setInt(0,ScheduleID);
-        rs=stat.executeQuery();
 
-        rs=stat.executeQuery();
-        ArrayList<Map> list=new ArrayList<>();
+
+            rs=stat.executeQuery();
+            ArrayList<Map> list=new ArrayList<>();
 
             Map json=new LinkedHashMap();
-        json.put("status","success");
-        json.put("Currenttime",TimeUtil.getCurrentTime());
+            json.put("status","success");
+            json.put("Currenttime",TimeUtil.getCurrentTime());
             json.put("schedule_runid",rs.getInt("SHID"));
             json.put("schedule_id",rs.getInt("ScheduleID"));
             json.put("schedule_name",rs.getString("ScheduleName"));
@@ -806,54 +780,47 @@ public class ScheduleCRUDUtils {
             json.put("notification",rs.getString("Notification"));
             json.put("schedule_status",rs.getString("ScheduleStatus"));
             json.put("schedule_mode",rs.getString("ScheduleTimeType"));
-//            if(rs.getString("ScheduleTimeType").equals("single")){
-//                json.put("mod_set","");
-//            }
-//
-//            json.put("runjob","");
             json.put("startwith", rs.getString("StartWith"));
             json.put("every",rs.getInt("TimeEvery"));
             json.put("unit",rs.getString("TimeEveryType"));
             json.put("time",rs.getInt("TimeCycle"));
             json.put("each",rs.getInt("TimeEach"));
-
-
             json.put("start_time",rs.getString("ScheduleStatTime"));
             json.put("stop_time",rs.getString("ScheduleStopTime"));
-        try{
-            json.put("last_runtime",rs.getString("ScheduleStartTime"));
-            json.put("runingtime", TimeUtil.getRunTime(TimeUtil.String2DateTime(rs.getString("ScheduleStartTime")),
-                    TimeUtil.String2DateTime(rs.getString("ScheduleStopTime"))));
-        }
-
-        catch(NullPointerException npe){
-            json.put("last_runtime", "");
-            if(rs.getString("ScheduleStartTime")!=null) {
+            try{
+                json.put("last_runtime",rs.getString("ScheduleStartTime"));
                 json.put("runingtime", TimeUtil.getRunTime(TimeUtil.String2DateTime(rs.getString("ScheduleStartTime")),
-                        TimeUtil.String2DateTime(TimeUtil.getCurrentTime())));
-            }else {
-                json.put("runingtime","0");
+                        TimeUtil.String2DateTime(rs.getString("ScheduleStopTime"))));
             }
-        }
+
+            catch(NullPointerException npe){
+                json.put("last_runtime", "");
+                if(rs.getString("ScheduleStartTime")!=null) {
+                    json.put("runingtime", TimeUtil.getRunTime(TimeUtil.String2DateTime(rs.getString("ScheduleStartTime")),
+                            TimeUtil.String2DateTime(TimeUtil.getCurrentTime())));
+                }else {
+                    json.put("runingtime","0");
+                }
+            }
             json.put("user",rs.getString("UserName"));
             json.put("userid", rs.getString("UID"));
             json.put("group", (Integer) info.get(2));
-        stat.close();
+            stat.close();
 
             int id=rs.getInt("schedule_id");
             json.put("runjob", getRunJob(id));
-        int hid=rs.getInt("SHID");
-        json.put("runHistoryjob",getScheduleRunJob(hid));
+            int hid=rs.getInt("SHID");
+            json.put("runHistoryjob",getScheduleRunJob(hid));
             if(((String)rs.getString("schedule_mode")).equals("single")){
                 json.put("mod_set", getscheduleTime(id));
             }
-        return gson.toJson(json);
+            return gson.toJson(json);
         }catch(SQLException sqle){
             log.error(sqle.toString()+";SQL:"+QuerySQL);
             return MessageFactory.rtnJobMessage("error", TimeUtil.getCurrentTime(), sqle.getMessage(), "");
-            }
-
         }
+
+    }
 
     public static ArrayList<Integer> getScheduleRunJob(int SHID) throws SQLException{
 
@@ -874,24 +841,16 @@ public class ScheduleCRUDUtils {
 
 
         int SJHID=-1;
-            String QuerySQL = "INSERT INTO `main`.`Schedule_Job_History` (`SHID`,`JHID`,`JobID`,`SortIndex`) VALUES (?,?,?,?);";
-            PreparedStatement stat = null;
-            //INSERT SQL
-            stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
-            stat.setInt(1, ShceduleHistoryId);//ScheduleID
-            stat.setInt(2, JobhistoryID);
-            stat.setInt(3, JobID);
-            stat.setInt(4, SortIndex);
+        String QuerySQL = "INSERT INTO `main`.`Schedule_Job_History` (`SHID`,`JHID`,`JobID`,`SortIndex`) VALUES (?,?,?,?);";
+        PreparedStatement stat = null;
+        //INSERT SQL
+        stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
+        stat.setInt(1, ShceduleHistoryId);//ScheduleID
+        stat.setInt(2, JobhistoryID);
+        stat.setInt(3, JobID);
+        stat.setInt(4, SortIndex);
 
         SJHID=ConnectionManager.dbInsert(stat);
-//            stat.executeUpdate();
-//        ResultSet rs = stat.getGeneratedKeys();
-//            int SJHID = 0;
-//        while (rs.next()) {
-//            SJHID = rs.getInt(1);
-//        }
-//            stat.close();
-
 
         return SJHID;
 
@@ -979,32 +938,18 @@ public class ScheduleCRUDUtils {
         stat.setBoolean(16, Boolean.getBoolean(args.get(15)));//notification
 
         ScheduleHistoryID=ConnectionManager.dbInsert(stat);
-//        stat.executeUpdate();
-//        ResultSet rs = stat.getGeneratedKeys();
-//        while (rs.next()) {
-//            ScheduleHistoryID = rs.getInt(1);
-//        }
-//        stat.close();
-
-
-
-
         return ScheduleHistoryID;
     }
 
     public synchronized static void updateScheduleHistory(int ScheduleHistoryID, String ScheduleStopTime, int ScheduleStatus, String logPath)throws SQLException{
 
         PreparedStatement stat = null;
-        ResultSet rs = null;
         //INSERT SQL
         stat = ConnectionManager.getInstance().getConnection().prepareStatement(UpdateScheduleHistorySql);
-
-        //stat.setInt(2, Integer.parseInt(token));//token
         stat.setString(1, ScheduleStopTime);
         stat.setInt(2, ScheduleStatus);
         stat.setString(3, logPath);
         stat.setInt(4,ScheduleHistoryID);
-
         stat.executeUpdate();
         stat.close();
 
