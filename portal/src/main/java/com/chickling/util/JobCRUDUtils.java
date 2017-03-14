@@ -5,6 +5,7 @@ import com.chickling.sqlite.ConnectionManager;
 import com.chickling.models.Auth;
 import com.chickling.models.MessageFactory;
 
+import com.chickling.sqlite.ReadOnlyConnectionManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -275,6 +276,11 @@ public class JobCRUDUtils {
     }
     //TODO :report schema
     public static String getJobStatusList(String limit,String token)  {
+
+
+        ReadOnlyConnectionManager rocm=new ReadOnlyConnectionManager();
+
+
         PreparedStatement stat = null;
         ResultSet rs = null;
         String QuerySQL = "";
@@ -289,11 +295,11 @@ public class JobCRUDUtils {
                 return MessageFactory.rtnJobMessage("error", TimeUtil.getCurrentTime(), "Permission denied", "");
             } else if ((Integer) info.get(0) > 0) {
                 QuerySQL = SelectAllJobExecutionList;
-                stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
+                stat = rocm.getConnection().prepareStatement(QuerySQL);
                 stat.setInt(1, recordLimit);
             } else {
                 QuerySQL = SelectJobExecutionList;
-                stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
+                stat = rocm.getConnection().prepareStatement(QuerySQL);
                 stat.setInt(1, (Integer) info.get(1));
                 stat.setInt(2, recordLimit);
 
@@ -303,6 +309,7 @@ public class JobCRUDUtils {
             rs = stat.executeQuery();
             String rtn = MessageFactory.JobStatusListMessage(rs, (Integer) info.get(2), (Integer) info.get(1), (String) info.get(3));
             stat.close();
+            rocm.close();
             return rtn;
         }catch(SQLException sqle){
             log.error(sqle.toString()+";SQL:"+QuerySQL);
