@@ -85,13 +85,17 @@
 
   <#-- INCLUDE NAV -->
   <#include "nav.ftl">
+    <div class="ui active dimmer load" id="scheduleHistoryLoader" style="display:none">
+        <div class="ui huge text loader">Loading</div>
+    </div>
   <div class="pusher">
     <div class="ui top  attached progress"  id="pg" style="margin-top:50px">
       <div class="bar"></div>
     </div>
-    
+
     <!-- Site content !-->
     <div class="full height">
+
       <div class="toc" style="min-height: 100%;">
 
         <div class="ui vertical inverted sticky menu" style="left: 0px; top: 0px; width: 200px ! important; height: 100% ! important;">
@@ -145,6 +149,7 @@
     <#-- INCLUDE FOOTER -->
     <#include "footer.ftl">
   </div>
+
   <!-- LOG MODAL -->
   <div class="ui modal schedule history fullscreen">
   <i class="close icon"></i>
@@ -154,6 +159,7 @@
   <div class="content">
     
     <div class="description" style="overflow-y:auto;max-height:500px;overflow-x:auto;">
+
       <table class="ui celled table schedule ">
         <thead>
           <tr>
@@ -172,6 +178,8 @@
           </tbody>
         </table>
       </div>
+
+
     </div>
   <div class="actions">
     

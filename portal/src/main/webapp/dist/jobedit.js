@@ -366,7 +366,7 @@
                         $(".dropdown.location.db .menu").html(itemHtml);
                         $(".db.dropdown").dropdown();
                     }else{
-                        $("#save_to_db").hide();
+                        $("#save_to_db").remove();
                     }
 
                     loadJobInfo();

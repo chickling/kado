@@ -310,7 +310,7 @@
                         $(".db.dropdown").dropdown();
                         $(".db.dropdown").dropdown('set selected', defaultValue.toString());
                       }else{
-                        $("#save_to_db").hide();
+                        $("#save_to_db").remove();
                       }
                   } else {
                       if (JData["message"].checkPermission())
