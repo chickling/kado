@@ -1,7 +1,6 @@
 package com.chickling.util;
 
 import com.chickling.bean.schedule.ScheduleHistory;
-import com.chickling.sqlite.ReadOnlyConnectionManager;
 import com.google.gson.Gson;
 import com.chickling.sqlite.ConnectionManager;
 import com.chickling.schedule.ScheduleMgr;
@@ -425,8 +424,6 @@ public class ScheduleCRUDUtils {
     }
 
     public static String getScheduleList(String token) {
-
-        ReadOnlyConnectionManager rocm=new ReadOnlyConnectionManager();
         String QuerySQL = null;
         PreparedStatement stat = null;
         ResultSet rs = null;
@@ -439,10 +436,10 @@ public class ScheduleCRUDUtils {
                 return MessageFactory.rtnScheduleMessage("error", TimeUtil.getCurrentTime(), "Permission denied", "");
             } else if ((Integer) info.get(0) > 1) {
                 QuerySQL = SelectAllScheduleSql;
-                stat = rocm.getConnection().prepareStatement(QuerySQL);
+                stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
             } else {
                 QuerySQL = SelectScheduleListSql;
-                stat = rocm.getConnection().prepareStatement(QuerySQL);
+                stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
                 stat.setInt(1, (Integer) info.get(1));
             }
             QuerySQL=stat.toString();
@@ -503,14 +500,12 @@ public class ScheduleCRUDUtils {
 
 
             list.clear();
-            rocm.close();
+
             return rtn;
         }
         catch(SQLException sqle){
             log.error(sqle.toString()+";SQL:"+QuerySQL);
             return MessageFactory.rtnJobMessage("error", TimeUtil.getCurrentTime(), sqle.getMessage(), "");
-        }finally {
-
         }
     }
 

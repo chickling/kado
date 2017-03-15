@@ -5,7 +5,6 @@ import com.chickling.sqlite.ConnectionManager;
 import com.chickling.models.Auth;
 import com.chickling.models.MessageFactory;
 
-import com.chickling.sqlite.ReadOnlyConnectionManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -40,8 +39,8 @@ public class JobCRUDUtils {
     private final static String CheckJobID="SELECT * FROM `Job` WHERE `JobID`=?;";
     private final static String SelectAllJobSql= "SELECT * FROM(SELECT *, j.JobOwner UID FROM Job j LEFT JOIN (SELECT *, Max(JobStartTime) FROM Job_History WHERE JobStatus = 1 group by JobID) jh on j.JobID=jh.JobID ) jl ,User u WHERE u.UID=jl.uid;";
     private final static String SelectJobListSql ="SELECT * FROM(SELECT *, j.JobOwner UID FROM Job j LEFT JOIN (SELECT *, Max(JobStartTime) FROM Job_History WHERE JobStatus=1 group by JobID) jh on j.JobID=jh.JobID ) jl,User u WHERE jl.UID=u.UID AND (jl.UID in (Select UID From User WHERE Gid=?) or JobLevel=1);";
-    private final static String SelectJobExecutionList="SELECT * FROM (SELECT *,j.JobOwner UID FROM Job_History jh INNER JOIN Job j ON j.JobID=jh.JobID WHERE UID in (Select UID From User WHERE Gid=?) or j.JobLevel=1 ORDER BY JobStartTime DESC limit ?) jhr,User u WHERE u.UID=jhr.JobOwner;";
-    private final static String SelectAllJobExecutionList="SELECT * FROM (SELECT *,j.JobOwner UID FROM Job_History jh LEFT JOIN Job j ON jh.JobID=j.JobID ORDER BY jh.JobStartTime DESC limit ?) jhr,User u WHERE jhr.JobOwner =u.UID;";
+    private final static String SelectJobExecutionList="SELECT * FROM (SELECT *,j.JobOwner UID FROM Job_History jh INNER JOIN Job j ON j.JobID=jh.JobID WHERE UID in (Select UID From User WHERE Gid=?) or j.JobLevel=1 ORDER BY JHID DESC limit ?) jhr,User u WHERE u.UID=jhr.JobOwner;";
+    private final static String SelectAllJobExecutionList="SELECT * FROM ((select * FROM Job_History order by JHID desc limit ?) jh left join Job j ON jh.JobID=j.JobID ) jhr,User u WHERE jhr.JobOwner =u.UID";
     private final static String SelectHistoryJobList_time_user="SELECT * FROM (SELECT *, Job.JobOwner UID FROM Job LEFT JOIN Job_History ON Job.JobID=Job_History.JobID WHERE JobStartTime>? and JobStopTime<? and (UID in (Select UID From User WHERE Gid=?) or Job.JobLevel=1)) jhr,User u WHERE jhr.JobOwner =u.UID;";
     private final static String SelectHistoryJobList_jobID_user="SELECT * FROM (SELECT *,  Job.JobOwner UID FROM Job INNER JOIN Job_History ON Job.JobID=Job_History.JobID WHERE Job_History.JobID=? and (UID in (Select UID From User WHERE Gid=?) or Job.JobLevel=1)) jhr,User u WHERE jhr.JobOwner =u.UID;";
     private final static String SelectHistoryJobList_timeandjobId_user="SELECT * FROM (SELECT *, Job.JobOwner UID FROM Job INNER JOIN Job_History WHERE JobStartTime>? and JobStopTime<? and Job.JobID=? and (UID in (Select UID From User WHERE Gid=?) or Job.JobLevel=1)) jhr,User u WHERE jhr.JobOwner =u.UID;";
@@ -109,49 +108,49 @@ public class JobCRUDUtils {
     public synchronized static String updateJobtoDB(Map args,int JobID, String token) {
         PreparedStatement stat = null;
         String QuerySQL = "";
-    try {
-        if (JobIsExist(JobID)) {
+        try {
+            if (JobIsExist(JobID)) {
 
-            Auth au = new Auth();
-            if (!(Boolean) au.verify(token).get(4)) {
-                return MessageFactory.rtnJobMessage("error", TimeUtil.getCurrentTime(), "Permission denied", "");
-            } else if ((au.jobMatch(token, Integer.toString(JobID))) || ((Integer) au.verify(token).get(0) == 2)) {
+                Auth au = new Auth();
+                if (!(Boolean) au.verify(token).get(4)) {
+                    return MessageFactory.rtnJobMessage("error", TimeUtil.getCurrentTime(), "Permission denied", "");
+                } else if ((au.jobMatch(token, Integer.toString(JobID))) || ((Integer) au.verify(token).get(0) == 2)) {
 
-                QuerySQL = UpdateJobSql;
-                stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
-            } else {
-                return MessageFactory.rtnJobMessage("error", TimeUtil.getCurrentTime(), "Permission denied", Integer.toString(JobID));
+                    QuerySQL = UpdateJobSql;
+                    stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
+                } else {
+                    return MessageFactory.rtnJobMessage("error", TimeUtil.getCurrentTime(), "Permission denied", Integer.toString(JobID));
+                }
+                //INSERT SQL
+                stat.setString(1, ((String) args.get("jobname")));
+                stat.setInt(2, (Integer.parseInt((String) args.get("jobLevel"))));
+                stat.setString(3, ((String) args.get("memo")));
+                stat.setBoolean(4, (Boolean) args.get("notification"));
+                if ((Boolean) args.get("storage")) {
+                    stat.setInt(5, ((Double) args.get("save_type")).intValue());
+
+                } else {
+                    stat.setInt(5, 0);
+                }
+                stat.setInt(6, (Integer.parseInt((String) args.get("location_id"))));
+                stat.setString(7, ((String) args.get("filepath")));
+                stat.setString(8, ((String) args.get("filename")));
+                stat.setString(9, ((String) args.get("insertsql")));
+                stat.setString(10, ((String) args.get("sql")));
+                stat.setBoolean(11, (Boolean.valueOf((String)args.get("Report"))));
+                stat.setString(12, ((String) args.get("ReportEmail")));
+                stat.setInt(13, (Integer.parseInt((String) args.get("ReportLength"))));
+                stat.setInt(14, (Integer.parseInt((String) args.get("ReportFileType"))));
+                stat.setString(15, ((String) args.get("ReportTitle")));
+                stat.setBoolean(16, (Boolean.valueOf((String) args.get("ReportWhileEmpty"))));
+                stat.setInt(17, JobID);
+
+                QuerySQL=stat.toString();
+                stat.executeUpdate();
+                stat.close();
+                return MessageFactory.rtnJobMessage("success", TimeUtil.getCurrentTime(), "", Integer.toString(JobID));
             }
-            //INSERT SQL
-            stat.setString(1, ((String) args.get("jobname")));
-            stat.setInt(2, (Integer.parseInt((String) args.get("jobLevel"))));
-            stat.setString(3, ((String) args.get("memo")));
-            stat.setBoolean(4, (Boolean) args.get("notification"));
-            if ((Boolean) args.get("storage")) {
-                stat.setInt(5, ((Double) args.get("save_type")).intValue());
-
-            } else {
-                stat.setInt(5, 0);
-            }
-            stat.setInt(6, (Integer.parseInt((String) args.get("location_id"))));
-            stat.setString(7, ((String) args.get("filepath")));
-            stat.setString(8, ((String) args.get("filename")));
-            stat.setString(9, ((String) args.get("insertsql")));
-            stat.setString(10, ((String) args.get("sql")));
-            stat.setBoolean(11, (Boolean.valueOf((String)args.get("Report"))));
-            stat.setString(12, ((String) args.get("ReportEmail")));
-            stat.setInt(13, (Integer.parseInt((String) args.get("ReportLength"))));
-            stat.setInt(14, (Integer.parseInt((String) args.get("ReportFileType"))));
-            stat.setString(15, ((String) args.get("ReportTitle")));
-            stat.setBoolean(16, (Boolean.valueOf((String) args.get("ReportWhileEmpty"))));
-            stat.setInt(17, JobID);
-
-            QuerySQL=stat.toString();
-            stat.executeUpdate();
-            stat.close();
-            return MessageFactory.rtnJobMessage("success", TimeUtil.getCurrentTime(), "", Integer.toString(JobID));
-            }
-        else {
+            else {
                 return MessageFactory.rtnJobMessage("error", TimeUtil.getCurrentTime(), "Job is not exit", Integer.toString(JobID));
             }
         }
@@ -276,11 +275,6 @@ public class JobCRUDUtils {
     }
     //TODO :report schema
     public static String getJobStatusList(String limit,String token)  {
-
-
-        ReadOnlyConnectionManager rocm=new ReadOnlyConnectionManager();
-
-
         PreparedStatement stat = null;
         ResultSet rs = null;
         String QuerySQL = "";
@@ -295,11 +289,11 @@ public class JobCRUDUtils {
                 return MessageFactory.rtnJobMessage("error", TimeUtil.getCurrentTime(), "Permission denied", "");
             } else if ((Integer) info.get(0) > 0) {
                 QuerySQL = SelectAllJobExecutionList;
-                stat = rocm.getConnection().prepareStatement(QuerySQL);
+                stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
                 stat.setInt(1, recordLimit);
             } else {
                 QuerySQL = SelectJobExecutionList;
-                stat = rocm.getConnection().prepareStatement(QuerySQL);
+                stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
                 stat.setInt(1, (Integer) info.get(1));
                 stat.setInt(2, recordLimit);
 
@@ -309,7 +303,6 @@ public class JobCRUDUtils {
             rs = stat.executeQuery();
             String rtn = MessageFactory.JobStatusListMessage(rs, (Integer) info.get(2), (Integer) info.get(1), (String) info.get(3));
             stat.close();
-            rocm.close();
             return rtn;
         }catch(SQLException sqle){
             log.error(sqle.toString()+";SQL:"+QuerySQL);
@@ -462,30 +455,30 @@ public class JobCRUDUtils {
     //TODO :report schema
     public synchronized static int InsertJobHistory(ArrayList<String> args)throws SQLException{
 
-            int JobHistoryID = -1;
+        int JobHistoryID = -1;
 
-            PreparedStatement stat = null;
+        PreparedStatement stat = null;
 
-            //INSERT SQL
-            stat = ConnectionManager.getInstance().getConnection().prepareStatement(InsertJobHistorySql);
-            stat.setInt(1, Integer.parseInt(args.get(0)));//JobID
-            stat.setString(2, args.get(1));//PrestoID
-            stat.setInt(3, Integer.parseInt(args.get(2)));//JobOwner
-            stat.setInt(4, Integer.parseInt(args.get(3)));//JobLevel
-            stat.setString(5, args.get(4));//JobStartTime
-            stat.setString(6, args.get(5));//JobStopTime
-            stat.setInt(7, Integer.parseInt(args.get(6)));//JobStatus
-            stat.setInt(8, Integer.parseInt(args.get(7)));//JobProgress
-            stat.setInt(9, Integer.parseInt(args.get(8)));//JobLog
-            stat.setInt(10, Integer.parseInt(args.get(9)));//JobType
-            stat.setBoolean(11, Boolean.valueOf(args.get(10)));
-            stat.setString(12,  args.get(11));
-            stat.setInt(13, (Integer.parseInt( args.get(12))));
-            stat.setInt(14, (Integer.parseInt(args.get(13))));
-            stat.setString(15, args.get(14));
-            stat.setBoolean(16, Boolean.valueOf(args.get(15)));
-            JobHistoryID= ConnectionManager.dbInsert(stat);
-            return JobHistoryID;
+        //INSERT SQL
+        stat = ConnectionManager.getInstance().getConnection().prepareStatement(InsertJobHistorySql);
+        stat.setInt(1, Integer.parseInt(args.get(0)));//JobID
+        stat.setString(2, args.get(1));//PrestoID
+        stat.setInt(3, Integer.parseInt(args.get(2)));//JobOwner
+        stat.setInt(4, Integer.parseInt(args.get(3)));//JobLevel
+        stat.setString(5, args.get(4));//JobStartTime
+        stat.setString(6, args.get(5));//JobStopTime
+        stat.setInt(7, Integer.parseInt(args.get(6)));//JobStatus
+        stat.setInt(8, Integer.parseInt(args.get(7)));//JobProgress
+        stat.setInt(9, Integer.parseInt(args.get(8)));//JobLog
+        stat.setInt(10, Integer.parseInt(args.get(9)));//JobType
+        stat.setBoolean(11, Boolean.valueOf(args.get(10)));
+        stat.setString(12,  args.get(11));
+        stat.setInt(13, (Integer.parseInt( args.get(12))));
+        stat.setInt(14, (Integer.parseInt(args.get(13))));
+        stat.setString(15, args.get(14));
+        stat.setBoolean(16, Boolean.valueOf(args.get(15)));
+        JobHistoryID= ConnectionManager.dbInsert(stat);
+        return JobHistoryID;
 
     }
     //TODO :report schema

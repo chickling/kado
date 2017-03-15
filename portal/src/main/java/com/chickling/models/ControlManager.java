@@ -1,6 +1,5 @@
 package com.chickling.models;
 
-import com.chickling.sqlite.ReadOnlyConnectionManager;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.chickling.sqlite.ConnectionManager;
@@ -46,10 +45,10 @@ public class ControlManager {
         //SQLite
         PreparedStatement stat = null;
         ResultSet rs = null;
-        ReadOnlyConnectionManager rocm=new ReadOnlyConnectionManager();
-        String sql = "SELECT * FROM (SELECT *,jh.JobOwner UID FROM Job_History jh,Job_Log jl WHERE jl.JLID=jh.JobLog AND jh.JobType=0 ORDER BY jh.JobStartTime DESC limit ?) jhr,User u WHERE jhr.JobOwner =u.UID;";
+
+        String sql = "SELECT * FROM (SELECT *,jh.JobOwner UID FROM (SELECT * FROM Job_History WHERE JobType=0 ORDER BY JHID DESC limit ?) jh,Job_Log jl WHERE jl.JLID=jh.JobLog) jhr,User u WHERE jhr.JobOwner =u.UID;";
         try {
-            stat = rocm.getConnection().prepareStatement(sql);
+            stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
 
             stat.setInt(1, limit);
             rs = stat.executeQuery();
@@ -85,7 +84,7 @@ public class ControlManager {
                 queryInfo.put("group", rs.getString("Gid"));
                 queryList.add(queryInfo);
             }
-            rocm.close();
+
             return MessageFactory.messageList("success", "list", queryList);
         } catch (SQLException e) {
             log.error(ExceptionUtils.getStackTrace(e));
