@@ -102,7 +102,7 @@
           }
 
           //Add Storage Setting
-         if($(".checkbox.db").checkbox('is checked')||$(".checkbox.csv").checkbox('is checked')){
+         if(($(".checkbox.db").checkbox('is checked')&&$(".checkbox.db").length>0)||$(".checkbox.csv").checkbox('is checked')){
             //clear
             addJson["storage"] = true;
             addJson["filepath"] = "";
@@ -110,7 +110,7 @@
             addJson["insertsql"] = "";
             addJson["location_id"] = "0";
             var stype=0;
-            if($(".checkbox.db").checkbox('is checked')){
+            if($(".checkbox.db").checkbox('is checked')&&$(".checkbox.db").length>0){
                 stype+=4;                
                 addJson["location_id"] = $(".dropdown.db.location").dropdown("get value");
                 //Set Value
@@ -310,11 +310,11 @@
                         $(".db.dropdown").dropdown();
                         $(".db.dropdown").dropdown('set selected', defaultValue.toString());
                       }else{
-                        $("#save_to_db").hide();
+                        $("#save_to_db").remove();
                       }
                   } else {
                       if (JData["message"].checkPermission())
-                          alert("[" + JData["status"] + "]\n" + JData["message"]);
+                          alert("[" + JData["tatus"] + "]\n" + JData["message"]);
                   }
               }
           },

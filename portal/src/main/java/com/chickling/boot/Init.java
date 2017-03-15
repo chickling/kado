@@ -1,11 +1,11 @@
 package com.chickling.boot;
 
 import com.chickling.face.ResultWriter;
-import com.google.common.base.Strings;
 import com.chickling.maintenance.DBmaintenance;
-import com.chickling.schedule.ScheduleMgr;
 import com.chickling.models.dfs.FSFile;
+import com.chickling.schedule.ScheduleMgr;
 import com.chickling.util.YamlLoader;
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.hadoop.fs.FsShell;
@@ -177,62 +177,62 @@ public class Init implements ServletContextListener{
                 sce.getServletContext().setAttribute("prestoURL", prestoURL);
             } else {
                 sce.getServletContext().setAttribute("prestoURL", "");
-                throw new Exception("presto url not set Error , please check your web.xml");
+                throw new Exception("presto url not set Error , please check your config.yaml");
             }
             if (!Strings.isNullOrEmpty(database)) {
                 sce.getServletContext().setAttribute("database", database);
             } else {
                 sce.getServletContext().setAttribute("database", "temp");
-                throw new Exception("hive database not set Error , please check your web.xml");
+                throw new Exception("hive database not set Error , please check your config.yaml");
             }
             if (!Strings.isNullOrEmpty(hivepath)) {
                 sce.getServletContext().setAttribute("hivepath", hivepath);
             } else {
                 sce.getServletContext().setAttribute("hivepath", "/user/hive/warehouse");
-                throw new Exception("hive path not set Error , please check your web.xml");
+                throw new Exception("hive path not set Error , please check your config.yaml");
             }
             if (!Strings.isNullOrEmpty(logpath)) {
                 sce.getServletContext().setAttribute("logpath", logpath);
             } else {
                 sce.getServletContext().setAttribute("logpath", "/tmp/presto-joblog");
-                throw new Exception("logpath not set Error , please check your web.xml");
+                throw new Exception("logpath not set Error , please check your config.yaml");
             }
             if (!Strings.isNullOrEmpty(sqliteName)) {
                 sce.getServletContext().setAttribute("sqliteName", sqliteName);
             } else {
                 sce.getServletContext().setAttribute("sqliteName", "Kado.sqlite");
-                throw new Exception("dbLocation not set Error , please check your web.xml");
+                throw new Exception("dbLocation not set Error , please check your config.yaml");
             }
             if (!Strings.isNullOrEmpty(siteURLBase)) {
                 sce.getServletContext().setAttribute("SiteURLBase", SiteURLBase);
             } else {
                 sce.getServletContext().setAttribute("SiteURLBase", "");
-                throw new Exception("SiteURLBase set Error , please check your web.xml");
+                throw new Exception("SiteURLBase set Error , please check your config.yaml");
             }
             if (!Strings.isNullOrEmpty(expiration)) {
                 sce.getServletContext().setAttribute("expiration", Expiration);
             } else {
                 sce.getServletContext().setAttribute("expiration", "");
-                throw new Exception("SiteURLBase set Error , please check your web.xml");
+                throw new Exception("SiteURLBase set Error , please check your config.yaml");
             }
             if (!Strings.isNullOrEmpty(prestoCatalog)) {
                 sce.getServletContext().setAttribute("prestoCatalog", prestoCatalog);
             } else {
                 sce.getServletContext().setAttribute("prestoCatalog", "");
-                throw new Exception("prestoCatalog set Error , please check your web.xml");
+                throw new Exception("prestoCatalog set Error , please check your config.yaml");
             }
             if (!Strings.isNullOrEmpty(csvtmphdfsPath)) {
                 sce.getServletContext().setAttribute("csv.tmp.hdfs.path", csvtmphdfsPath);
             } else {
                 sce.getServletContext().setAttribute("csv.tmp.hdfs.path", "");
-                throw new Exception("csvtmphdfsPath set Error , please check your web.xml");
+                throw new Exception("csvtmphdfsPath set Error , please check your config.yaml");
             }
 
             if (!Strings.isNullOrEmpty(deleteLogTTL)) {
                 sce.getServletContext().setAttribute("deleteLogTTL", deleteLogTTL);
             } else {
                 sce.getServletContext().setAttribute("deleteLogTTL", "30");
-                throw new Exception("csvlocalpath set Error , please check your web.xml");
+                throw new Exception("csvlocalpath set Error , please check your config.yaml");
             }
 
             setCsvlocalPath(csvlocalpath);
@@ -253,13 +253,12 @@ public class Init implements ServletContextListener{
                 log.info("start load HDFS SQLite DB to Local");
                 FSFile fsFile=FSFile.newInstance(FSFile.FSType.HDFS);
                 FsShell fsShell=new FsShell(fsFile.getFs().getConf());
-                log.info("Remove exist SQLite  DB");
                 File file =new File(YamlLoader.instance.getSqliteLOCALpath());
-                file.delete();
+                if (file.delete())
+                    log.info("Remove exist SQLite  DB");
                 log.info("get SQLite DB From HDFS ");
                 fsShell.run(new String[]{"-copyToLocal",sqliteSite,YamlLoader.instance.getSqliteLOCALpath()});
                 log.info("Finish load HDFS File from "+sqliteSite+" to "+YamlLoader.instance.getSqliteLOCALpath());
-
             }
             checkHDFSPath();
             DBmaintenance dbm=new DBmaintenance();
