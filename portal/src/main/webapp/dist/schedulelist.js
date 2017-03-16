@@ -1,3 +1,13 @@
+ String.prototype.hashCode = function() {
+        var hash = 0;
+        if (this.length == 0) return hash;
+        for (i = 0; i < this.length; i++) {
+            char = this.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32bit integer
+        }
+        return hash;
+    }
  //message
  Messenger.options = {
      extraClasses: 'messenger-fixed messenger-on-bottom messenger-on-right',
@@ -49,6 +59,7 @@
              if (JData["status"] != null) {
                  if (JData["status"] != "error") {
                      var tableHtml = "";
+                     var tableList=[];
                      //GET LIST TO UPDATE TABLE
                      for (var i = 0; i < JData["list"].length; i++) {
                          if (!userFilter()) {
@@ -58,18 +69,24 @@
                              if (JData["list"][i]["user"] == $.cookie('username'))
                                  continue;
                          }
+                         var tableRow=[];
                          tableHtml += '<tr>';
-                         tableHtml += '<td>' + JData["list"][i]["schedule_id"] + '</td>';
-                         tableHtml += '<td>' + JData["list"][i]["schedule_name"] + '</td>';
-                         tableHtml += '<td>' + JData["list"][i]["user"] + '</td>';
-                         tableHtml += '<td>' + ((JData["list"][i]["last_runtime"] != undefined) ? JData["list"][i]["last_runtime"] : "") + '</td>';
-                         tableHtml += '<td>' + ((JData["list"][i]["runingtime"] != undefined) ? getTimeString(JData["list"][i]["runingtime"]) : "") + '</td>';
-                         //Function 
-                         tableHtml += getStatusHtml(JData["list"][i]["status"]);
-                         tableHtml += getFunction(JData["list"][i]["schedule_id"], JData["list"][i]["status"]);
+                         tableRow.push('<td>' + JData["list"][i]["schedule_id"] + '</td>');
+                         tableRow.push('<td>' + JData["list"][i]["schedule_name"] + '</td>');
+                         tableRow.push('<td>' + JData["list"][i]["user"] + '</td>');
+                         tableRow.push('<td>' + ((JData["list"][i]["last_runtime"] != undefined) ? JData["list"][i]["last_runtime"] : "") + '</td>');
+                         tableRow.push('<td>' + ((JData["list"][i]["runingtime"] != undefined) ? getTimeString(JData["list"][i]["runingtime"]) : "") + '</td>'); 
+                         tableRow.push(getStatusHtml(JData["list"][i]["status"]));
+                         tableRow.push(getFunction(JData["list"][i]["schedule_id"], JData["list"][i]["status"]));
+                         tableList.push(tableRow);
+                         tableHtml += tableRow.join("");                      
                          tableHtml += '</tr>';                         
                      }
-                     $(".table.schedule.list tbody").html(tableHtml);
+                     if($(".table.schedule.list tbody").children("tr").length==tableList.length){
+                        updateTableRow($(".table.schedule.list tbody"),tableList);
+                     }else{
+                        $(".table.schedule.list tbody").html(tableHtml);
+                     }
 
                      $(".scheduleedit").unbind('click');
                      $(".scheduleedit").click(function() {
@@ -133,6 +150,43 @@
          }
      });
  }
+ function updateTableRow(table,dataRows){
+    if($(table).children("tr").length==dataRows.length){
+        $(table).children("tr").each(function(key,value){
+        var mark='<span style="display: none; width: 0px; height: 0px;" id="transmark"></span>';
+        var mark2='<span id="transmark" style="display: none; width: 0px; height: 0px;"></span>';
+
+            if($(value).html().replace("&gt;",">").replace(mark,"").replace(mark2,"").replace(/&amp;/g, '&').hashCode()!=dataRows[key].join("").hashCode()){
+               
+                //UPDATE ROWS               
+               
+                var flag=0;
+                
+                $(value).children("td").each(function(i,v){                    
+                    var tdContent=$.parseHTML(dataRows[key][i]);
+                    tdContent=$(tdContent).html();                    
+                    if(i==0&&$(v).html().replace(mark,"").replace(mark2,"")!=tdContent){                        
+                        return false;
+                    }  
+                                  
+                    if($(v).html().replace(mark,"").replace(mark2,"")!=tdContent){            
+                        console.log("UPDATE CELL");
+                        $(v).html(tdContent);
+                    }
+                    flag++;
+                });
+
+                if(flag==0){
+                    console.log("UPDATE LINE");
+                    $(value).html(dataRows[key].join(""));
+                }
+                    
+            }
+            mark=null;
+            mark2=null;
+        });
+    }
+}
 
  function showScheduleHistory(sid) {
      //get schedule history trigger
