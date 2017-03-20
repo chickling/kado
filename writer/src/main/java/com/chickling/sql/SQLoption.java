@@ -24,7 +24,7 @@ public class SQLoption {
     private static final int MAX_RETRY_TIMES = 3;
     private static final int SLEEP_TIMES = 3000;
     private DBConnectionManager connMgr=null;
-    private  String connnName="";
+    private  String dsName ="";
     private StringBuilder exception=null;
 
     public String getException() {
@@ -35,14 +35,15 @@ public class SQLoption {
         this.exception.append(exception).append("\\n");
     }
 
-    public SQLoption(DBConnectionManager dbconn, String connName) {
+    public SQLoption(DBConnectionManager dbconn, String dsName) {
         this.connMgr=dbconn;
-        this.connnName=connName;
+        this.dsName =dsName;
         exception=new StringBuilder();
     }
 
     public  boolean execute(String sql)  {
-        Connection conn = connMgr.getDBConnection(connnName);
+
+        Connection conn = connMgr.getConnection(dsName);
         boolean isSuccess=false;
         if (conn != null) {
             try {
@@ -62,7 +63,7 @@ public class SQLoption {
                 return false;
             }
         } else {
-            setException("NO SQL CONNECTION TO DATABASE :" + connnName);
+            setException("NO SQL CONNECTION TO DATABASE :" + dsName);
             return false;
         }
     }
@@ -70,7 +71,7 @@ public class SQLoption {
 
     public boolean batchExecute(List<String> sqls)   {
         int retryTimes = 0;
-        Connection conn = connMgr.getDBConnection(connnName);
+        Connection conn = connMgr.getConnection(dsName);
         while (true) {
             try {
                 if (null!=conn){
@@ -84,7 +85,8 @@ public class SQLoption {
             } catch (SQLException sqle) {
                 if (retryTimes < MAX_RETRY_TIMES) {
                     // close connection
-                    connMgr.recycleDBConneciton(conn);
+                    connMgr.recycleConnection(dsName,conn);
+//                    connMgr.recycleDBConneciton(conn);
                     try {
                         Thread.sleep(SLEEP_TIMES);
                     } catch (InterruptedException e) {
@@ -92,7 +94,7 @@ public class SQLoption {
                     }
                     retryTimes++;
                     // reopen
-                    conn = connMgr.getDBConnection(connnName);
+                    conn = connMgr.getConnection(dsName);
                 } else {
                     try {
                         conn.close();
@@ -121,7 +123,7 @@ public class SQLoption {
                 if (!Strings.isNotEmpty(nobatchdb))
                         noBatchDB.addAll(Arrays.asList(nobatchdb.split(",")));
 
-                if (noBatchDB.contains(connnName)){
+                if (noBatchDB.contains(dsName)){
                     for (String sql : sqlList) {
                         try {
                             statement.execute(sql);
@@ -151,7 +153,7 @@ public class SQLoption {
             }
             return true;
         } else {
-            setException("NO SQL CONNECTION TO DATABASE :" + connnName);
+            setException("NO SQL CONNECTION TO DATABASE :" + dsName);
             return false;
         }
     }

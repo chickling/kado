@@ -1,34 +1,38 @@
 !dbselect-config
 JDBCClassDriver: com.microsoft.sqlserver.jdbc.SQLServerDriver
-poolSize: 10
 dataSourceList:
   - name: ST02CPS03
     url: 'jdbc:sqlserver://ST02CPS03'
     username: sa
     passwd: Bigdata0123456
+    poolSize: 5
 
   - name: ST02CPS04
     url: 'jdbc:sqlserver://ST02CPS04'
     username: sa
     passwd: Bigdata0123456
+    poolSize: 5
 
   - name: S7ECDB01
     url: 'jdbc:sqlserver://S7ECDB01'
     username: Ecomdbo
     passwd: Ecom2Dev
+    poolSize: 10
 
   - name: S7BIDB08
     url: 'jdbc:sqlserver://S7BIDB08'
     username: ec
     passwd: 1qaz!@#$
+    poolSize: 10
 
   - name: S7SAS07
     url: 'jdbc:sqlserver://S7SAS07'
     username: FPWuser
     passwd: RW4Fraud
+    poolSize: 10
 
   - name: S7MKRPT01
     url: 'jdbc:sqlserver://S7MKRPT01'
     username: yang
     passwd: 1234
-
+    poolSize: 10

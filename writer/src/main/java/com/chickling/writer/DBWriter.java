@@ -4,6 +4,8 @@ import com.chickling.bean.job.JobLog;
 import com.chickling.face.ResultWriter;
 import com.chickling.sql.ImportDB;
 import com.chickling.util.YamlConfig;
+import com.newegg.ec.db.DBClient;
+import com.newegg.ec.db.DBConnectionManager;
 import com.newegg.ec.db.ManagerConfig;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
@@ -32,6 +34,7 @@ public class DBWriter implements ResultWriter {
     private ArrayList<String> locationList=new ArrayList<>();
 
     {
+//        DBConnectionManager dbconnmgr=DBConnectionManager.getSingletonInstance();
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
         InputStream input = classloader.getResourceAsStream("dbselect-config.yaml");
         Yaml yaml = new Yaml();

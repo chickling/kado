@@ -115,7 +115,7 @@ public class ImportDB {
             Class c = Class.forName("com.chickling.models.dfs.OrcFileUtil");
             orcFile=(OrcFile) c.newInstance();
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-           log.error(ExceptionUtils.getStackTrace(e));
+            log.error(ExceptionUtils.getStackTrace(e));
         }
 
         assert orcFile != null;
@@ -152,7 +152,7 @@ public class ImportDB {
                                 try {
                                     tmpSql = tmpSql.replaceAll("\\$" + index + "\\$", values[index]);
                                 }catch (Exception e2){
-                                    e2.fillInStackTrace();
+                                    log.error(ExceptionUtils.getStackTrace(e2));
                                 }
                             }
                         }
@@ -218,7 +218,7 @@ public class ImportDB {
                                 try {
                                     tmpSql = tmpSql.replaceAll("\\$" + index + "\\$", values[index]);
                                 }catch (Exception e2){
-                                    e2.fillInStackTrace();
+                                    log.error(ExceptionUtils.getStackTrace(e2));
                                 }
                             }
                         }
@@ -264,7 +264,7 @@ public class ImportDB {
          */
         DBConnectionManager dbconn = null;
         try {
-            dbconn = DBConnectionManager.getInstance();
+            dbconn = DBConnectionManager.getNewInstance();
         } catch (Exception e) {
             setException(e.getMessage());
             return false;

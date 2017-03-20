@@ -50,7 +50,7 @@ public class ConnectionManager {
     public synchronized static ConnectionManager getInstance() {
         if (null == dbtm) {
             dbtm = new ConnectionManager();
-            dbtm.init();
+//            dbtm.init();
         }
         return dbtm;
     }
