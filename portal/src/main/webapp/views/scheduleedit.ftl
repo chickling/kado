@@ -86,7 +86,8 @@
   <!-- Site content !-->  
   <div class="ui main  container">
     <div style="text-align: right;margin-bottom:20px;padding-left: 10px; padding-right: 10px;"> 
-      <h3 style="float:left">Add Schedule</h3>
+
+      <h3 style="float:left">Edit Schedule</h3>
       <a href="../schedulelist#back" class="ui labeled icon  button  vk">
             <i class="remove icon"></i>
             Cancel
@@ -351,10 +352,11 @@
 
  
 </div>
-   <h3>Job Delete</h3>
+
+   <h3>Schedule Delete</h3>
   <button class="ui labeled icon red button schedule delete" sid="0">
     <i class="fire icon"></i>
-    Delete Job
+    Delete Schedule
   </button>
 
   

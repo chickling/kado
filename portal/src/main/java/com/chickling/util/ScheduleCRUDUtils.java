@@ -16,6 +16,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -35,8 +37,8 @@ public class ScheduleCRUDUtils {
     private final static String GetScheduleInfoSql_usr="SELECT *, ScheduleOwner UID FROM `main`.`Schedule` WHERE `ScheduleID`=? and ( UID in (Select UID From User WHERE Gid=?) or  ScheduleLevel=1);";
     private final static String DeleteSchedule="DELETE FROM `main`.`Schedule` WHERE `ScheduleID`=?;";
     private final static String CheckScheduleID="SELECT * FROM `Schedule` WHERE `ScheduleID`=?;";
-    private final static String SelectAllScheduleSql= "SELECT * FROM(SELECT *, j.ScheduleOwner UID FROM Schedule j LEFT JOIN (SELECT *, Max(ScheduleStartTime) FROM Schedule_History WHERE ScheduleStatus = 1 group by ScheduleID) jh on j.ScheduleID=jh.ScheduleID ) jl ,User u WHERE u.UID=jl.UID;";
-    private final static String SelectScheduleListSql ="SELECT * FROM(SELECT *, j.ScheduleOwner UID FROM Schedule j LEFT JOIN (SELECT *, Max(ScheduleStartTime) FROM Schedule_History WHERE ScheduleStatus=1 group by ScheduleID) jh on j.ScheduleID=jh.ScheduleID ) jl,User u WHERE jl.UID=u.UID AND (jl.UID in (Select UID From User WHERE Gid=?) or  ScheduleLevel=1);";
+    private final static String SelectAllScheduleSql= "SELECT * FROM(SELECT *, j.ScheduleOwner UID FROM Schedule j LEFT JOIN (SELECT ScheduleID, Max(ScheduleStartTime) FROM Schedule_History WHERE ScheduleStatus = 1 group by ScheduleID) jh on j.ScheduleID=jh.ScheduleID ) jl ,User u WHERE u.UID=jl.UID;";
+    private final static String SelectScheduleListSql ="SELECT * FROM(SELECT *, j.ScheduleOwner UID FROM Schedule j LEFT JOIN (SELECT ScheduleID, Max(ScheduleStartTime) FROM Schedule_History WHERE ScheduleStatus=1 group by ScheduleID) jh on j.ScheduleID=jh.ScheduleID ) jl,User u WHERE jl.UID=u.UID AND (jl.UID in (Select UID From User WHERE Gid=?) or  ScheduleLevel=1);";
     private final static String SelectScheduleExecutionList="SELECT * FROM (SELECT *,j.ScheduleOwner UID FROM Schedule_History jh INNER JOIN Schedule j ON j.ScheduleID=jh.ScheduleID WHERE UID in (Select UID From User WHERE Gid=?) or  j.ScheduleLevel=1 ORDER BY ScheduleStartTime DESC limit ?) jhr,User u WHERE u.UID=jhr.ScheduleOwner;";
     private final static String SelectAllScheduleExecutionList="SELECT * FROM (SELECT *,j.ScheduleOwner UID FROM Schedule_History jh INNER JOIN Schedule j ON jh.ScheduleID=j.ScheduleID ORDER BY jh.ScheduleStartTime DESC limit ?) jhr,User u WHERE jhr.ScheduleOwner =u.UID;";
     private final static String SelectHistoryScheduleList_time_user="SELECT * FROM (SELECT *, Schedule_History.ScheduleOwner UID FROM Schedule INNER JOIN Schedule_History WHERE  Schedule_History.ScheduleStartTime>? and Schedule_History.ScheduleStopTime<? and (UID in (Select UID From User WHERE Gid=?) or  Schedule_History.ScheduleLevel=1)) jhr,User u WHERE jhr.ScheduleOwner =u.UID;";
@@ -544,6 +546,13 @@ public class ScheduleCRUDUtils {
                 Map json = new LinkedHashMap();
                 json.put("schedule_runid", rs.getInt("SHID"));
                 json.put("schedule_id", rs.getInt("ScheduleID"));
+
+                Map<String,ArrayList<Integer>> jobs=getScheduleRunJob(rs.getInt("SHID"));
+                json.put("runHistoryjob",jobs.get("runHistoryjob"));
+                json.put("runjob", jobs.get("runJob"));
+                if((rs.getString("ScheduleTimeType")).equals("single")){
+                    json.put("mod_set",getscheduleTime(rs.getInt("ScheduleID")));
+                }
                 json.put("schedule_name", rs.getString("ScheduleName"));
                 json.put("schedule_Level", rs.getInt("ScheduleLevel"));
                 json.put("memo", rs.getString("ScheduleMemo"));
@@ -578,17 +587,6 @@ public class ScheduleCRUDUtils {
 
             }
             stat.close();
-
-            for (Map m : list) {
-                int id = (Integer) m.get("schedule_id");
-                m.put("runjob", getRunJob(id));
-                int hid = (Integer) m.get("schedule_runid");
-                m.put("runHistoryjob", getScheduleRunJob(hid));
-                if (((String) m.get("schedule_mode")).equals("single")) {
-                    m.put("mod_set", getscheduleTime(id));
-                }
-            }
-
 
             String rtn = MessageFactory.scheduleListMessage(list);
 
@@ -667,10 +665,20 @@ public class ScheduleCRUDUtils {
             QuerySQL=stat.toString();
             rs=stat.executeQuery();
             ArrayList<Map> list=new ArrayList<>();
+
+            ArrayList<Integer> runJob=new ArrayList<>();
             while(rs.next()){
                 Map json=new LinkedHashMap();
                 json.put("schedule_runid",rs.getInt("SHID"));
                 json.put("schedule_id",rs.getInt("ScheduleID"));
+
+                Map<String,ArrayList<Integer>> jobs=getScheduleRunJob(rs.getInt("SHID"));
+                json.put("runHistoryjob",jobs.get("runHistoryjob"));
+                json.put("runjob", jobs.get("runJob"));
+                if((rs.getString("ScheduleTimeType")).equals("single")){
+                    json.put("mod_set",getscheduleTime(rs.getInt("ScheduleID")));
+                }
+
                 json.put("schedule_name",rs.getString("ScheduleName"));
                 json.put("schedule_Level",rs.getInt("ScheduleLevel"));
                 json.put("memo",rs.getString("ScheduleMemo"));
@@ -717,19 +725,6 @@ public class ScheduleCRUDUtils {
 
             }
             stat.close();
-
-            for(Map m:list){
-                int id=(Integer) m.get("schedule_id");
-                m.put("runjob",getRunJob(id));
-                int hid=(Integer) m.get("schedule_runid");
-                m.put("runHistoryjob",getScheduleRunJob(hid));
-                if(((String)m.get("schedule_mode")).equals("single")){
-                    m.put("mod_set",getscheduleTime(id));
-                }
-            }
-
-
-
             String rtn=MessageFactory.scheduleListMessage(list);
             return rtn;
         }catch(SQLException sqle){
@@ -807,12 +802,12 @@ public class ScheduleCRUDUtils {
             json.put("group", (Integer) info.get(2));
             stat.close();
 
-            int id=rs.getInt("schedule_id");
-            json.put("runjob", getRunJob(id));
-            int hid=rs.getInt("SHID");
-            json.put("runHistoryjob",getScheduleRunJob(hid));
-            if(((String)rs.getString("schedule_mode")).equals("single")){
-                json.put("mod_set", getscheduleTime(id));
+
+            Map<String,ArrayList<Integer>> jobs=getScheduleRunJob(rs.getInt("SHID"));
+            json.put("runHistoryjob",jobs.get("runHistoryjob"));
+            json.put("runjob", jobs.get("runJob"));
+            if((rs.getString("ScheduleTimeType")).equals("single")){
+                json.put("mod_set",getscheduleTime(rs.getInt("ScheduleID")));
             }
             return gson.toJson(json);
         }catch(SQLException sqle){
@@ -822,18 +817,24 @@ public class ScheduleCRUDUtils {
 
     }
 
-    public static ArrayList<Integer> getScheduleRunJob(int SHID) throws SQLException{
+    public static Map<String,ArrayList<Integer>> getScheduleRunJob(int SHID) throws SQLException{
 
-        String QuerySQL="SELECT * FROM Schedule_Job_History WHERE `SHID`=? ORDER BY `SortIndex`";
+        String QuerySQL="SELECT JHID,JobID FROM Schedule_Job_History WHERE `SHID`=? ORDER BY `SortIndex`";
         PreparedStatement stat = null;
         ResultSet rs = null;
-        ArrayList<Integer> rtn=new ArrayList<>();
+        ArrayList<Integer> runJob=new ArrayList<>();
+        ArrayList<Integer> runHistoryjob=new ArrayList<>();
         stat=ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
         stat.setInt(1, SHID);
         rs=stat.executeQuery();
         while(rs.next()){
-            rtn.add(rs.getInt("JHId"));
+
+            runHistoryjob.add(rs.getInt("JHID"));
+            runJob.add(rs.getInt("JobID"));
         }
+        Map rtn=new HashMap();
+        rtn.put("runHistoryjob",runHistoryjob);
+        rtn.put("runJob",runJob);
         return rtn;
     }
 
@@ -987,5 +988,6 @@ public class ScheduleCRUDUtils {
         stat.close();
         return flag;
     }
+
 
 }

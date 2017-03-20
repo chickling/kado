@@ -258,7 +258,8 @@
          //     addJson["location_id"] = "0";
          // }
          //Add Storage Setting
-         if($(".checkbox.db").checkbox('is checked')||$(".checkbox.csv").checkbox('is checked')){
+
+         if(($(".checkbox.db").checkbox('is checked')&&$(".checkbox.db").length>0)||$(".checkbox.csv").checkbox('is checked')){
             //clear
             addJson["storage"] = true;
             addJson["filepath"] = "";
@@ -266,8 +267,9 @@
             addJson["insertsql"] = "";
             addJson["location_id"] = "0";
             var stype=0;
-            if($(".checkbox.db").checkbox('is checked')){
-                stype+=4;                
+
+          if($(".checkbox.db").checkbox('is checked')&&$(".checkbox.db").length>0){
+                stype+=4;
                 addJson["location_id"] = $(".dropdown.db.location").dropdown("get value");
                 //Set Value
                 addJson["insertsql"] = $.base64Encode($(".input.insert.sql input").val());
@@ -366,7 +368,8 @@
                         $(".dropdown.location.db .menu").html(itemHtml);
                         $(".db.dropdown").dropdown();
                     }else{
-                        $("#save_to_db").hide();
+
+                        $("#save_to_db").remove();
                     }
 
                     loadJobInfo();

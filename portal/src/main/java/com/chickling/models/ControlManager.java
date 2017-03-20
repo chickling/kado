@@ -46,7 +46,8 @@ public class ControlManager {
         PreparedStatement stat = null;
         ResultSet rs = null;
 
-        String sql = "SELECT * FROM (SELECT *,jh.JobOwner UID FROM Job_History jh,Job_Log jl WHERE jl.JLID=jh.JobLog AND jh.JobType=0 ORDER BY jh.JobStartTime DESC limit ?) jhr,User u WHERE jhr.JobOwner =u.UID;";
+
+        String sql = "SELECT * FROM (SELECT *,jh.JobOwner UID FROM (SELECT * FROM Job_History WHERE JobType=0 ORDER BY JHID DESC limit ?) jh,Job_Log jl WHERE jl.JLID=jh.JobLog) jhr,User u WHERE jhr.JobOwner =u.UID;";
         try {
             stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
 

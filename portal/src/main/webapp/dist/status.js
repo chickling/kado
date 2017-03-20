@@ -225,8 +225,11 @@ function showJobHistory(jhid) {
                     $(".runingtimes label").html(JData["runingtime"]);
                     $(".user label").html(JData["user"]);
                     $(".storage label").html(JData["storage"]);
-                    $(".save_type").html(getStorageLabelBySaveType(JData["save_type"]));
-                    $(".location_id label").html(JData["location_name"]);
+
+                    var saveType=getStorageLabelBySaveType(JData["save_type"]);
+                    $(".save_type").html(saveType);
+                    if(saveType.indexOf("Database")>0)
+                        $(".location_id label").html(JData["location_name"]);
                     $(".log label").html(JData["log"]);
                     $(".presto_id").html(getPrestoButton(JData["presto_id"],JData["presto_url"]));
                     $(".ResultCount label").html(JData["ResultCount"]);
