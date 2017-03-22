@@ -325,13 +325,6 @@
                 <include>views/**</include>
               </includes>
             </resource>
-            <resource>
-              <directory>${project.basedir}/plugin</directory>
-              <targetPath>WEB-INF/classes</targetPath>
-              <includes>
-                <include>**</include>
-              </includes>
-            </resource>
           </webResources>
         </configuration>
       </plugin>
