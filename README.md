@@ -5,7 +5,7 @@
   src="https://github.com/chickling/kado/raw/master/doc/images/kado_start.png" 
 />
 
-see the User Manual  for Kado
+More information in the [Wiki](https://github.com/chickling/kado/wiki) 
 
 ## Overview
 <div style="text-align:center">
@@ -51,4 +51,4 @@ In the Kado section, ensure the Project language level is set to 8.0 as Kado mak
 
 
 ## Docker image
-Comming Soon
+[Docker Hub](https://hub.docker.com/r/chickling/kado/)
