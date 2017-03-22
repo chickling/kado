@@ -89,10 +89,7 @@ public class DBmaintenance {
             log.error("Schedule maintenance is failed cause: "+e.toString());
         }
     }
-    public void testMaintainLog(){
-        log.info("------------- in maintail log");
 
-    }
     public void  deleteTempTableOverTTL(){
         String deleteTempTableSql="select JLID,JobOutput from Job_Log where Valid=0";
         PreparedStatement stat = null;
@@ -163,7 +160,6 @@ public class DBmaintenance {
 
                     Path path= Paths.get(logfile.toURI());
                     BasicFileAttributes attr= Files.readAttributes(path,BasicFileAttributes.class);
-//                        DateTime fileTime=new DateTime(attr.creationTime().toMillis());
                     if (attr.creationTime().toMillis()< now.plusDays(Integer.parseInt(csvTTL)).getMillis()){
                         if (logfile.delete()){
                             deleteCount++;
@@ -196,7 +192,6 @@ public class DBmaintenance {
                     if (logfile.getName().contains("joblog") || logfile.getName().contains("ScheduleHistoryLog")){
                         Path path= Paths.get(logfile.toURI());
                         BasicFileAttributes attr= Files.readAttributes(path,BasicFileAttributes.class);
-//                        DateTime fileTime=new DateTime(attr.creationTime().toMillis());
                         if (attr.creationTime().toMillis()< now.plusDays(Integer.parseInt(logTTL)).getMillis()){
                             if (logfile.delete()){
                                 deleteCount++;
@@ -253,7 +248,6 @@ public class DBmaintenance {
         FsShell fsShell=new FsShell(fsFile.getFs().getConf());
         try {
             fsShell.run(new String[]{"-copyFromLocal","-f",sqliteDBpath,hdfsPath});
-//            fsFile.copyFileLocalToFs(sqliteDBpath,hdfsPath);
             log.info("====== Backup SQLite DB  to HDFS Finish  ====== ");
         } catch (Exception e) {
             log.error("====== Backup SQLite DB  to HDFS ERROR !!! ====== ");
@@ -266,7 +260,6 @@ public class DBmaintenance {
     public void jobResultMaintain(){
         String JobResultMaintain="UPDATE `main`.`Job_Log` SET `Valid`= 0 WHERE `CRTIME`<?";
         PreparedStatement stat = null;
-        ResultSet rs = null;
         String period= Init.getExpiration();
         log.info("TTL : "+period +" days  , delete day before "+TimeUtil.beforeDate(period));
         try {

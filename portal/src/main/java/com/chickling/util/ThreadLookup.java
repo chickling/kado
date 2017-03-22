@@ -5,7 +5,6 @@ import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.lookup.StrLookup;
 
-import java.util.Objects;
 
 /**
  * Created by gl08 on 2017/2/7.

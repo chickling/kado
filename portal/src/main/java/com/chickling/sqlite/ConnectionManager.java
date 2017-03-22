@@ -48,13 +48,9 @@ public class ConnectionManager {
     }
 
     public synchronized static ConnectionManager getInstance() {
-        //synchronized (ConnectionManager.class) {
-
-            if (null == dbtm) {
-                dbtm = new ConnectionManager();
-                dbtm.init();
-            }
-        //}
+        if (null == dbtm) {
+            dbtm = new ConnectionManager();
+        }
         return dbtm;
     }
     public synchronized  Connection getConnection() throws SQLException
@@ -73,6 +69,5 @@ public class ConnectionManager {
         if (!con.isClosed()) {
             con.close();
         }
-
     }
 }

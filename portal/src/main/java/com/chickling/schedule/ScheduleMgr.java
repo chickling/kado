@@ -66,7 +66,6 @@ public class ScheduleMgr {
             Type type = new TypeToken<Map>() {
             }.getType();
             Gson gson = new Gson();
-            int schedulerunid = 0;
             int scheduleOwner = 0;
             String scheduleInfo = "";
             String currentTime = TimeUtil.getCurrentTime();

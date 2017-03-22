@@ -3,7 +3,6 @@ package com.chickling.controllers;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
-import com.chickling.boot.Init;
 import com.chickling.models.AccountManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

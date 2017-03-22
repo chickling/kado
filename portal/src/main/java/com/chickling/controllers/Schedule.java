@@ -38,9 +38,6 @@ public class Schedule {
         Type type = new TypeToken<Map>() {}.getType();
         Gson gson = new Gson();
         try {
-
-
-
             Map datas = gson.fromJson(json, type);
             return Response.ok(ScheduleCRUDUtils.addSchedule(datas, token)).build();
         }catch (JsonSyntaxException e){
@@ -73,9 +70,7 @@ public class Schedule {
                               @HeaderParam("AUTHORIZATION") String token){
         Type type = new TypeToken<Map>() {}.getType();
         Gson gson = new Gson();
-
         try {
-
             Map datas = gson.fromJson(json, type);
             return Response.ok(ScheduleCRUDUtils.updateSchedule(datas, scheduleId, token)).build();
         }catch (JsonSyntaxException e){
@@ -88,8 +83,6 @@ public class Schedule {
             log.warn(ExceptionUtils.getStackTrace(e));
             return Response.ok(MessageFactory.rtnJobMessage("error", "", "Json Class Cast Exception", "")).build();
         }
-
-
     }
 
     /**
@@ -155,7 +148,6 @@ public class Schedule {
     @Path("/manage/list/")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getScheduleList(@HeaderParam("AUTHORIZATION") String token) {
-
         try {
             return Response.ok(ScheduleCRUDUtils.getScheduleList(token)).build();
         }catch (NullPointerException e){
@@ -165,7 +157,6 @@ public class Schedule {
             log.warn(ExceptionUtils.getStackTrace(e));
             return Response.ok(MessageFactory.rtnJobMessage("error", "", "Json Class Cast Exception", "")).build();
         }
-
     }
 
     /**
@@ -188,9 +179,7 @@ public class Schedule {
         }catch (NullPointerException e){
             log.warn(ExceptionUtils.getStackTrace(e));
             return Response.ok(MessageFactory.rtnJobMessage("error", "", "value can not be null", "")).build();
-        }
-
-        catch (ClassCastException e){
+        }catch (ClassCastException e){
             return Response.ok(MessageFactory.rtnJobMessage("error", "", "Json Class Cast Exception", "")).build();
         }
     }
@@ -262,7 +251,6 @@ public class Schedule {
     @Path("/manage/run/history/range/{scheduleid}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getScheduleHistoryList(@PathParam("scheduleid")String scheduleId,@HeaderParam("AUTHORIZATION") String token){
-
         try {
             return Response.ok(ScheduleCRUDUtils.getScheduleHistoryList("","",scheduleId, token)).build();
         }catch (JsonSyntaxException e){
@@ -275,8 +263,6 @@ public class Schedule {
             log.warn(ExceptionUtils.getStackTrace(e));
             return Response.ok(MessageFactory.rtnJobMessage("error", "",  e.getMessage(), "")).build();
         }
-
-
     }
 
 }

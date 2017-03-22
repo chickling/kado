@@ -287,23 +287,4 @@ public class PrestoGrammarUtil {
 		return result;
 	}
 
-//	public static void main(String[]args) throws JSONException {
-//		Map<String,String> conditionMap = new HashMap<String,String>();
-//		conditionMap.put("{ty}", "1");
-//		System.out.println(parseConst("$p_DT-1$", conditionMap));
-////		System.out.println(parseConst("$ym_d-1$",conditionMap));
-//
-//		JSONObject result= (JSONObject) parseConst("$between last 5 and {ty} hour$   $last {ty} hour$ ", conditionMap).get("constConditions");
-//		Iterator keys=result.keys();
-//		while (keys.hasNext()){
-//			String key= (String) keys.next();
-//			System.out.println("Key= "+key+ " replace value= "+result.getString(key));
-//		}
-//// System.out.println(parseConst("$between last 5 and {ty} hour$", conditionMap));
-//		System.out.println(parseConst("$last {ty} hour$", conditionMap));
-//		System.out.println(parseConst("$last 24 hour$", conditionMap));
-//		System.out.println(parseConst("$last 48 hour$", conditionMap));
-//		System.out.println(parseConst("$last 24 hour from 2012-03-12 10:00$",conditionMap));
-//
-//	}
 }

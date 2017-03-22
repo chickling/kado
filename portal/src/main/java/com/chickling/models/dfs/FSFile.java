@@ -30,7 +30,6 @@ public abstract class FSFile {
 
 	protected static Configuration conf = null;
 	private static String HWI_PATH;
-	public static final String UDF_SQL_PATH = "./sqls";
 	public static final String HWI_QUERY_PATH = "hwi.query.path";
 	public static final String HWI_LOCAL_PATH="local.path";
 	public final static String HWI_API_DOWN_MAXSIZE="hwi.api.down.maxsize";
@@ -143,7 +142,6 @@ public abstract class FSFile {
 
 	public InputStream createInputStream(String filePath) throws IOException {
 		Path file = new Path(HWI_PATH, filePath);
-//		System.out.println(file.toString());
 		if (fs.exists(file)) {
 			return fs.open(file);
 		} else {
@@ -293,9 +291,7 @@ public abstract class FSFile {
 
 	public static void writeJSONFormat(PrintWriter pw, BufferedReader br) throws IOException {
 		JsonObject jsonRoot=new JsonObject();
-//		JSONObject jsonRoot = new JSONObject();
 		JsonArray jsonRows=new JsonArray();
-//		JSONArray jsonRows = new JSONArray();
 
 
 		String line = "";

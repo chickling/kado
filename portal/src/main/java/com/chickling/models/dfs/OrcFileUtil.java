@@ -172,7 +172,6 @@ public  class OrcFileUtil  extends OrcFile{
         } catch (IOException e) {
             log.error(e);
         }
-//        FSFile.close();
         if(baos.size()==0)
             return new ByteArrayInputStream(new byte[]{});
         else
@@ -218,7 +217,6 @@ public  class OrcFileUtil  extends OrcFile{
         List<OrcType> types= orcReader.getFooter().getTypes();
 
         Map<Integer, Type> columnTypes =null;
-//            types.get(0).getFieldNames()
 
         LinkedHashMap <String , String > cols=new LinkedHashMap<>();
         LinkedHashMap <Integer , Type > colstype=new LinkedHashMap<>();
@@ -330,7 +328,6 @@ public  class OrcFileUtil  extends OrcFile{
         List<OrcType> types= orcReader.getFooter().getTypes();
 
         Map<Integer, Type> columnTypes =null;
-//            types.get(0).getFieldNames()
 
         LinkedHashMap <String , String > cols=new LinkedHashMap<>();
         LinkedHashMap <Integer , Type > colstype=new LinkedHashMap<>();

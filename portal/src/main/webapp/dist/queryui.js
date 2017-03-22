@@ -138,7 +138,8 @@ function showSchema() {
                             loadSampleData();
                         });
                         $(".button.insert").click(function() {
-                            insertText(" " + $(this).parent().parent().children("td").eq(0).html());
+
+                            insertText(" " + $(this).parent().parent().children("td").eq(1).html());
                         });
                         $('.item.schema').click(function() {
                             insertText(" " + $(this).children("b").eq(0).html());
