@@ -465,12 +465,11 @@ public class ControlManager {
      */
     public String getLogFile(String filepath) {
         if (!filepath.equals("")) {
-            FSFile fsFile = FSFile.newInstance(FSFile.FSType.HDFS);
-//            System.out.println(fsFile.getFs().getConf().toString());
-//            System.out.println(filepath);
+            File localFile=new File(filepath);
+//            FSFile fsFile = FSFile.newInstance(FSFile.FSType.LocalFs);
             String logMessage = "";
             try {
-                InputStreamReader inReader = new InputStreamReader(fsFile.createInputStream(filepath));
+                InputStreamReader inReader = new InputStreamReader(new FileInputStream(localFile));
                 BufferedReader br = new BufferedReader(inReader);
                 while (br.ready()) {
                     String tmp = br.readLine();
@@ -506,9 +505,9 @@ public class ControlManager {
         while (rs.next()){
             logOutput=rs.getString("JobLogfile");
         }
-        if(!logOutput.equals("")){
-            logOutput=logOutput+logOutput.substring(logOutput.lastIndexOf("/"),logOutput.length())+".log";
-        }
+//        if(!logOutput.equals("")){
+//            logOutput=logOutput+logOutput.substring(logOutput.lastIndexOf("/"),logOutput.length())+".log";
+//        }
         return logOutput;
     }
 
@@ -518,6 +517,6 @@ public class ControlManager {
      * @return [log file path]
      */
     public String getScheduleLogPath(int shid){
-        return YamlLoader.instance.getLogpath()+"/Schedule/ScheduleHistoryLog_"+shid;
+        return YamlLoader.instance.getLogpath()+Init.getFileseparator()+"ScheduleHistoryLog_"+shid+".log";
     }
 }

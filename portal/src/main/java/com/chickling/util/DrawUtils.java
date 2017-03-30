@@ -44,7 +44,7 @@ public class DrawUtils {
         }
         query=selectTemplate+"from presto_temp."+table+ " limit "+ limit;
         PrestoUtil pu=new PrestoUtil();
-        String rtn=pu.post(query,0,null);
+        String rtn=pu.post(query,0);
 
         return rtn;
     }
@@ -132,7 +132,7 @@ public class DrawUtils {
         }
         query=selectTemplate+"from presto_temp."+table+" order by "+ orderby+ " "+orderOption+ " limit "+ limit;
         PrestoUtil pu=new PrestoUtil();
-        String rtn=pu.post(query,0,null);
+        String rtn=pu.post(query,0);
 
         return rtn;
     }

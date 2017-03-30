@@ -34,7 +34,7 @@ public class Presto {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getTableList(@Context ServletContext context,@HeaderParam("AUTHORIZATION") String token){
         PrestoUtil prestoUtil=new PrestoUtil();
-        String    responseStr=prestoUtil.post("SELECT * FROM information_schema.tables where table_schema<> 'presto_temp'", PrestoContent.QUERY_UI,"ec");
+        String    responseStr=prestoUtil.post("SELECT * FROM information_schema.tables where table_schema<> 'presto_temp'", PrestoContent.QUERY_UI);
         if (Strings.isNullOrEmpty(responseStr)){
             log.error("get Presto Table List Error:");
             log.error(prestoUtil.getException());
@@ -98,7 +98,7 @@ public class Presto {
                     col.put("type", data.get(1));
                     boolean partition=false;
                     if(data.size()>2) {
-                        if (data.get(2).equals("Partition Key"))
+                        if (data.get(2).equals("partition key"))
                             partition = true;
                     }
 
@@ -190,15 +190,16 @@ public class Presto {
             @HeaderParam("AUTHORIZATION")String token){
         PrestoUtil prestoUtil=new PrestoUtil();
         String  responseStr=prestoUtil.post("SHOW PARTITIONS FROM " + tablename, PrestoContent.QUERY_UI);
+        HashMap<String, Object> responseMap = new HashMap<>();
+        responseMap.put("status", "error");
         if (Strings.isNullOrEmpty(responseStr)){
             log.error("get Presto Table Partitions Error:");
             log.error(prestoUtil.getException());
-            return Response.ok(MessageFactory.message("error", "get Presto Table Partitions Error")).build();
+            responseMap.put("partition", new ArrayList<>());
+            responseMap.put("list", new ArrayList<>());
+            responseMap.put("status", "success");
         }else {
             HashMap response = gson.fromJson(responseStr, HashMap.class);
-            HashMap<String, Object> responseMap = new HashMap<>();
-
-            responseMap.put("status", "error");
             responseMap.put("partition", "");
             responseMap.put("list", "");
             if (!Strings.isNullOrEmpty(responseStr)) {
@@ -224,8 +225,9 @@ public class Presto {
                 responseMap.put("status", "success");
             }
             responseMap.put("time", TimeUtil.toString(DateTime.now()));
-            return Response.ok(gson.toJson(responseMap)).build();
+
         }
+        return Response.ok(gson.toJson(responseMap)).build();
     }
 
 

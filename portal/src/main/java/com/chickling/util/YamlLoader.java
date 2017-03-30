@@ -35,7 +35,8 @@ public class YamlLoader {
 	private  String sqliteLOCALpath="";
 	private String wrtierinjection="";
 	private String downloadToken="";
-
+	private String saveLogToHDFS="";
+	private String presto_hdfs_user="";
 	static {
 		loadYaml();
 	}
@@ -188,6 +189,22 @@ public class YamlLoader {
 
 	public void setDownloadToken(String downloadToken) {
 		this.downloadToken = downloadToken;
+	}
+
+	public String getSaveLogToHDFS() {
+		return saveLogToHDFS;
+	}
+
+	public void setSaveLogToHDFS(String saveLogToHDFS) {
+		this.saveLogToHDFS = saveLogToHDFS;
+	}
+
+	public String getPresto_hdfs_user() {
+		return presto_hdfs_user;
+	}
+
+	public void setPresto_hdfs_user(String presto_hdfs_user) {
+		this.presto_hdfs_user = presto_hdfs_user;
 	}
 
 	@Override

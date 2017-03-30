@@ -27,6 +27,10 @@ public class PrestoContent {
     public final static Long JOB_STATUS_INTERVAL = 1000L;
     public final static Long JOB_START_WAIT_TIME = 1000L;
 
+    public final static Long POST_STATUS_WAIT_TIME = 500L;
+    public final static Long POST_START_WAIT_TIME = 1000L;
+
+
     public final static Integer REALTIME_QUERY_LIMIT = 1000;
 
     public final static Long JOB_IDLE_TIME = 2 * 60 * 60 * 1000L;  // 2HR idle

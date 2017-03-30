@@ -3,6 +3,8 @@ package com.chickling.util;
 import com.google.common.base.Strings;
 import com.chickling.boot.Init;
 import com.chickling.models.job.PrestoContent;
+import com.google.gson.Gson;
+import com.google.gson.internal.LinkedTreeMap;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.io.BufferedReader;
@@ -11,6 +13,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.*;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by gl08 on 2015/12/3.
@@ -20,7 +25,9 @@ public class PrestoUtil {
     private int RETRY_COUNT=3;
     private long RECONNECT_TIME=500;
     private boolean success=false;
+    private Gson gson=new Gson();
     private StringBuilder exception;
+
     public PrestoUtil() {
         this.exception=new StringBuilder();
     }
@@ -63,7 +70,49 @@ public class PrestoUtil {
     }
 
     public  String post(String SQL,Integer jobType,String... schema) {
-        return doHttpRequest(SQL, Init.getPrestoURL()+"/v1/execute","POST",jobType,schema);
+        String result = "";
+        String temp="";
+        ArrayList tempdata=new ArrayList();
+        AtomicInteger page=new AtomicInteger(1);
+        boolean postRunning=true;
+        String jobstatus="";
+        // send async post
+        try {
+            temp =postStatement(SQL, jobType, Init.getDatabase());
+            Thread.sleep(PrestoContent.POST_START_WAIT_TIME);
+
+            // get response
+            HashMap queryMap= gson.fromJson(temp, HashMap.class);
+            String prestoid = ((String) queryMap.get("id"));
+
+            do {
+                temp = getStatement(prestoid, String.valueOf(page), jobType);
+                queryMap = gson.fromJson(temp, HashMap.class);
+                if (!Strings.isNullOrEmpty(temp)){
+                    jobstatus= (String) ((LinkedTreeMap)queryMap.get("stats")).get("state");
+                    if ("FINISHED".equals(jobstatus)) {
+                        postRunning=false;
+                    }
+                    if (queryMap.containsKey("error") || "FAILED".equals(jobstatus)) {
+                        delete(prestoid, jobType);
+                        postRunning=false;
+                    }
+                    if (queryMap.containsKey("nextUri")){
+                        page.getAndIncrement();
+                    }
+                    if (queryMap.containsKey("data"))
+                        tempdata.addAll((ArrayList)queryMap.get("data"));
+                }else
+                    return "";
+                Thread.sleep(PrestoContent.POST_STATUS_WAIT_TIME);
+            }while (postRunning);
+            System.out.println(tempdata.size());
+            queryMap.put("data",tempdata);
+            result=gson.toJson(queryMap);
+        } catch (InterruptedException e) {
+            /*do nothing*/
+        }
+        return result;
     }
 
     public  String postStatement(String SQL,Integer jobType,String... schema) {
@@ -108,14 +157,14 @@ public class PrestoUtil {
         try {
             conn.setRequestMethod(method);
         } catch (ProtocolException e) {
-                setException("URL Parse Exception " + ExceptionUtils.getStackTrace(e));
+            setException("URL Parse Exception " + ExceptionUtils.getStackTrace(e));
 
         }
         conn.setDoInput(true);
         conn.setDoOutput(true);
         conn.setRequestProperty("Content-Type", "application/json");
         conn.setRequestProperty("Content-Length", String.valueOf(postSQL));
-        conn.setRequestProperty("x-presto-user", "presto");
+        conn.setRequestProperty("x-presto-user", Init.getPresto_user());
         conn.setRequestProperty("x-presto-catalog", Init.getPrestoCatalog());
 
         if (PrestoContent.QUERY_UI.equals(jobType))

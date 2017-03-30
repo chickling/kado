@@ -37,6 +37,9 @@ public class Init implements ServletContextListener{
     private static String csvtmphdfsPath="";
     private static String csvlocalPath="";
     private static String deleteLogTTL="";
+    private static boolean savelogtohdfs=false;
+    private static String presto_user="";
+    private  static String fileseparator=File.separator;
     private static Map<String,ResultWriter> injectionMap;
 
     public static String getDeleteLogTTL() {
@@ -135,6 +138,29 @@ public class Init implements ServletContextListener{
     public static void setPrestoCatalog(String prestoCatalog){Init.prestoCatalog=prestoCatalog;}
     public static String getPrestoCatalog(){return prestoCatalog;}
 
+    public static boolean isSavelogtohdfs() {
+        return savelogtohdfs;
+    }
+
+    public static void setSavelogtohdfs(boolean savelogtohdfs) {
+        Init.savelogtohdfs = savelogtohdfs;
+    }
+
+    public static String getFileseparator() {
+        return fileseparator;
+    }
+
+    public static void setFileseparator(String fileseparator) {
+        Init.fileseparator = fileseparator;
+    }
+
+    public static String getPresto_user() {
+        return presto_user;
+    }
+
+    public static void setPresto_user(String presto_user) {
+        Init.presto_user = presto_user;
+    }
 
     public Init() {
         ThreadContext.put("logFileName","init");
@@ -161,6 +187,7 @@ public class Init implements ServletContextListener{
         String csvlocalpath=YamlLoader.instance.getCsvlocalPath();
         String deleteLogTTL=YamlLoader.instance.getDeleteLogTTL();
         String writerinjection=YamlLoader.instance.getWrtierinjection();
+        String presto_user=YamlLoader.instance.getPresto_hdfs_user();
 
         try {
 
@@ -234,6 +261,15 @@ public class Init implements ServletContextListener{
                 sce.getServletContext().setAttribute("deleteLogTTL", "30");
                 throw new Exception("csvlocalpath set Error , please check your config.yaml");
             }
+            if (!Strings.isNullOrEmpty(presto_user)) {
+                sce.getServletContext().setAttribute("presto_user", presto_user);
+            } else {
+                sce.getServletContext().setAttribute("presto_user", "root");
+//                throw new Exception("presto_user set Error , please check your config.yaml");
+            }
+
+            if ("true".equals(YamlLoader.instance.getSaveLogToHDFS()))
+               setSavelogtohdfs(true);
 
             setCsvlocalPath(csvlocalpath);
             setHivepath(hivepath);
@@ -246,6 +282,7 @@ public class Init implements ServletContextListener{
             setDeleteLogTTL(deleteLogTTL);
             setPrestoCatalog(prestoCatalog);
             setCsvtmphdfsPath(csvtmphdfsPath);
+            setPresto_user(presto_user);
 
             String sqliteSite="";
             if ( !Strings.isNullOrEmpty(System.getenv("sqlitedb")) ){
@@ -260,7 +297,7 @@ public class Init implements ServletContextListener{
                 fsShell.run(new String[]{"-copyToLocal",sqliteSite,YamlLoader.instance.getSqliteLOCALpath()});
                 log.info("Finish load HDFS File from "+sqliteSite+" to "+YamlLoader.instance.getSqliteLOCALpath());
             }
-            checkHDFSPath();
+//            checkHDFSPath();
             DBmaintenance dbm=new DBmaintenance();
             dbm.maintain();
             ScheduleMgr smgr=new ScheduleMgr();
