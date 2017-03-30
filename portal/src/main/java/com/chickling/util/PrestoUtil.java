@@ -13,14 +13,18 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.*;
 import java.nio.charset.Charset;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by gl08 on 2015/12/3.
  */
 public class PrestoUtil {
+
 
     private int RETRY_COUNT=3;
     private long RECONNECT_TIME=500;
@@ -231,6 +235,68 @@ public class PrestoUtil {
         }
 
         return sb.toString();
+    }
+
+    public static void main(String[] args) {
+        PrestoUtil util=new PrestoUtil();
+//        String sql="select * from mars.truesight_page_orc_v4 limit 10";
+        String sql="drop table mars.orders";
+        Init.setPrestoCatalog("hive");
+        Init.setPrestoURL("http://10.16.205.110:8889");
+        Init.setPresto_user("root");
+        util.doJdbcRequest(sql,1);
+    }
+
+    private String doJdbcRequest(String jdbcSQL ,int jobType){
+        String result="";
+        Connection  conn=null;
+        Statement state=null;
+
+
+        String catalog=Init.getPrestoCatalog();
+        String prstoUrl=Init.getPrestoURL();
+
+        Properties prop=new Properties();
+        prop.setProperty("user",Init.getPresto_user());
+//        prop.setProperty("source","JDBC");
+
+
+        String jdbcUrl="jdbc:"+prstoUrl.replaceFirst("http","presto")+"/"+catalog;
+        try {
+            Class.forName("com.facebook.presto.jdbc.PrestoDriver");
+            conn = DriverManager.getConnection(jdbcUrl, prop);
+            List<String> columns = new ArrayList<>();
+            state = conn.createStatement();
+
+            if (jdbcSQL.toLowerCase().contains("drop table"))
+                state.execute(jdbcSQL);
+            else {
+                ResultSet resultSet = state.executeQuery(jdbcSQL);
+                int count = 0;
+                boolean flag = true;
+                while (resultSet.next()) {
+                    if (0 == count) {
+                        count = resultSet.getMetaData().getColumnCount();
+                    }
+                    if (flag) {
+                        for (int i = 1; i < count; i++) {
+                            System.out.print(resultSet.getMetaData().getColumnName(i) + " | ");
+                        }
+                    }
+                    for (int i = 1; i <= count; i++) {
+                        System.out.print(resultSet.getString(i) + "|");
+                    }
+                    flag = false;
+                    System.out.println("=====================");
+                }
+                resultSet.close();
+                state.close();
+                conn.close();
+            }
+        } catch(ClassNotFoundException | SQLException e){
+            e.printStackTrace();
+        }
+        return result;
     }
 
 }
