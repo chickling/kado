@@ -11,4 +11,4 @@ target
 logs
 .sqlite
 .log
-writer
+/writer
