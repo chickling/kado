@@ -381,9 +381,9 @@ function loadQueryStatus() {
                         //htmlTmp += "<tr>";
                         htmlTmp +="<td>" + JData["list"][i]["jobrunid"] + "</td>";
                         if (isBase64(JData["list"][i]["sql"]))
-                            htmlTmp +='<td style="word-break: break-all;">' + $.base64Decode(JData["list"][i]["sql"]) + "</td>";
+                            htmlTmp +='<td class="sqlcontent hidd" style="word-break: break-all;"><p>' + $.base64Decode(JData["list"][i]["sql"]) + "</p></td>";
                         else
-                            htmlTmp +='<td>' + JData["list"][i]["sql"] + "</td>";
+                            htmlTmp +='<td class="sqlcontent hidd"><p>' + JData["list"][i]["sql"] + "</p></td>";
                         var valid='1';
                         if (JData["list"][i]["valid"]!= null)
                             valid=JData["list"][i]["valid"];
@@ -404,6 +404,7 @@ function loadQueryStatus() {
                         updateTableRow($(".ui.celled.table.query tbody"),tableHtml,10);
                     }else{
                         $(".ui.celled.table.query tbody").html(convArrayToHtmlString(tableHtml));
+                        bindDoubleClickSQL();
                     }
                     $(".button.query.stop").unbind("click");
                     $(".button.query.stop").click(function() {
@@ -444,6 +445,7 @@ function loadQueryStatus() {
     });
 }
 function updateTableRow(table,dataRows,count){
+    var flag=false;
     if($(table).children("tr").length==dataRows.length&&dataRows.length==count){
         $(table).children("tr").each(function(key,value){
         var mark='<span style="display: none; width: 0px; height: 0px;" id="transmark"></span>';
@@ -459,16 +461,18 @@ function updateTableRow(table,dataRows,count){
                         return false;
                     }                
                     if($(v).html().replace(mark,"").replace(mark2,"")!=$(cell).eq(i).html()){
-                        console.log($(v).html().replace(mark,"").replace(mark2,"")+"->"+$(cell).eq(i).html());
-                        console.log("UPDATE CELL");
+                        //console.log($(v).html().replace(mark,"").replace(mark2,"")+"->"+$(cell).eq(i).html());
+                        //console.log("UPDATE CELL");
                         $(v).html($(cell).eq(i).html());
+                        flag=true;
                     }
                     flag++;
                 });
 
                 if(flag==0){
-                    console.log("UPDATE LINE");
+                    //console.log("UPDATE LINE");
                     $(value).html(dataRows[key]);
+                    flag=true;
                 }
                     
             }
@@ -476,6 +480,18 @@ function updateTableRow(table,dataRows,count){
             mark2=null;
         });
     }
+    if(flag){
+       bindDoubleClickSQL();
+    }
+}
+function bindDoubleClickSQL(){
+    $(".sqlcontent p").unbind("dblclick");
+        $(".sqlcontent p").dblclick(function(){
+            if($(this).parent().hasClass("hidd"))
+                $(this).parent().removeClass("hidd")
+            else
+                $(this).parent().addClass("hidd");
+        });
 }
 function convArrayToHtmlString(listArr){
     tmpHtml="";
