@@ -347,7 +347,7 @@ public class PrestoUtil {
      * @param rowCount    how many rows will be taken
      * @return
      */
-    private ResultMap readJsonAsResult(String tableName, int start, int rowCount){
+    public ResultMap readJsonAsResult(String tableName, int start, int rowCount){
         ResultMap resultMap=new ResultMap();
         resultMap.setCount(rowCount);
         resultMap.setStart(start);
