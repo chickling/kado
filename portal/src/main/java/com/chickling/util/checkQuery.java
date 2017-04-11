@@ -12,8 +12,8 @@ import java.sql.SQLException;
 /**
  * Created by jw6v on 2017/1/18.
  */
-public class checkQuery {
-    private static Logger log = LogManager.getLogger(checkQuery.class);
+public class CheckQuery {
+    private static Logger log = LogManager.getLogger(CheckQuery.class);
 
 public static boolean recentQuery(int jobID,int period){
     //todo test and check

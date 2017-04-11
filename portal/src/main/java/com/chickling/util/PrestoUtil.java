@@ -403,7 +403,7 @@ public class PrestoUtil {
             this.setException(ExceptionUtils.getStackTrace(e));
             this.setSuccess(false);
         }
-        System.out.println(gson.toJson(resultMap));
+
         return resultMap;
     }
 
