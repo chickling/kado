@@ -92,6 +92,21 @@
       .search.dropdown > .menu{
         width:280px !important;
       }
+    .hidd p::after {
+        background-color: #fff;
+        bottom: 0;
+        content: "...";
+        padding: 0 5px;
+        position: absolute;
+        right: 0;
+    }
+
+    .hidd p {
+        height: 5em;
+        line-height: 1em;
+        overflow: hidden;
+        position: relative;
+    }
 
       </style>
 
