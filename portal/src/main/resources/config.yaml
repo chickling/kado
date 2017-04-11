@@ -1,4 +1,4 @@
-prestoURL: "http://10.16.205.110:8889"
+prestoURL: "http://172.16.157.11:8080"
 database: "presto_temp"
 hivepath: "/user/hive/warehouse"
 logpath: "D:\\0_projects\\Kado\\logs"

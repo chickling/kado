@@ -1,6 +1,7 @@
 package com.chickling.controllers;
 
 
+import com.chickling.bean.result.ResultMap;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
@@ -34,7 +35,13 @@ public class Presto {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getTableList(@Context ServletContext context,@HeaderParam("AUTHORIZATION") String token){
         PrestoUtil prestoUtil=new PrestoUtil();
-        String    responseStr=prestoUtil.post("SELECT * FROM information_schema.tables where table_schema<> 'presto_temp'", PrestoContent.QUERY_UI);
+        String sql="SELECT * FROM information_schema.tables where table_schema<> 'presto_temp'";
+//        String    responseStr=prestoUtil.post(sql, PrestoContent.QUERY_UI);
+
+
+        ResultMap resultMap=prestoUtil.doJdbcRequest(sql);
+        String responseStr= "1111";
+
         if (Strings.isNullOrEmpty(responseStr)){
             log.error("get Presto Table List Error:");
             log.error(prestoUtil.getException());
@@ -44,6 +51,10 @@ public class Presto {
             responseMap.put("status", "error");
             responseMap.put("list", "");
             if (!Strings.isNullOrEmpty(responseStr)) {
+
+                resultMap.getData().forEach( data ->{
+                    ;
+                });
                 HashMap<String, ArrayList> response = gson.fromJson(responseStr, HashMap.class);
                 ArrayList<HashMap> tableList = new ArrayList<>();
                 for (Object data : response.get("data")) {

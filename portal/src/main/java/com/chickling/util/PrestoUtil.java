@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class PrestoUtil {
 
-    private static Logger logger= LogManager.getLogger(PrestoUtil.class);
+//    private static Logger logger= LogManager.getLogger(PrestoUtil.class);
 
     private int RETRY_COUNT=3;
     private long RECONNECT_TIME=500;
@@ -255,10 +255,10 @@ public class PrestoUtil {
         Init.setPresto_user("root");
         Init.setCsvlocalPath("D:\\0_projects\\Kado\\logs");
         PrestoUtil util=new PrestoUtil();
-
+//        util.doJdbcRequest("SELECT * FROM information_schema.tables where table_schema<> 'presto_temp'");
 
 //       util.witerAsJson("presto_temp.temp_586721bafdfd41548f187898fe4f7e72");
-        util.readJsonAsResult("presto_temp.temp_586721bafdfd41548f187898fe4f7e72",5,1);
+        util.readJsonAsResult("presto_temp.temp_dadb1fee570e43b3bcd239aa54b19953 ",0,100);
 //        String csvfile=util.readAsCSV("presto_temp.temp_be3d22c827b240c08ff4b129bfa7d74d","D:\\0_projects\\Kado\\logs\\","test");
 //        ByteArrayInputStream bais=util.readAsStream("presto_temp.temp_586721bafdfd41548f187898fe4f7e72",0,100);
 //
@@ -342,9 +342,9 @@ public class PrestoUtil {
 //        return resultFinalPath;
 //    }
     /**
-     * @param tableName  result table Name ex: " presto_temp.temp_586721bafdfd41548f187898fe4f7e72 "
+     * @param tableName  result table Name,  ex: " presto_temp.temp_586721bafdfd41548f187898fe4f7e72 "
      * @param start            start index
-     * @param rowCount    how many row will take
+     * @param rowCount    how many rows will be taken
      * @return
      */
     private ResultMap readJsonAsResult(String tableName, int start, int rowCount){
@@ -384,7 +384,9 @@ public class PrestoUtil {
                 for (int  index=0; index<ja.get(i).getAsJsonArray().size() ; index++){
                     JsonPrimitive jp= ja.get(i).getAsJsonArray().get(index).getAsJsonPrimitive();
                     // add rowData
-                    if (jp.isString())
+                    if (null==jp)
+                        rowdata.add("");
+                    else if (jp.isString())
                         rowdata.add(jp.getAsString());
                     else if (jp.isNumber())
                         rowdata.add(jp.getAsLong());
@@ -398,7 +400,8 @@ public class PrestoUtil {
                     break;
             }
         } catch (FileNotFoundException e) {
-            logger.error(ExceptionUtils.getStackTrace(e));
+            this.setException(ExceptionUtils.getStackTrace(e));
+            this.setSuccess(false);
         }
         System.out.println(gson.toJson(resultMap));
         return resultMap;
@@ -447,12 +450,12 @@ public class PrestoUtil {
                     for (int i = 0; i < rsmd.getColumnCount(); i++) {
                         ja.add(rsmd.getColumnName(i + 1));
                         cValue=resultSet.getObject(i+1);
-                        if (cValue instanceof String || cValue instanceof Timestamp)
+                        if (null== cValue || cValue instanceof String || cValue instanceof Timestamp)
                             type.add("string");
                         else if (cValue instanceof Boolean)
                             type.add("boolean");
                         else
-                            type.add("long");
+                            type.add("double");
                     }
                     fw.write("{\"columns\":"+ja.toString()+",");
                     fw.write("\"types\":"+type.toString()+",");
@@ -467,12 +470,14 @@ public class PrestoUtil {
                 for (int i = 0; i < rsmd.getColumnCount(); i++) {
 
                     cValue=resultSet.getObject(i+1);
-                    if (cValue instanceof String || cValue instanceof Timestamp)
+                    if (null==cValue)
+                        ja.add("");
+                    else if (cValue instanceof String || cValue instanceof Timestamp)
                         ja.add(cValue.toString());
                     else if (cValue instanceof Boolean)
                         ja.add(Boolean.valueOf(cValue.toString()));
                     else
-                        ja.add(Long.valueOf(cValue.toString()));
+                        ja.add(Double.valueOf(cValue.toString()));
                 }
                 fw.write(ja.toString());
                 count++;
@@ -488,7 +493,8 @@ public class PrestoUtil {
             conn.close();
 
         }catch (ClassNotFoundException | SQLException | IOException e) {
-            logger.error(ExceptionUtils.getStackTrace(e));
+            this.setException(ExceptionUtils.getStackTrace(e));
+            this.setSuccess(false);
             return false;
         }
         return true;
@@ -556,47 +562,70 @@ public class PrestoUtil {
 //            return  new ByteArrayInputStream(baos.toByteArray());
 //    }
 
-    private String doJdbcRequest(String jdbcSQL ,int jobType){
+    public ResultMap doJdbcRequest(String jdbcSQL){
+        ResultMap resultMap=new ResultMap();
+
+        resultMap.setStart(0);
+
         String result="";
         Connection  conn=null;
         Statement state=null;
         try {
             Class.forName("com.facebook.presto.jdbc.PrestoDriver");
             conn = DriverManager.getConnection(jdbcUrl, prop);
-            List<String> columns = new ArrayList<>();
+//            List<String> columns = new ArrayList<>();
+            ResultSetMetaData rsmd = null;
             state = conn.createStatement();
 //            state.setFetchSize();
             if (jdbcSQL.toLowerCase().contains("drop table"))
                 state.execute(jdbcSQL);
             else {
                 ResultSet resultSet = state.executeQuery(jdbcSQL);
+                rsmd=resultSet.getMetaData();
 
-                int count = 0;
+                int count=rsmd.getColumnCount();
                 boolean flag = true;
+                List<Object> rowData=null;
                 while (resultSet.next()) {
-                    if (0 == count) {
-                        count = resultSet.getMetaData().getColumnCount();
-                    }
+
                     if (flag) {
-                        for (int i = 1; i < count; i++) {
-                            System.out.print(resultSet.getMetaData().getColumnName(i) + " | ");
+                        for (int i = 0; i < count; i++) {
+                            resultMap.getSchema().add(rsmd.getColumnName(i+1));
+                            Object cValue=resultSet.getObject(i+1);
+                            if (null==cValue || cValue instanceof String || cValue instanceof Timestamp)
+                                resultMap.getType().add("string");
+                            else if (cValue instanceof Boolean)
+                                resultMap.getType().add("boolean");
+                            else
+                                resultMap.getType().add("double");
                         }
+                        flag = false;
+
                     }
-                    for (int i = 1; i <= count; i++) {
+                   rowData=new ArrayList<>();
+                    for (int i = 0; i < count; i++) {
                         //todo needs column schema ,
-                        System.out.print(resultSet.getString(i) + "|");
+
+                        if ("string".equalsIgnoreCase(resultMap.getType().get(i)))
+                            rowData.add(resultSet.getString(i+1));
+                        else if ("double".equalsIgnoreCase(resultMap.getType().get(i)))
+                            rowData.add(resultSet.getDouble(i+1));
+                       else
+                           rowData.add(resultSet.getBoolean(i+1));
                     }
-                    flag = false;
-                    System.out.println("=====================");
+                    resultMap.getData().add(rowData);
+//                    System.out.println("=====================");
                 }
                 resultSet.close();
                 state.close();
                 conn.close();
+                resultMap.setCount(resultMap.getData().size());
             }
         } catch(ClassNotFoundException | SQLException e){
-            e.printStackTrace();
+            this.setException(ExceptionUtils.getStackTrace(e));
+            this.setSuccess(false);
         }
-        return result;
+        return resultMap;
     }
 
 }
