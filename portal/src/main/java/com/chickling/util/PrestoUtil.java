@@ -7,9 +7,6 @@ import com.chickling.models.job.PrestoContent;
 import com.google.gson.*;
 import com.google.gson.internal.LinkedTreeMap;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.hadoop.hive.ql.exec.ColumnInfo;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.net.*;
@@ -356,15 +353,19 @@ public class PrestoUtil {
         String filePath=Init.getCsvlocalPath()+File.separator+fileName;
         File jsonFile=new File(filePath);
 
-        // no exist file , create as csv
-        if (!jsonFile.exists())
-            witerAsJson(tableName);
-
-        // starting read result json file
-        JsonParser parser=new JsonParser();
 
         try {
+            // no exist file , create as csv
+            if (!jsonFile.exists()) {
+                witerAsJson(tableName);
+            }
+
             FileReader fr=new FileReader(jsonFile);
+
+            // starting read result json file
+            JsonParser parser=new JsonParser();
+
+
             JsonObject jo= (JsonObject) parser.parse(fr);
 
             // add Column Name
@@ -403,7 +404,7 @@ public class PrestoUtil {
             this.setException(ExceptionUtils.getStackTrace(e));
             this.setSuccess(false);
         }
-        System.out.println(gson.toJson(resultMap));
+//        System.out.println(gson.toJson(resultMap));
         return resultMap;
     }
 
