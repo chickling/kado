@@ -302,14 +302,14 @@ function insertText(text) {
  * @return 
  */
 function loadTableAutoCom() {
-    var jsonUrl = "./presto/table/list";
+
     var rhymeCompleter = {
         getCompletions: function(editor, session, pos, prefix, callback) {
             if (prefix.length === 0) {
                 callback(null, []);
                 return
             }
-            $.getJSON(jsonUrl, function(wordList) {
+            $.getJSON("./presto/table/list", function(wordList) {
                 callback(null, wordList.list.map(function(ea) {
                     return {
                         name: ea.tablename,
@@ -323,7 +323,7 @@ function loadTableAutoCom() {
 
     langTools.addCompleter(rhymeCompleter);
     rhymeCompleter=null;
-    jsonUrl=null;
+
 }
 /**
  * load table schema to AutoComplete Keyword LIST
@@ -332,15 +332,18 @@ function loadTableAutoCom() {
  */
 function loadTableSchemaAutoCom(table) {
     if (table != "" && $.inArray(table, autoCom_table) == -1) {
-        var jsonUrls = "./presto/table/schemas/" + table;
+
+        //var jsonUrls = "./presto/table/schemas/" + table;
         var rhymeCompleters = {
             getCompletions: function(editor, session, pos, prefix, callback) {
                 if (prefix.length === 0) {
                     callback(null, []);
                     return
                 }
-                $.getJSON(jsonUrls, function(wordLists) {
+
+                $.getJSON("./presto/table/schemas/" + table, function(wordLists) {
                     callback(null, wordLists.column.map(function(ea) {
+
                         return {
                             name: ea.column,
                             value: ea.column,
@@ -353,7 +356,7 @@ function loadTableSchemaAutoCom(table) {
         }
         autoCom_table.push(table);
         langTools.addCompleter(rhymeCompleters);
-        jsonUrls=null;
+
         rhymeCompleters=null;
     }
 }
@@ -885,12 +888,15 @@ $(".dropdown.prestotable").dropdown({
         $("#editor").css("z-index", "10");
     },
     onChange: function(value, text) {
+
         if (value != "") {
+
             $(".dropdown.partition").dropdown('clear');
             $('#tableCount').attr("tablename", value);
             showSchema();
             loadPartition();
             loadTableSchemaAutoCom(value);
+
         }
     }
 });

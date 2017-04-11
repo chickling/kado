@@ -278,48 +278,12 @@ public class ControlManager {
                     resultInfo.put("row", resultData.getData().stream().map(item-> {
                         return item.stream().map(value->value.toString()).toArray();
                     }).toArray());
-                    System.out.print(((List)resultInfo.get("row")).size());
+                    return new Gson().toJson(resultInfo);
                 }catch (Exception e){
                     log.error("Get ResultFilePath Error");
-                    log.error(e);
-                    e.printStackTrace();
+                    log.error(ExceptionUtils.getMessage(e));
                     return MessageFactory.message("error", "Get ResultFilePath Error");
                 }
-
-                //Read page from orcfileutil
-                OrcFileUtil orc = OrcFileUtil.newInstance();
-                ByteArrayInputStream stream = null;
-                try {
-                    stream = orc.readORCFiles(getResultFilePath(jhid), OrcFileUtil.TYPE.HDFS, startRow, pageRowCount);
-                } catch (SQLException e) {
-                    log.error("Get ResultFilePath Error");
-                    log.error(e);
-                    return MessageFactory.message("error", "Get ResultFilePath Error");
-                }
-                // Read InputStream by InputStreamReader
-                InputStreamReader inReader = new InputStreamReader(stream);
-                BufferedReader br = new BufferedReader(inReader);
-                List result = new ArrayList<>();
-                int i = 0;
-                try {
-                    while (br.ready()) {
-                        String tmp = br.readLine();
-                        String[] rowArray = tmp.split("\001");
-                        //first line is header
-                        if (i == 0)
-                            resultInfo.put("header", rowArray);
-                        else
-                            result.add(rowArray);
-                        i++;
-                    }
-                } catch (IOException e) {
-                    log.error("Get Page IO Error");
-                    log.error(e);
-                    return MessageFactory.message("error", "Get Page IO Error");
-                }
-                resultInfo.put("row", result);
-                Gson gson = new Gson();
-                return gson.toJson(resultInfo);
             } else {
                 return MessageFactory.message("error", "Page number out of index");
             }
