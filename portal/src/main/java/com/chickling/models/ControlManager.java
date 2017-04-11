@@ -1,5 +1,7 @@
 package com.chickling.models;
 
+import com.chickling.bean.result.ResultMap;
+import com.chickling.util.PrestoUtil;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.chickling.sqlite.ConnectionManager;
@@ -246,6 +248,7 @@ public class ControlManager {
      * @throws SQLException
      */
     public String getResultPage(int jhid,int page,int pageRowCount)  {
+
         Map<String,Object> resultInfo=new LinkedHashMap<>();
         int resultCount= 0;
         try {
@@ -268,6 +271,21 @@ public class ControlManager {
                 resultInfo.put("nowPage", page+1);
                 resultInfo.put("startRow", startRow);
                 resultInfo.put("pageRowCount", pageRowCount);
+                try {
+                    String path=getResultFilePath(jhid);
+                    ResultMap resultData=new PrestoUtil().readJsonAsResult(Init.getDatabase()+"."+path.substring(path.lastIndexOf("/")+1,path.length()),startRow, pageRowCount);
+                    resultInfo.put("header", resultData.getSchema());
+                    resultInfo.put("row", resultData.getData().stream().map(item-> {
+                        return item.stream().map(value->value.toString()).toArray();
+                    }).toArray());
+                    System.out.print(((List)resultInfo.get("row")).size());
+                }catch (Exception e){
+                    log.error("Get ResultFilePath Error");
+                    log.error(e);
+                    e.printStackTrace();
+                    return MessageFactory.message("error", "Get ResultFilePath Error");
+                }
+
                 //Read page from orcfileutil
                 OrcFileUtil orc = OrcFileUtil.newInstance();
                 ByteArrayInputStream stream = null;
