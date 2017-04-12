@@ -102,7 +102,6 @@ public class QueryUI {
         Type type = new TypeToken<Map>() {}.getType();
         Gson gson = new Gson();
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        Future<Boolean> future = null;
         Auth auth = new Auth();
 
         try {
@@ -110,7 +109,7 @@ public class QueryUI {
                 Map datas = gson.fromJson(json, type);
                 String sql = new String(base64.decode((String) datas.get("sql")), "UTF-8");
                 String jobHistoryCatchKey=TimeUtil.getCurrentTime()+":QueryUI:"+sql.hashCode();
-                future = executor.submit(new JobRunner(0, PrestoContent.QUERY_UI, token,jobHistoryCatchKey, sql));
+                executor.submit(new JobRunner(0, PrestoContent.QUERY_UI, token,jobHistoryCatchKey, sql));
                 int waitCount=0;
                 while (waitCount<100){
                     Integer jhid= JobHistoryCatch.getInstance().jobHistoryIDs.get(jobHistoryCatchKey);

@@ -1,5 +1,6 @@
 package com.chickling.util;
 
+import com.chickling.bean.result.ResultMap;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.chickling.sqlite.ConnectionManager;
@@ -44,9 +45,8 @@ public class DrawUtils {
         }
         query=selectTemplate+"from presto_temp."+table+ " limit "+ limit;
         PrestoUtil pu=new PrestoUtil();
-        String rtn=pu.post(query,0);
-
-        return rtn;
+        ResultMap resultMap=new PrestoUtil().doJdbcRequest(query);
+        return new Gson().toJson(resultMap);
     }
 
 
@@ -73,6 +73,7 @@ public class DrawUtils {
             cols.add(y);
         }
         String result=getQueryResult(cols,limit,x_axis,orderOption,table);
+
         if(result.equals("")){
             return MessageFactory.rtnDrawMessage(null,count,"success","");
         }else{
@@ -103,13 +104,11 @@ public class DrawUtils {
 
     public String getResultTable(int JHID) throws SQLException{
         String QuerySQL="Select `JobOutput` from `main`.`Job_Log` JOIN `main`.`Job_History` on `JobLog`=`JLID` where `JHID`=?";
-        // String QuerySQL="Select * from `Job_Log`";
         PreparedStatement stat = null;
         ResultSet rs = null;
         stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
         stat.setInt(1, JHID);
         rs = stat.executeQuery();
-        //rs.getString("JobOutput");
         if(!rs.next()){
             return "";
         }
@@ -131,10 +130,9 @@ public class DrawUtils {
             }
         }
         query=selectTemplate+"from presto_temp."+table+" order by "+ orderby+ " "+orderOption+ " limit "+ limit;
-        PrestoUtil pu=new PrestoUtil();
-        String rtn=pu.post(query,0);
+        ResultMap resultMap=new PrestoUtil().doJdbcRequest(query);
 
-        return rtn;
+        return new Gson().toJson(resultMap);
     }
 
 
@@ -158,13 +156,11 @@ public class DrawUtils {
         int index_x=0;
         Type type = new TypeToken<Map>() {}.getType();
         Map<String,Map> obj = gson.fromJson(queryResult, type);
-        ArrayList<Map> ob=(ArrayList<Map>)obj.get("columns");
 
 
         ArrayList<Map> rtndata=new ArrayList<>();
         ArrayList<String> cols=new ArrayList<>();
-        for(Map m: ob){
-            String col=(String)m.get("name");
+        for(String col: (ArrayList<String>) obj.get("schema")){
             cols.add(col);
         }
 
@@ -178,7 +174,6 @@ public class DrawUtils {
             }
         }
         rtndata.add(m);
-        HashMap<String,ArrayList> result=new HashMap<>();
         return rtndata;
 
     }
@@ -207,13 +202,11 @@ public class DrawUtils {
         int index_x=0;
         Type type = new TypeToken<Map>() {}.getType();
         Map<String,Map> obj = gson.fromJson(queryResult, type);
-        ArrayList<Map> ob=(ArrayList<Map>)obj.get("columns");
         HashMap<String,ArrayList<Map>> rtndata=new HashMap<>();
         ArrayList<String> cols=new ArrayList<>();
         int i=0;
-        for(Map m: ob){
+        for(String col:(ArrayList<String>) obj.get("schema")){
 
-            String col=(String)m.get("name");
             cols.add(col);
             if(y_axis.contains(col)){
                 index_y.add(i);
