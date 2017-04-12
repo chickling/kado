@@ -6,12 +6,17 @@ import com.chickling.boot.Init;
 import com.chickling.models.job.PrestoContent;
 import com.google.gson.*;
 import com.google.gson.internal.LinkedTreeMap;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.io.*;
 import java.net.*;
 import java.nio.charset.Charset;
 import java.sql.*;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -255,7 +260,10 @@ public class PrestoUtil {
 //        util.doJdbcRequest("SELECT * FROM information_schema.tables where table_schema<> 'presto_temp'");
 
 //       util.witerAsJson("presto_temp.temp_586721bafdfd41548f187898fe4f7e72");
-        util.readJsonAsResult("presto_temp.temp_dadb1fee570e43b3bcd239aa54b19953 ",0,100);
+//        util.readJsonAsResult("presto_temp.temp_dadb1fee570e43b3bcd239aa54b19953 ",0,100);
+//        String out="D:\\0_projects\\Kado\\logs\\\\\\\\";
+//        util.writeAsCsV(" presto_temp.temp_b1ad3c34b6084cf185b77e3984034e15",out);
+        String downloadPath=util.downloadCSV("presto_temp.temp_b1ad3c34b6084cf185b77e3984034e15");
 //        String csvfile=util.readAsCSV("presto_temp.temp_be3d22c827b240c08ff4b129bfa7d74d","D:\\0_projects\\Kado\\logs\\","test");
 //        ByteArrayInputStream bais=util.readAsStream("presto_temp.temp_586721bafdfd41548f187898fe4f7e72",0,100);
 //
@@ -271,7 +279,7 @@ public class PrestoUtil {
 //            }
 //
 //        }
-//        int pause=0;
+        int pause=0;
 //        util.doJdbcRequest(sql,1);
     }
 
@@ -341,12 +349,11 @@ public class PrestoUtil {
     /**
      * @param tableName  result table Name,  ex: " presto_temp.temp_586721bafdfd41548f187898fe4f7e72 "
      * @param start            start index
-     * @param rowCount    how many rows will be taken
+     * @param rowCount    how many rows will be taken  , if rowCount==-1 , read All rows
      * @return
      */
     public ResultMap readJsonAsResult(String tableName, int start, int rowCount){
         ResultMap resultMap=new ResultMap();
-        resultMap.setCount(rowCount);
         resultMap.setStart(start);
         // check file
         String fileName=tableName+".json";
@@ -377,7 +384,7 @@ public class PrestoUtil {
                 resultMap.getType().add(column.getAsString());
             });
 
-            int count=1;
+            int count=0;
             JsonArray ja= jo.getAsJsonArray("data");
 
             for (int i=start ;i<ja.size();i++){
@@ -395,11 +402,20 @@ public class PrestoUtil {
                         rowdata.add(jp.getAsBoolean());
                 }
                 resultMap.getData().add(rowdata);
-                if (count<rowCount)
+
+                if (-1==rowCount){
                     count++;
-                else
-                    break;
+                }else{
+                    if (count<rowCount-1)
+                        count++;
+                    else
+                        break;
+                }
             }
+            if (-1==rowCount) {
+                resultMap.setCount(count);
+            }else
+                resultMap.setCount(rowCount);
         } catch (FileNotFoundException e) {
             this.setException(ExceptionUtils.getStackTrace(e));
             this.setSuccess(false);
@@ -411,7 +427,7 @@ public class PrestoUtil {
      * @param table  result table
      * @return
      */
-    private  boolean witerAsJson(String table){
+    public  boolean witerAsJson(String table){
 
         // initial SQL
         Connection  conn=null;
@@ -500,6 +516,58 @@ public class PrestoUtil {
         return true;
     }
 
+    /**
+     *  for download CSV format file ,
+     * @param table     Table Name
+     * @return               The local absolute path of the file output
+     */
+    public  String downloadCSV(String table){
+        return writeAsCSV(table,Init.getCsvlocalPath());
+    }
+
+    /**
+     *  Write Result to CSV format file
+     * @param table          table name
+     * @param outputPath Local custom output path
+     * @return                   The local absolute path of the file output
+     */
+    public String writeAsCSV(String table,String outputPath){
+
+        // Remove the extra separator
+        while (outputPath.lastIndexOf(File.separator)==(outputPath.length()-1)){
+            outputPath=outputPath.substring(0,outputPath.length()-1);
+        }
+
+       String resultPath=outputPath+File.separator+table+"@"+ Instant.now().toEpochMilli() +".csv";
+        ResultMap resultMap=readJsonAsResult(table,0,-1);
+
+        File csvfile =new File(resultPath);
+
+        if (csvfile.exists())
+            csvfile.delete();
+
+        CSVPrinter csvp=null;
+        CSVFormat format=CSVFormat.EXCEL;
+        try {
+            FileWriter fw=new FileWriter(csvfile);
+
+            csvp=new CSVPrinter(fw,format);
+            csvp.printRecord(resultMap.getSchema());
+            for (int i =0 ; i<resultMap.getCount();i++){
+                csvp.printRecord(resultMap.getData().get(i));
+                if (i%batchSize==0)
+                    fw.flush();
+            }
+            fw.flush();
+            fw.close();
+            csvp.close();
+        } catch (IOException e) {
+           this.setSuccess(false);
+           this.setException(ExceptionUtils.getStackTrace(e));
+           return "";
+        }
+        return resultPath;
+    }
 //    private ByteArrayInputStream readAsStream(String table,int start,int batchsize){
 //        ByteArrayOutputStream baos=new ByteArrayOutputStream();
 //
