@@ -4,6 +4,7 @@ import com.amazonaws.util.json.JSONException;
 import com.amazonaws.util.json.JSONObject;
 import com.chickling.bean.job.Job;
 import com.chickling.bean.job.JobLog;
+import com.chickling.bean.result.ResultMap;
 import com.chickling.face.ResultWriter;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
@@ -104,7 +105,8 @@ public class JobRunner   implements Callable<Boolean> {
             //******************************************************************************************
             if (!isAdmin){
                 try {
-                    prestoUtil.post(dropTable, jobType, Init.getDatabase());
+//                    prestoUtil.post(dropTable, jobType, Init.getDatabase());
+                    prestoUtil.doJdbcRequest(dropTable);
                 } catch (Exception e) {
                     log.error("drop table " + tempTableName + " error : " + e);
                     this.exception.append(e.getMessage()).append("\n");
@@ -212,7 +214,8 @@ public class JobRunner   implements Callable<Boolean> {
                 log.error("Insert Job Log  Error  : " + ExceptionUtils.getStackTrace(e));
                 try {
                     prestoUtil.delete(prestoid, jobType);
-                    prestoUtil.post(dropTable, jobType, Init.getDatabase());
+                    prestoUtil.doJdbcRequest(dropTable);
+//                    prestoUtil.post(dropTable, jobType, Init.getDatabase());
                 } catch (Exception e1) {
                     log.error("Delete job "+prestoid + "Error  : " +e1);
                 }
@@ -242,7 +245,8 @@ public class JobRunner   implements Callable<Boolean> {
                 log.error("Insert Job History Error  : "+ ExceptionUtils.getStackTrace(e));
                 try {
                     prestoUtil.delete(prestoid,jobType);
-                    prestoUtil.post(dropTable, jobType, Init.getDatabase());
+                    prestoUtil.doJdbcRequest(dropTable);
+//                    prestoUtil.post(dropTable, jobType, Init.getDatabase());
                 } catch (Exception e1) {
                     log.error("Delete job [ "+prestoid + " ] Error  : " +e1);
                 }
@@ -268,7 +272,8 @@ public class JobRunner   implements Callable<Boolean> {
                         try {
                             // delete presto job, drop temp table , remove jobhistory fom deletejobList
                             prestoUtil.delete(prestoid,jobType);
-                            prestoUtil.post(dropTable, jobType, Init.getDatabase());
+                            prestoUtil.doJdbcRequest(dropTable);
+//                            prestoUtil.post(dropTable, jobType, Init.getDatabase());
                             Init.getDeleteJobList().remove(jobHistoryid);
                             isdelete=true;
                         } catch (Exception e) {
@@ -296,7 +301,8 @@ public class JobRunner   implements Callable<Boolean> {
                         if (queryMap.containsKey("error") || "FAILED".equals(jobstatus)) {
                             log.error("Query Error , Kill this Job !!!!");
                             prestoUtil.delete(prestoid, jobType);
-                            prestoUtil.post(dropTable, jobType, Init.getDatabase());
+                            prestoUtil.doJdbcRequest(dropTable);
+//                            prestoUtil.post(dropTable, jobType, Init.getDatabase());
                             jobHistory.setStatus(PrestoContent.FAILED.toString());
                             isdelete=true;
                             isSuccess=Boolean.FALSE;
@@ -357,13 +363,15 @@ public class JobRunner   implements Callable<Boolean> {
                 if (!sql.toLowerCase().startsWith("drop") && !sql.toLowerCase().startsWith("insert")) {
                     log.info("Finish Presto job , now start row Count");
                     String countStr="select count(*) from "+ tempTableName;
-                    String postCount=prestoUtil.post(countStr, jobType);
-                    if (!Strings.isNullOrEmpty(postCount)) {
-                        HashMap<String, ArrayList<ArrayList<Object>>> tmp = new Gson().fromJson(postCount, HashMap.class);
-                        resultCount = ((Number) tmp.get("data").get(0).get(0)).intValue();
-                    }
+                    ResultMap resultMap=prestoUtil.doJdbcRequest(countStr);
+                    if (resultMap.getCount()>0)
+                        resultCount=resultMap.getCount();
+//                    String postCount=prestoUtil.post(countStr, jobType);
+//                    if (!Strings.isNullOrEmpty(postCount)) {
+//                        HashMap<String, ArrayList<ArrayList<Object>>> tmp = new Gson().fromJson(postCount, HashMap.class);
+//                        resultCount = ((Number) tmp.get("data").get(0).get(0)).intValue();
+//                    }
                     log.info("Result Count is : " + resultCount);
-
                 }else
                     log.info("Is Drop or Insert Job , we don't COUNT this job result");
                 //******************************************************************************************
@@ -399,7 +407,8 @@ public class JobRunner   implements Callable<Boolean> {
                 prestoUtil.delete(prestoid, jobType);
                 if (!prestoUtil.isSuccess())
                     log.error("Delete job "+prestoid + "Error  : " +prestoUtil.getException());
-                prestoUtil.post(dropTable, jobType, Init.getDatabase());
+                prestoUtil.doJdbcRequest(dropTable);
+//                prestoUtil.post(dropTable, jobType, Init.getDatabase());
                 if (!prestoUtil.isSuccess())
                     log.error("Drop Table "+tempTableName + "Error  : " +prestoUtil.getException());
                 isSuccess=Boolean.FALSE;

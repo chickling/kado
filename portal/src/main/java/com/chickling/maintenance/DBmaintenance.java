@@ -113,7 +113,8 @@ public class DBmaintenance {
             PrestoUtil prestoutil=new PrestoUtil();
             for (int i = 0; i < JLID.size() ; i++) {
                 String droptable="DROP TABLE if EXISTS "+Init.getDatabase()+"."+tableList.get(i);
-                prestoutil.post(droptable, PrestoContent.SCHEDULE, Init.getDatabase());
+//                prestoutil.post(droptable, PrestoContent.SCHEDULE, Init.getDatabase());
+                prestoutil.doJdbcRequest(droptable);
                 String JobResultMaintain="UPDATE `main`.`Job_Log` SET `Valid`= 2 WHERE JLID="+JLID.get(i);
                 stat= conn.prepareStatement(JobResultMaintain);
                 stat.execute();
