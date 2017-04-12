@@ -602,16 +602,20 @@ public class PrestoUtil {
                         flag = false;
 
                     }
-                   rowData=new ArrayList<>();
+                    rowData=new ArrayList<>();
                     for (int i = 0; i < count; i++) {
                         //todo needs column schema ,
 
-                        if ("string".equalsIgnoreCase(resultMap.getType().get(i)))
-                            rowData.add(resultSet.getString(i+1));
+                        if ("string".equalsIgnoreCase(resultMap.getType().get(i))){
+                            if (Strings.isNullOrEmpty(resultSet.getString(i+1)))
+                                rowData.add("");
+                            else
+                                rowData.add(resultSet.getString(i+1));
+                        }
                         else if ("double".equalsIgnoreCase(resultMap.getType().get(i)))
                             rowData.add(resultSet.getDouble(i+1));
-                       else
-                           rowData.add(resultSet.getBoolean(i+1));
+                        else
+                            rowData.add(resultSet.getBoolean(i+1));
                     }
                     resultMap.getData().add(rowData);
 //                    System.out.println("=====================");
