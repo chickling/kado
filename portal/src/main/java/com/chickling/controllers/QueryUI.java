@@ -1,5 +1,7 @@
 package com.chickling.controllers;
 
+import com.chickling.boot.Init;
+import com.chickling.util.PrestoUtil;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.chickling.models.Auth;
@@ -213,9 +215,10 @@ public class QueryUI {
                 ControlManager controlManager = new ControlManager();
                 String filePath = "";
                 filePath = controlManager.getResultFilePath(jobrunid);
+                String fileName=controlManager.getFilenameFromPath(filePath);
                 ContentDisposition contentDisposition = ContentDisposition.type("attachment")
-                        .fileName(controlManager.getFilenameFromPath(filePath) + ".csv").creationDate(new Date()).build();
-                return Response.ok(controlManager.getResultFile(controlManager.getResultCSVPath(filePath))).header("Content-Disposition", contentDisposition).build();
+                        .fileName(fileName + ".csv").creationDate(new Date()).build();
+                return Response.ok(controlManager.getResultFile(new PrestoUtil().downloadCSV(Init.getDatabase()+"."+fileName))).header("Content-Disposition", contentDisposition).build();
             } else {
                 log.warn("Get Result File Verify Error");
                 log.warn("JHID->"+jobrunid+";Token->"+token);
