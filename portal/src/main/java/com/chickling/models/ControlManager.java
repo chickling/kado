@@ -220,8 +220,7 @@ public class ControlManager {
             @Override
             public void write(OutputStream os) throws IOException,
                     WebApplicationException {
-                FSFile fsFile=FSFile.newInstance(FSFile.FSType.HDFS);
-                InputStream is = fsFile.createInputStreamWithAbsoultePath(filepath);
+                InputStream is = new FileInputStream(new File(filepath));
                 try {
                     byte[] buffer = new byte[1024];
                     int len = 0;
@@ -436,7 +435,7 @@ public class ControlManager {
      * @return [file name]
      */
     public String getFilenameFromPath(String Path){
-        return Path.substring(Path.lastIndexOf("/"),Path.length());
+        return Path.substring(Path.lastIndexOf("/")+1,Path.length());
     }
 
     /**

@@ -117,12 +117,8 @@
                 addJson["insertsql"] = $.base64Encode($(".input.insert.sql input").val());
             }
             if($(".checkbox.csv").checkbox('is checked')){
-                if($(".checkbox.hdfs").checkbox('is checked')){
-                    stype+=1;
-                }
-                if($(".checkbox.local").checkbox('is checked')){
-                    stype+=2;
-                }
+
+                stype+=2;
                 //Set Value
                 addJson["filepath"] = $(".input.file.fpath input").val();
                 addJson["filename"] = $(".input.file.fname input").val();
@@ -200,14 +196,6 @@
          if ($(".input.file.fname input").val() == "") {
              message += "File Name can not be empty \n";
              $(".input.file.fname").addClass("error");
-         }
-         if ($(".input.file.fpath input").val() == ""&&$('.file.segment.hdfs').checkbox("is checked")) {
-             message += "File Path can not be empty \n";
-             $(".input.file.fpath").addClass("error");
-         }
-         if(!$('.file.segment.hdfs').checkbox("is checked")&&!$('.file.segment.local').checkbox("is checked")) {
-            message += "Please select at least one csv Location (HDFS or Local) \n";
-             $(".file.segment").addClass("error");
          }
      }
       if($(".checkbox.db").checkbox("is checked")) {
@@ -419,15 +407,3 @@
       hash = hash.replace(/#/, "");
       return hash;
   }
- $(".file.location.hdfs").click(function(){
-     if($('.file.segment.hdfs').checkbox("is checked")&&!$('.file.segment.local').checkbox("is checked")) {
-         //$('.file.segment.hdfs').checkbox("uncheck");
-         $('.file.segment.local').checkbox("check");
-         }
-  });
- $(".file.location.local").click(function(){
-     if(!$('.file.segment.hdfs').checkbox("is checked")&&$('.file.segment.local').checkbox("is checked")){
-             //$('.file.segment.local').checkbox("uncheck");
-         $('.file.segment.hdfs').checkbox("check");
-    }
-  });

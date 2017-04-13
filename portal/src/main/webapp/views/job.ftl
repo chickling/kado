@@ -242,7 +242,7 @@
             <i class="icon disk outline big" style="margin-right: 8px;"></i>
             <div class="ui  checkbox csv storage">
               <input name="storage"  type="checkbox" value="1">
-              <label style="width:180px;">Save CSV File in HDFS or LocalFS</label>
+              <label style="width:180px;">Save CSV File in LocalFS</label>
             </div>
             <div class="ui left icon input file fpath">
               <input placeholder="File Path" type="text" id="labelname">
@@ -255,14 +255,6 @@
                 @{Timestamp}.csv
               </div>
             </div>
-             <div class="ui  checkbox file segment hdfs location" style="padding-top: 10px; padding-bottom: 10px;">
-              <input type="checkbox" tabindex="0" class="hidden" value="1" name="storage_location">
-              <label>HDFS</label>
-          </div>
-          <div class="ui  checkbox file segment local location" style="padding-top: 10px; padding-bottom: 10px;">
-              <input type="checkbox" tabindex="0" class="hidden" value="2" name="storage_location">
-              <label>Local</label>
-          </div>
           <p style="text-align: right;">Local File Output Path:${localpath}</p>
           </div>
           <div style="margin-top:10px;" id="save_to_db">
