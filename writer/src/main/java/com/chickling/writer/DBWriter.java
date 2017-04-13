@@ -31,6 +31,7 @@ public class DBWriter implements ResultWriter {
     private String insertsql;
     private String exception="";
     private int batchSize=500;
+    private String tableName;
     private ArrayList<String> locationList=new ArrayList<>();
 
     {
@@ -54,7 +55,7 @@ public class DBWriter implements ResultWriter {
         this.location_id= (int) map.get("location_id");
         this.resultCount= (int) map.get("resultCount");
         this.insertsql= (String) map.get("insertsql");
-
+        this.tableName= (String) map.get("tableName");
     }
 
     @Override
@@ -69,14 +70,14 @@ public class DBWriter implements ResultWriter {
         log.info("Start Insert Result to SQL Server : [ "+connName+" ]");
         ImportDB importDB = null;
         try {
-            importDB = new ImportDB(new String(Base64.getDecoder().decode(this.insertsql), "UTF-8"), this.jobLog.getJoboutput(),connName, this.resultCount, this.batchSize);
+            importDB = new ImportDB(new String(Base64.getDecoder().decode(this.insertsql), "UTF-8"), tableName,connName, this.batchSize);
             importDB.execute();
             if (!importDB.isSuccess()){
                 log.error("Import to DB  Error!! ");
                 log.error(importDB.getException());
                 this.exception=importDB.getException();
             }
-        } catch (UnsupportedEncodingException | NullPointerException e) {
+        } catch (NullPointerException | UnsupportedEncodingException e ) {
             this.exception= ExceptionUtils.getStackTrace(e);
             return 0;
         }

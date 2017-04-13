@@ -362,14 +362,10 @@ public class JobRunner   implements Callable<Boolean> {
                 //******************************************************************************************
                 if (!sql.toLowerCase().startsWith("drop") && !sql.toLowerCase().startsWith("insert")) {
                     log.info("Finish Presto job , now start row Count");
-                    String countStr="select count(*) from "+ tempTableName;
+                    String countStr="select count(*)  from "+ tempTableName;
                     ResultMap resultMap=prestoUtil.doJdbcRequest(countStr);
                     if (resultMap.getCount()>0)
-                        resultCount=resultMap.getCount();
-//                    String postCount=prestoUtil.post(countStr, jobType);
-//                    if (!Strings.isNullOrEmpty(postCount)) {
-//                        HashMap<String, ArrayList<ArrayList<Object>>> tmp = new Gson().fromJson(postCount, HashMap.class);
-//                        resultCount = ((Number) tmp.get("data").get(0).get(0)).intValue();
+                        resultCount=Integer.parseInt(resultMap.getData().get(0).get(0).toString());
 //                    }
                     log.info("Result Count is : " + resultCount);
                 }else
@@ -392,6 +388,7 @@ public class JobRunner   implements Callable<Boolean> {
                     parameter.put("location_id",job.getLocation_id());
                     parameter.put("insertsql",job.getInsertsql());
                     parameter.put("resultCount",resultCount);
+                    parameter.put("tableName",tempTableName);
                     // start Writer
                     //
                     if(!doWriter(activeWriter,parameter)){
@@ -667,12 +664,12 @@ public class JobRunner   implements Callable<Boolean> {
         int resultCode = 0;
 //            HDFS binary  100
         String name = "";
-        if ("1".equals(activeWriter.get(0))) {
-            name = "com.chickling.models.writer.HdfsWriter";
-            ResultWriter hdfsWriter =Init.getInjectionInstance(name);
-            hdfsWriter.init(parameter);
-            resultCode += (int) hdfsWriter.call();
-        }
+//        if ("1".equals(activeWriter.get(0))) {
+//            name = "com.chickling.models.writer.HdfsWriter";
+//            ResultWriter hdfsWriter =Init.getInjectionInstance(name);
+//            hdfsWriter.init(parameter);
+//            resultCode += (int) hdfsWriter.call();
+//        }
         //LOCAL  binary 010
         //
         if ("1".equals(activeWriter.get(1))) {

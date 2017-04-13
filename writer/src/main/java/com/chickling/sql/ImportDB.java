@@ -1,16 +1,17 @@
 package com.chickling.sql;
 
 
-import com.chickling.face.OrcFile;
+import com.chickling.bean.result.ResultMap;
+import com.chickling.face.PrestoResult;
 import com.newegg.ec.db.DBConnectionManager;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
+import java.util.stream.IntStream;
 
 /**
  * Created by gl08 on 2016/1/6.
@@ -21,9 +22,8 @@ public class ImportDB {
     private int RETRY_COUNT=3;
     private int RETRT_SLEEP=500;
     private String importSQL="";
-    private int importCount=0;
     private int batchSize=SqlContent.MAX_BATCH_ROWS;
-    private String prestoDirpath ="";
+    private String tableName ="";
     private StringBuilder exception=null;
     private boolean success=false;
     private String connName="";
@@ -51,16 +51,18 @@ public class ImportDB {
     public void setBatchSize(int batchSize) {
         this.batchSize = batchSize;
     }
+
+    public ImportDB() {
+    }
+
     /**
      * @param importSQL         import SQL String
-     * @param prestoDirpath               where is the orc file Path  on HDFS  ,
-     * @param importCount      total rows count with this result
+     * @param tableName          result of table
      * @param batchSize            SQL batch execute size
      */
-    public ImportDB(String importSQL , String prestoDirpath , String connName,int importCount , int batchSize)  {
+    public ImportDB(String importSQL , String tableName , String connName, int batchSize)  {
         this.importSQL = importSQL;
-        this.importCount=importCount;
-        this.prestoDirpath =prestoDirpath;
+        this.tableName =tableName;
         this.connName=connName;
         this.batchSize=batchSize;
         this.exception=new StringBuilder();
@@ -74,12 +76,12 @@ public class ImportDB {
         this.exception.append(exception).append("\\n");
     }
 
-    public String getPrestoDirpath() {
-        return prestoDirpath;
+    public String getTableName() {
+        return tableName;
     }
 
-    public void setPrestoDirpath(String prestoDirpath) {
-        this.prestoDirpath = prestoDirpath;
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
     }
 
     public String getImportSQL() {
@@ -90,173 +92,94 @@ public class ImportDB {
         this.importSQL = importSQL;
     }
 
-    public int getImportCount() {
-        return importCount;
-    }
-
-    public void setImportCount(int importCount) {
-        this.importCount = importCount;
-    }
-
     public void execute()  {
 
-        //todo need add Batch Size to execute SQL , done !!
         String sql=getImportSQL();
-        Matcher matcher=SqlContent.SQL_UNION_PATTERN2.matcher(sql);
-        List<String> sqlList=new ArrayList<>();
+        Matcher matcher= null;
+        Matcher matcher2= null;
 
+        if (SqlContent.SQL_UNION_PATTERN2.matcher(sql.toLowerCase()).find())
+            matcher= SqlContent.SQL_UNION_PATTERN2.matcher(sql);
+        if (SqlContent.SQL_UPDATE_PATTEN.matcher(sql.toLowerCase()).find())
+            matcher2= SqlContent.SQL_UPDATE_PATTEN.matcher(sql);
 
-        int process=0;
-        int startRow=0;
         log.info("DB SQL Find Matcher");
-
-        OrcFile orcFile=null;
+        ResultMap resultMap=null;
+        PrestoResult jdbc=null;
         try {
-            Class c = Class.forName("com.chickling.models.dfs.OrcFileUtil");
-            orcFile=(OrcFile) c.newInstance();
+            Class c = Class.forName("com.chickling.util.PrestoUtil");
+            jdbc=(PrestoResult) c.newInstance();
+            resultMap=jdbc.getPrestoResult("select * from "+tableName);
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
             log.error(ExceptionUtils.getStackTrace(e));
         }
-
-        assert orcFile != null;
-
-        if (matcher.find() ) {
-            log.info("Total Row is : "+getImportCount()+" , Batch Size is : "+getBatchSize());
-            while (startRow < getImportCount()) {
-
-                String original = matcher.group(0);
-                String relpace = original.replaceAll("#\\{", "VALUES(").replaceAll("}", ")");
-                List<Integer> fieldIndex = parseFieldsIndex(sql);
-
-                try (
-                        ByteArrayInputStream stream = orcFile.getInputStream(getPrestoDirpath(), startRow, getBatchSize());
-                        InputStreamReader inReader = new InputStreamReader(stream);
-                        BufferedReader br = new BufferedReader(inReader)
-                ){
-                    String line = br.readLine();
-                    //get Column
-                    String[] column = line.split("\t|\001");
-                    String tmpSql = "";
-                    int count=0;
-                    while ((line = br.readLine()) != null) {
-                        String[] values = line.split("\t|\001");
-                        //get original and relplace "#{}" -> "values()"
-                        if (values[0].contains("#"))
-                            continue;
-                        tmpSql = sql.replace(original, relpace);
-                        //replace all $1$ to values
-                        for (Integer index : fieldIndex) {
-                            if (index <= 0 || index > column.length - 1) {
-                                tmpSql = tmpSql.replaceAll("\\$" + index + "\\$", "");
-                            } else {
-                                try {
-                                    tmpSql = tmpSql.replaceAll("\\$" + index + "\\$", values[index]);
-                                }catch (Exception e2){
-                                    log.error(ExceptionUtils.getStackTrace(e2));
-                                }
-                            }
-                        }
-                        //add replace SQL
-                        sqlList.add(tmpSql);
-                        if(count<10)
-                            log.info(tmpSql);
-                        count++;
-                    }
-
-                    // batch Import Data to DB
-                    boolean isBatchSuccess=startImport(sqlList);
-                    if (isBatchSuccess) {
-                        // set Next Batch Start Row
-                        if (sqlList.size() < getBatchSize()) {
-                            // if rows less than batchSize , is last batch  , set startRow to END
-                            log.info("Import to DB Process is : " + 100 + " % ");
-                            log.info("Import to DB Finished !!");
-                            setSuccess(true);
-                            break;
-                        } else {
-                            startRow += getBatchSize();
-                        }
-                        process = ((startRow * 100) / getImportCount());
-                        log.info("Import to DB Process is : " + process + " % ");
-                        sqlList.clear();
-                    }else{
-                        setSuccess(false);
-                        break;
-                    }
-                } catch (IOException e) {
-                    log.error(ExceptionUtils.getStackTrace(e));
-                    break;
-                }
-            }
-        }else if(sql.toLowerCase().contains("update")){
-            log.info("Total Row is : "+getImportCount()+" , Batch Size is : "+getBatchSize());
-            while (startRow < getImportCount()) {
-
-                List<Integer> fieldIndex = parseFieldsIndex(sql);
-                //Create Orc File InputStream
-                try (
-                        ByteArrayInputStream stream =orcFile.getInputStream(getPrestoDirpath(), startRow, getBatchSize());
-                        InputStreamReader inReader = new InputStreamReader(stream);
-                        BufferedReader br = new BufferedReader(inReader)
-                ){
-                    String line = br.readLine();
-                    //get Column
-                    String[] column = line.split("\t|\001");
-                    String tmpSql = "";
-                    int count=0;
-                    while ((line = br.readLine()) != null) {
-                        String[] values = line.split("\t|\001");
-                        //get original and relplace "#{}" -> "values()"
-                        if (values[0].contains("#"))
-                            continue;
-                        tmpSql = sql;
-                        //replace all $1$ to values
-                        for (Integer index : fieldIndex) {
-                            if (index <= 0 || index > column.length - 1) {
-                                tmpSql = tmpSql.replaceAll("\\$" + index + "\\$", "");
-                            } else {
-                                try {
-                                    tmpSql = tmpSql.replaceAll("\\$" + index + "\\$", values[index]);
-                                }catch (Exception e2){
-                                    log.error(ExceptionUtils.getStackTrace(e2));
-                                }
-                            }
-                        }
-                        //add replace SQL
-                        sqlList.add(tmpSql);
-                        if(count<10)
-                            log.info(tmpSql);
-                        count++;
-                    }
-
-                    // batch Import Data to DB
-                    boolean isBatchSuccess=startImport(sqlList);
-                    if (isBatchSuccess) {
-                        // set Next Batch Start Row
-                        if (sqlList.size() < getBatchSize()) {
-//                            startRow = getImportCount();
-                            log.info("Update to DB Process is : " + 100 + " % ");
-                            log.info("Update to DB Finished !!");
-                            setSuccess(true);
-                            break;
-                        } else {
-                            startRow += getBatchSize();
-                        }
-                        process = ((startRow * 100) / getImportCount());
-                        log.info("Update to DB Process is : " + process + " % ");
-                        sqlList.clear();
-                    }else{
-                        setSuccess(false);
-                        break;
-                    }
-                } catch (IOException e) {
-                    log.error(ExceptionUtils.getStackTrace(e));
-                    break;
-                }
-            }
+        assert resultMap != null;
+        int type=0;
+        String original="";
+        if (null != matcher && matcher.find()) {
+            original = matcher.group(0);
+            type=1;
+        } else if (null != matcher2 &&  matcher2.find()){
+            original=matcher2.group(0);
+            type=2;
         }
+        if (type>0) {
+            log.info("Total Row is : "+resultMap.getCount()+" , Batch Size is : "+getBatchSize());
+            List<Integer> fieldIndex = parseFieldsIndex(sql);
+            List<String> sqlList=new ArrayList<>();
+            if ( type==1) {
+                String relpace = original.replaceAll("#\\{", "VALUES(").replaceAll("}", ")");
+                sql = sql.replace(original, relpace);
+            }
+            final  String execSQL=sql;
+            final  ResultMap map=resultMap;
 
+
+            IntStream.range(0,resultMap.getCount()).forEach( dataIndex->{
+                        String tmpSql="";
+                        List<Object>  rowData=map.getData().get(dataIndex);
+                        if (fieldIndex.size()>0) {
+                            for (Integer index : fieldIndex) {
+                                if (index <= 0 || index > map.getCount() - 1)
+                                    tmpSql = execSQL.replaceAll("\\$" + index + "\\$", "");
+                                else {
+                                    try {
+                                        tmpSql = execSQL.replaceAll("\\$" + index + "\\$", rowData.get(index).toString());
+                                    } catch (Exception e2) {
+                                        log.error(ExceptionUtils.getStackTrace(e2));
+                                    }
+                                }
+                            }
+                        }else
+                            tmpSql=execSQL;
+
+                        sqlList.add(tmpSql);
+                        if(dataIndex<10){
+                            log.info(tmpSql);
+                            System.err.println("index is "+dataIndex);
+                        }
+                        if (dataIndex==(map.getCount()-1)){
+                            if (startImport(sqlList)){
+                                log.info("Import to DB Process is : " + 100 + " % ");
+                                log.info("Import to DB Finished !!");
+                                setSuccess(true);
+                            }else
+                                log.info(this::getException);
+                        }else{
+                            if (sqlList.size() > getBatchSize()) {
+                                if (startImport(sqlList)){
+                                    int process=((dataIndex*100)/map.getCount());
+                                    log.info("Import to DB Process is : " + process + " % ");
+                                    sqlList.clear();
+                                }else
+                                    log.info(this::getException);
+                            }
+                        }
+                    }
+            );
+        }
     }
+
 
     public  boolean startImport(List<String> sqlList )  {
         /**
@@ -290,14 +213,39 @@ public class ImportDB {
         return fieldIndex;
     }
     public static void main(String[] args) {
-        String  sql="INSERT INTO [Ecommerce].[dbo].[syn] (item,country,numner,icc,time)  #{'$1$','$2$',$3$,'shoppingcart',50}";
-        String prestoPath="/user/hive/warehouse/temp.db/temp_c5d2d283d9074757a3d23b9eba307374";
-        String connName="Presto";
-        ImportDB importDB=new ImportDB(sql,prestoPath,connName,10,3);
+//        String table="presto_temp.temp_fea6e977b2f14163822927b16f3889a4";
+//        table="presto_temp.temp_c66612e49f414aceaefc442df4ca811e";
+//        ResultMap resultMap=null;
+//
+//        PrestoResult jdbc=null;
+//        try {
+//            Class c = Class.forName("com.chickling.util.PrestoUtil");
+//            jdbc=(PrestoResult) c.newInstance();
+//            resultMap=jdbc.getPrestoResult("select * from "+table);
+//
+//
+//
+//            int pause=0;
+//        } catch (IllegalAccessException | InstantiationException | ClassNotFoundException e) {
+//            e.printStackTrace();
+//        }
+        String table = "presto_temp.temp_d6f867a9b9df4970833b5205729e0748";
+        String sql = "insert into Presto.dbo.EC_CrawlerList (Content,utma,TotalClicks,Memo,[Type],[Level],[Domain],[ResStr1]) #{'$1$',null,$5$,'Top_Mobile_Site_SSL_HTTPS_Access_ReCaptcha','I',5,'WWWSSL','ALL'}";
+
+        sql="UPDATE   Presto.dbo.EC_CrawlerList  SET [Content]=111  WHERE [Status]='B' and [InUser] is null";
+        String connName = "ST02CPS03";
+//        Matcher matcher2=SqlContent.SQL_UPDATE_PATTEN.matcher(sql.toLowerCase());
+        ImportDB importDB = new ImportDB(sql, table, connName, 2);
         importDB.execute();
+
+//        String  sql="INSERT INTO [Ecommerce].[dbo].[syn] (item,country,numner,icc,time)  #{'$1$','$2$',$3$,'shoppingcart',50}";
+//        String prestoPath="/user/hive/warehouse/temp.db/temp_c5d2d283d9074757a3d23b9eba307374";
+//        String connName="Presto";
+//        ImportDB importDB=new ImportDB(sql,prestoPath,connName,10,3);
+//        importDB.execute();
+//    }
+
     }
-
-
 
 }
 

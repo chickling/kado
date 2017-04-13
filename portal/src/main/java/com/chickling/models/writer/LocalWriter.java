@@ -5,6 +5,7 @@ import com.chickling.boot.Init;
 import com.chickling.face.ResultWriter;
 import com.chickling.models.dfs.FSFile;
 import com.chickling.models.dfs.OrcFileUtil;
+import com.chickling.util.PrestoUtil;
 import com.google.common.base.Strings;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
@@ -23,6 +24,7 @@ public class LocalWriter implements ResultWriter {
 
     private JobLog jobLog;
 
+    private String tableName;
     private String exception="";
 
 
@@ -30,6 +32,7 @@ public class LocalWriter implements ResultWriter {
     public void init(Object parameter) {
         HashMap map= (HashMap) parameter;
         this.jobLog= (JobLog) map.get("jobLog");
+        this.tableName= (String) map.get("tableName");
     }
 
     @Override
@@ -39,52 +42,16 @@ public class LocalWriter implements ResultWriter {
 
     @Override
     public Integer call()   {
-
-        String hdfstmp= Init.getCsvtmphdfsPath()+"/";
-        String csvResultPath= Init.getCsvlocalPath()+"/"+jobLog.getFilepath().trim().replace(" ","").replaceAll("\\\\","").replaceAll("/+","/");
-        if (!csvResultPath.startsWith("/"))
-            csvResultPath="/"+csvResultPath;
-        if (!csvResultPath.endsWith("/"))
-            csvResultPath=csvResultPath+"/";
-
-
-        if (!Strings.isNullOrEmpty(jobLog.getFilename())){
-            csvResultPath=csvResultPath+jobLog.getFilename();
-            hdfstmp+=jobLog.getFilename();
-        }
-        String sourceDir=jobLog.getJoboutput();
-
-        if(!sourceDir.endsWith("/"))
-            sourceDir=sourceDir+"/";
-
-        OrcFileUtil orcFileUtil= OrcFileUtil.newInstance();
-
-        String result=orcFileUtil.writeORCFilestoCSVLocal(sourceDir,hdfstmp, OrcFileUtil.TYPE.HDFS, FSFile.FSType.HDFS);
-
+        String fs=File.separator;
+        String csvResultPath= Init.getCsvlocalPath()+fs+jobLog.getFilepath().trim().replace(" ","");
+        String result=new PrestoUtil().writeAsCSV(tableName,csvResultPath);
         log.info("tmp csv file Path is "+result);
         if(!Strings.isNullOrEmpty(result)) {
-            FSFile fsFile= FSFile.newInstance(FSFile.FSType.HDFS);
-            try {
-                log.info("check parent Dir is Exist");
-                String targetPath=csvResultPath+result.split(jobLog.getFilename())[1];
-                File file=new File(targetPath);
-                if (! file.getParentFile().exists()){
-                    log.info("Parent Dir not Exist !! mkdirs : [ "+file.getParent()+"  ]");
-                    file.getParentFile().mkdirs();
-                }
-                fsFile.moveFSFileToLocal(result,targetPath);
-                log.info("Save Orc File to [Local] CSV File Success !!! ");
-            } catch (IOException e) {
-                log.error(ExceptionUtils.getStackTrace(e));
-                this.exception= ExceptionUtils.getStackTrace(e);
-            }
+            log.info("Save Result to  Local  CSV File Success !!! ");
         }else{
             log.error("Save CSV File Error");
             return 0;
         }
         return 2;
     }
-
-
-
 }
