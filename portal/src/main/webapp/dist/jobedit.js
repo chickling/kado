@@ -266,19 +266,14 @@
             addJson["insertsql"] = "";
             addJson["location_id"] = "0";
             var stype=0;
-          if($(".checkbox.db").checkbox('is checked')&&$(".checkbox.db").length>0){
+            if($(".checkbox.db").checkbox('is checked')&&$(".checkbox.db").length>0){
                 stype+=4;                
                 addJson["location_id"] = $(".dropdown.db.location").dropdown("get value");
                 //Set Value
                 addJson["insertsql"] = $.base64Encode($(".input.insert.sql input").val());
             }
             if($(".checkbox.csv").checkbox('is checked')){
-                if($(".checkbox.hdfs").checkbox('is checked')){
-                    stype+=1;
-                }
-                if($(".checkbox.local").checkbox('is checked')){
-                    stype+=2;
-                }
+                stype+=2;
                 //Set Value
                 addJson["filepath"] = $(".input.file.fpath input").val();
                 addJson["filename"] = $(".input.file.fname input").val();
@@ -396,21 +391,18 @@
              message += "File Name can not be empty \n";
              $(".input.file.fname").addClass("error");
          }
-         if ($(".input.file.fpath input").val() == ""&&$('.file.segment.hdfs').checkbox("is checked")) {
-             message += "File Path can not be empty \n";
-             $(".input.file.fpath").addClass("error");
-         }
-         if(!$('.file.segment.hdfs').checkbox("is checked")&&!$('.file.segment.local').checkbox("is checked")) {
-            message += "Please select at least one csv Location (HDFS or Local) \n";
-             $(".file.segment").addClass("error");
-         }
-     }
+
+    }
     if ($(".checkbox.db").checkbox("is checked")) {
          if ($(".input.insert.sql input").val() == "") {
              message += "Insert SQL can not be empty \n";
              $(".input.insert.sql").addClass("error");
          }
-     }
+         if($(".db.location").dropdown('get text') == "Select DB Location"){
+             message += "Insert SQL DB Location can not be empty \n";
+             $(".db.location").addClass("error");
+         }
+    }
 
 
      //check Job Visibility Level
@@ -719,38 +711,38 @@
      return hash;
  }
 
- $(".file.location.hdfs").click(function(){
-    if($('.file.segment.hdfs').checkbox("is checked")&&!$('.file.segment.local').checkbox("is checked")) {
-        //$('.file.segment.hdfs').checkbox("uncheck");
-        $('.file.segment.local').checkbox("check");
-        }
-//        $('.ui.left.icon.input.file.fpath').addClass('disabled');
-//    }else{
-//             $(".file.location.hdfs").one("click",function(){
-//                 if(!$('.file.segment.hdfs').checkbox("is checked")){
-//                    $('.ui.left.icon.input.file.fpath').addClass('disabled');
-//                  }else
-//                     $('.ui.left.icon.input.file.fpath').removeClass('disabled');
-//               })
-//           if($('.file.segment.local').checkbox("is checked"))
-//                   $('.ui.left.icon.input.file.fpath').removeClass('disabled');
-//    }
+//  $(".file.location.hdfs").click(function(){
+//     if($('.file.segment.hdfs').checkbox("is checked")&&!$('.file.segment.local').checkbox("is checked")) {
+//         //$('.file.segment.hdfs').checkbox("uncheck");
+//         $('.file.segment.local').checkbox("check");
+//         }
+// //        $('.ui.left.icon.input.file.fpath').addClass('disabled');
+// //    }else{
+// //             $(".file.location.hdfs").one("click",function(){
+// //                 if(!$('.file.segment.hdfs').checkbox("is checked")){
+// //                    $('.ui.left.icon.input.file.fpath').addClass('disabled');
+// //                  }else
+// //                     $('.ui.left.icon.input.file.fpath').removeClass('disabled');
+// //               })
+// //           if($('.file.segment.local').checkbox("is checked"))
+// //                   $('.ui.left.icon.input.file.fpath').removeClass('disabled');
+// //    }
 
- });
-$(".file.location.local").click(function(){
-    if(!$('.file.segment.hdfs').checkbox("is checked")&&$('.file.segment.local').checkbox("is checked")){
-            //$('.file.segment.local').checkbox("uncheck");
-        $('.file.segment.hdfs').checkbox("check");
-        }
-//        $('.ui.left.icon.input.file.fpath').removeClass('disabled');
-//    }else{
-//        if($('.file.segment.hdfs').checkbox("is checked"))
-//           $('.ui.left.icon.input.file.fpath').removeClass('disabled');
-//        else
-//           $('.ui.left.icon.input.file.fpath').addClass('disabled');
-//    }
+//  });
+// $(".file.location.local").click(function(){
+//     if(!$('.file.segment.hdfs').checkbox("is checked")&&$('.file.segment.local').checkbox("is checked")){
+//             //$('.file.segment.local').checkbox("uncheck");
+//         $('.file.segment.hdfs').checkbox("check");
+//         }
+// //        $('.ui.left.icon.input.file.fpath').removeClass('disabled');
+// //    }else{
+// //        if($('.file.segment.hdfs').checkbox("is checked"))
+// //           $('.ui.left.icon.input.file.fpath').removeClass('disabled');
+// //        else
+// //           $('.ui.left.icon.input.file.fpath').addClass('disabled');
+// //    }
 
- });
+//  });
 function setStorageStatusBySaveType(save_type,JData){
     $(".checkbox.segment").checkbox("uncheck");
     $(".ui.checkbox.storage").checkbox("uncheck");
@@ -762,18 +754,9 @@ function setStorageStatusBySaveType(save_type,JData){
          $(".db.dropdown").dropdown('set selected',JData["location_id"].toString());
     }
     if(((stype%4)/2)>=1){
-        $(".checkbox.csv").checkbox('check');
-        $(".checkbox.local").checkbox('check');
+        $(".checkbox.csv").checkbox('check');        
         $(".input.file.fpath input").val(JData["filepath"]);
         $(".input.file.fname input").val(JData["filename"]);
-        $(".db.dropdown").dropdown('set selected','0');
-                            
     }
-    if((((stype%4)%2)/1)>=1){
-        $(".checkbox.csv").checkbox('check');
-        $(".checkbox.hdfs").checkbox('check');
-        $(".input.file.fpath input").val(JData["filepath"]);
-        $(".input.file.fname input").val(JData["filename"]);
-        $(".db.dropdown").dropdown('set selected','0');
-    }
+
 }
