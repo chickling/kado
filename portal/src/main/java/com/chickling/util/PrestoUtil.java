@@ -1,6 +1,7 @@
 package com.chickling.util;
 
 import com.chickling.bean.result.ResultMap;
+import com.chickling.face.PrestoResult;
 import com.google.common.base.Strings;
 import com.chickling.boot.Init;
 import com.chickling.models.job.PrestoContent;
@@ -8,7 +9,6 @@ import com.google.gson.*;
 import com.google.gson.internal.LinkedTreeMap;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.io.*;
@@ -16,14 +16,13 @@ import java.net.*;
 import java.nio.charset.Charset;
 import java.sql.*;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by gl08 on 2015/12/3.
  */
-public class PrestoUtil {
+public class PrestoUtil  implements PrestoResult {
 
 //    private static Logger logger= LogManager.getLogger(PrestoUtil.class);
 
@@ -33,19 +32,24 @@ public class PrestoUtil {
     private Gson gson=new Gson();
     private StringBuilder exception;
     private int batchSize=300;
-    private String  newline=System.getProperty("line.separator");
 
     private String catalog;
     private String prstoUrl;
     private String  jdbcUrl;
     private Properties prop=new Properties();
     public PrestoUtil() {
+        Init.setPrestoURL("http://172.16.157.11:8080");
+        Init.setPresto_user("root");
+        Init.setCsvlocalPath("D:\\0_projects\\Kado\\logs");
+        Init.setPrestoCatalog("hive");
+
         prstoUrl=Init.getPrestoURL();
         catalog=Init.getPrestoCatalog();
         prop.setProperty("user",Init.getPresto_user());
         jdbcUrl="jdbc:"+prstoUrl.replaceFirst("http","presto")+"/"+catalog;
         this.exception=new StringBuilder();
     }
+
 
     public boolean isSuccess() {
         return success;
@@ -251,19 +255,17 @@ public class PrestoUtil {
     public static void main(String[] args) throws IOException {
 //        String sql="select * from mars.truesight_page_orc_v4 limit 13";
 //        String sql="drop table mars.orders";
-        Init.setPrestoCatalog("hive");
+
 //        Init.setPrestoURL("http://10.16.205.110:8889");
-        Init.setPrestoURL("http://172.16.157.11:8080");
-        Init.setPresto_user("root");
-        Init.setCsvlocalPath("D:\\0_projects\\Kado\\logs");
+
         PrestoUtil util=new PrestoUtil();
 //        util.doJdbcRequest("SELECT * FROM information_schema.tables where table_schema<> 'presto_temp'");
 
 //       util.witerAsJson("presto_temp.temp_586721bafdfd41548f187898fe4f7e72");
-//        util.readJsonAsResult("presto_temp.temp_dadb1fee570e43b3bcd239aa54b19953 ",0,100);
+        util.readJsonAsResult("presto_temp.temp_c66612e49f414aceaefc442df4ca811e ",0,100);
 //        String out="D:\\0_projects\\Kado\\logs\\\\\\\\";
 //        util.writeAsCsV(" presto_temp.temp_b1ad3c34b6084cf185b77e3984034e15",out);
-        String downloadPath=util.downloadCSV("presto_temp.temp_b1ad3c34b6084cf185b77e3984034e15");
+//        String downloadPath=util.downloadCSV("presto_temp.temp_b1ad3c34b6084cf185b77e3984034e15");
 //        String csvfile=util.readAsCSV("presto_temp.temp_be3d22c827b240c08ff4b129bfa7d74d","D:\\0_projects\\Kado\\logs\\","test");
 //        ByteArrayInputStream bais=util.readAsStream("presto_temp.temp_586721bafdfd41548f187898fe4f7e72",0,100);
 //
@@ -396,9 +398,12 @@ public class PrestoUtil {
                         rowdata.add("");
                     else if (jp.isString())
                         rowdata.add(jp.getAsString());
-                    else if (jp.isNumber())
-                        rowdata.add(jp.getAsLong());
-                    else
+                    else if (jp.isNumber()) {
+                        if (jp.toString().contains(".")) {
+                            rowdata.add(jp.getAsDouble());
+                        } else
+                            rowdata.add(jp.getAsLong());
+                    }else
                         rowdata.add(jp.getAsBoolean());
                 }
                 resultMap.getData().add(rowdata);
@@ -438,6 +443,10 @@ public class PrestoUtil {
         String fileName=table+".json";
         String filePath=Init.getCsvlocalPath()+File.separator+fileName;
         File jsonfile=new File(filePath);
+
+        if (!jsonfile.getParentFile().exists())
+            jsonfile.getParentFile().mkdirs();
+
         if (jsonfile.exists())
             jsonfile.delete();
 
@@ -464,14 +473,26 @@ public class PrestoUtil {
                     //
                     //add columns and types
                     for (int i = 0; i < rsmd.getColumnCount(); i++) {
+
+//                        cValue=resultSet.getObject(i+1);
+//                        if (null== cValue || cValue instanceof String || cValue instanceof Timestamp)
+//                            type.add("string");
+//                        else if (cValue instanceof Boolean)
+//                            type.add("boolean");
+//                        else if (cValue instanceof Long)
+//                            type.add("long");
+//                        else
+//                            type.add("double");
                         ja.add(rsmd.getColumnName(i + 1));
-                        cValue=resultSet.getObject(i+1);
-                        if (null== cValue || cValue instanceof String || cValue instanceof Timestamp)
-                            type.add("string");
-                        else if (cValue instanceof Boolean)
+                        String cType=rsmd.getColumnTypeName(i+1);
+                        if ("bigint".equalsIgnoreCase(cType))
+                            type.add("long");
+                        else if ("double".equalsIgnoreCase(cType))
+                            type.add("double");
+                        else if ("boolean".equalsIgnoreCase(cType))
                             type.add("boolean");
                         else
-                            type.add("double");
+                            type.add("string");
                     }
                     fw.write("{\"columns\":"+ja.toString()+",");
                     fw.write("\"types\":"+type.toString()+",");
@@ -484,16 +505,18 @@ public class PrestoUtil {
                 //
                 //add row data
                 for (int i = 0; i < rsmd.getColumnCount(); i++) {
-
                     cValue=resultSet.getObject(i+1);
+                    String cType=rsmd.getColumnTypeName(i+1);
                     if (null==cValue)
                         ja.add("");
-                    else if (cValue instanceof String || cValue instanceof Timestamp)
-                        ja.add(cValue.toString());
-                    else if (cValue instanceof Boolean)
+                    else if ("bigint".equalsIgnoreCase(cType))
+                        ja.add(Long.valueOf(cValue.toString()));
+                    else if ("double".equalsIgnoreCase(cType))
+                        ja.add(Double.valueOf(cValue.toString()));
+                    else if ("boolean".equalsIgnoreCase(cType))
                         ja.add(Boolean.valueOf(cValue.toString()));
                     else
-                        ja.add(Double.valueOf(cValue.toString()));
+                        ja.add(cValue.toString());
                 }
                 fw.write(ja.toString());
                 count++;
@@ -538,11 +561,13 @@ public class PrestoUtil {
             outputPath=outputPath.substring(0,outputPath.length()-1);
         }
 
-       String resultPath=outputPath+File.separator+table+"@"+ Instant.now().toEpochMilli() +".csv";
+        String resultPath=outputPath+File.separator+table+"@"+ Instant.now().toEpochMilli() +".csv";
         ResultMap resultMap=readJsonAsResult(table,0,-1);
 
         File csvfile =new File(resultPath);
-
+        // create parent dir
+        if (!csvfile.getParentFile().exists())
+            csvfile.getParentFile().mkdirs();
         if (csvfile.exists())
             csvfile.delete();
 
@@ -562,9 +587,9 @@ public class PrestoUtil {
             fw.close();
             csvp.close();
         } catch (IOException e) {
-           this.setSuccess(false);
-           this.setException(ExceptionUtils.getStackTrace(e));
-           return "";
+            this.setSuccess(false);
+            this.setException(ExceptionUtils.getStackTrace(e));
+            return "";
         }
         return resultPath;
     }
@@ -658,14 +683,29 @@ public class PrestoUtil {
 
                     if (flag) {
                         for (int i = 0; i < count; i++) {
+
                             resultMap.getSchema().add(rsmd.getColumnName(i+1));
-                            Object cValue=resultSet.getObject(i+1);
-                            if (null==cValue || cValue instanceof String || cValue instanceof Timestamp)
-                                resultMap.getType().add("string");
-                            else if (cValue instanceof Boolean)
+//                            Object cValue=resultSet.getObject(i+1);
+                            String type=rsmd.getColumnTypeName(i+1);
+                            if ("bigint".equalsIgnoreCase(type))
+                                resultMap.getType().add("long");
+                            else if ("double".equalsIgnoreCase(type))
+                                resultMap.getType().add("double");
+                            else if ("boolean".equalsIgnoreCase(type))
                                 resultMap.getType().add("boolean");
                             else
-                                resultMap.getType().add("double");
+                                resultMap.getType().add("string");
+//                            if ("varchar".equalsIgnoreCase(type) || "timestamp".equalsIgnoreCase(type) )
+//
+//
+//                            if (null==cValue || cValue instanceof String || cValue instanceof Timestamp)
+//                                resultMap.getType().add("string");
+//                            else if (cValue instanceof Boolean)
+//
+//                            else if (cValue instanceof Long)
+//
+//                            else
+
                         }
                         flag = false;
 
@@ -682,7 +722,9 @@ public class PrestoUtil {
                         }
                         else if ("double".equalsIgnoreCase(resultMap.getType().get(i)))
                             rowData.add(resultSet.getDouble(i+1));
-                        else
+                        else if ("long".equalsIgnoreCase(resultMap.getType().get(i)))
+                            rowData.add(resultSet.getLong(i+1));
+                        else if ("boolean".equalsIgnoreCase(resultMap.getType().get(i)))
                             rowData.add(resultSet.getBoolean(i+1));
                     }
                     resultMap.getData().add(rowData);
@@ -698,6 +740,11 @@ public class PrestoUtil {
             this.setSuccess(false);
         }
         return resultMap;
+    }
+
+    @Override
+    public ResultMap getPrestoResult(String sql) {
+        return doJdbcRequest(sql);
     }
 
 }
