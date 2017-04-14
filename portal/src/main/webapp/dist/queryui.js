@@ -309,6 +309,7 @@ function loadTableAutoCom() {
                 callback(null, []);
                 return
             }
+            console.log(prefix);
             $.getJSON("./presto/table/list", function(wordList) {
                 callback(null, wordList.list.map(function(ea) {
                     return {
@@ -340,7 +341,7 @@ function loadTableSchemaAutoCom(table) {
                     callback(null, []);
                     return
                 }
-
+                console.log(prefix);
                 $.getJSON("./presto/table/schemas/" + table, function(wordLists) {
                     callback(null, wordLists.column.map(function(ea) {
 
