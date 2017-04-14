@@ -40,7 +40,11 @@ public class LocalWriter implements ResultWriter {
     public Integer call()   {
         String fs=File.separator;
         String csvResultPath= Init.getCsvlocalPath()+fs+jobLog.getFilepath().trim().replace(" ","");
-        String result=new PrestoUtil().writeAsCSV(tableName,csvResultPath);
+        while (csvResultPath.endsWith("\\") || csvResultPath.endsWith("/")){
+            csvResultPath=csvResultPath.substring(0,csvResultPath.length()-1);
+        }
+        String fileName=jobLog.getFilename().trim().replaceAll("\\\\","").replaceAll("/","");
+        String result=new PrestoUtil().writeAsCSV(tableName,csvResultPath+File.separator+fileName,true);
         log.info("tmp csv file Path is "+result);
         if(!Strings.isNullOrEmpty(result)) {
             log.info("Save Result to  Local  CSV File Success !!! ");

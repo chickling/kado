@@ -31,10 +31,8 @@ public class Init implements ServletContextListener{
     private static String SiteURLBase="";
     private static String Expiration="";
     private static String prestoCatalog="";
-    private static String csvtmphdfsPath="";
     private static String csvlocalPath="";
     private static String deleteLogTTL="";
-    private static boolean savelogtohdfs=false;
     private static String presto_user="";
     private  static String fileseparator=File.separator;
     private static Map<String,ResultWriter> injectionMap;
@@ -124,24 +122,11 @@ public class Init implements ServletContextListener{
     public static void setExpiration(String expiration){Init.Expiration=expiration;}
     public static String getExpiration(){return Expiration;}
 
-    public static String getCsvtmphdfsPath() {
-        return csvtmphdfsPath;
-    }
-
-    public static void setCsvtmphdfsPath(String csvtmphdfsPath) {
-        Init.csvtmphdfsPath = csvtmphdfsPath;
-    }
 
     public static void setPrestoCatalog(String prestoCatalog){Init.prestoCatalog=prestoCatalog;}
     public static String getPrestoCatalog(){return prestoCatalog;}
 
-    public static boolean isSavelogtohdfs() {
-        return savelogtohdfs;
-    }
 
-    public static void setSavelogtohdfs(boolean savelogtohdfs) {
-        Init.savelogtohdfs = savelogtohdfs;
-    }
 
     public static String getFileseparator() {
         return fileseparator;
@@ -180,7 +165,6 @@ public class Init implements ServletContextListener{
         String logpath=YamlLoader.instance.getLogpath();
         String sqliteName=YamlLoader.instance.getSqliteName();
         String prestoCatalog=YamlLoader.instance.getPrestoCatalog();
-        String csvtmphdfsPath=YamlLoader.instance.getCsvtmphdfsPath();
         String csvlocalpath=YamlLoader.instance.getCsvlocalPath();
         String deleteLogTTL=YamlLoader.instance.getDeleteLogTTL();
         String writerinjection=YamlLoader.instance.getWrtierinjection();
@@ -245,12 +229,6 @@ public class Init implements ServletContextListener{
                 sce.getServletContext().setAttribute("prestoCatalog", "");
                 throw new Exception("prestoCatalog set Error , please check your config.yaml");
             }
-            if (!Strings.isNullOrEmpty(csvtmphdfsPath)) {
-                sce.getServletContext().setAttribute("csv.tmp.hdfs.path", csvtmphdfsPath);
-            } else {
-                sce.getServletContext().setAttribute("csv.tmp.hdfs.path", "");
-                throw new Exception("csvtmphdfsPath set Error , please check your config.yaml");
-            }
 
             if (!Strings.isNullOrEmpty(deleteLogTTL)) {
                 sce.getServletContext().setAttribute("deleteLogTTL", deleteLogTTL);
@@ -262,11 +240,7 @@ public class Init implements ServletContextListener{
                 sce.getServletContext().setAttribute("presto_user", presto_user);
             } else {
                 sce.getServletContext().setAttribute("presto_user", "root");
-//                throw new Exception("presto_user set Error , please check your config.yaml");
             }
-
-            if ("true".equals(YamlLoader.instance.getSaveLogToHDFS()))
-               setSavelogtohdfs(true);
 
             setCsvlocalPath(csvlocalpath);
             setHivepath(hivepath);
@@ -278,23 +252,8 @@ public class Init implements ServletContextListener{
             setExpiration(expiration);
             setDeleteLogTTL(deleteLogTTL);
             setPrestoCatalog(prestoCatalog);
-            setCsvtmphdfsPath(csvtmphdfsPath);
             setPresto_user(presto_user);
 
-            String sqliteSite="";
-//            if ( !Strings.isNullOrEmpty(System.getenv("sqlitedb")) ){
-//                sqliteSite=System.getenv("sqlitedb");
-//                log.info("start load HDFS SQLite DB to Local");
-//                FSFile fsFile=FSFile.newInstance(FSFile.FSType.HDFS);
-//                FsShell fsShell=new FsShell(fsFile.getFs().getConf());
-//                File file =new File(YamlLoader.instance.getSqliteLOCALpath());
-//                if (file.delete())
-//                    log.info("Remove exist SQLite  DB");
-//                log.info("get SQLite DB From HDFS ");
-//                fsShell.run(new String[]{"-copyToLocal",sqliteSite,YamlLoader.instance.getSqliteLOCALpath()});
-//                log.info("Finish load HDFS File from "+sqliteSite+" to "+YamlLoader.instance.getSqliteLOCALpath());
-//            }
-//            checkHDFSPath();
             DBmaintenance dbm=new DBmaintenance();
             dbm.maintain();
             ScheduleMgr smgr=new ScheduleMgr();

@@ -1,13 +1,13 @@
 package com.chickling.util;
 
 import com.chickling.bean.schedule.ScheduleHistory;
+import com.facebook.presto.hive.$internal.org.apache.commons.lang3.exception.ExceptionUtils;
 import com.google.gson.Gson;
 import com.chickling.sqlite.ConnectionManager;
 import com.chickling.schedule.ScheduleMgr;
 import com.chickling.models.Auth;
 import com.chickling.models.MessageFactory;
 import com.chickling.models.job.PrestoContent;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
