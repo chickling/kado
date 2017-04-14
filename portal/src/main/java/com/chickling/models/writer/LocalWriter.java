@@ -3,16 +3,12 @@ package com.chickling.models.writer;
 import com.chickling.bean.job.JobLog;
 import com.chickling.boot.Init;
 import com.chickling.face.ResultWriter;
-import com.chickling.models.dfs.FSFile;
-import com.chickling.models.dfs.OrcFileUtil;
 import com.chickling.util.PrestoUtil;
 import com.google.common.base.Strings;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 
 /**

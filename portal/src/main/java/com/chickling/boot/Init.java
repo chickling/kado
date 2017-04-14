@@ -2,14 +2,11 @@ package com.chickling.boot;
 
 import com.chickling.face.ResultWriter;
 import com.chickling.maintenance.DBmaintenance;
-import com.chickling.models.dfs.FSFile;
 import com.chickling.schedule.ScheduleMgr;
 import com.chickling.util.YamlLoader;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.hadoop.fs.FsShell;
-import org.apache.hadoop.fs.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
@@ -285,18 +282,18 @@ public class Init implements ServletContextListener{
             setPresto_user(presto_user);
 
             String sqliteSite="";
-            if ( !Strings.isNullOrEmpty(System.getenv("sqlitedb")) ){
-                sqliteSite=System.getenv("sqlitedb");
-                log.info("start load HDFS SQLite DB to Local");
-                FSFile fsFile=FSFile.newInstance(FSFile.FSType.HDFS);
-                FsShell fsShell=new FsShell(fsFile.getFs().getConf());
-                File file =new File(YamlLoader.instance.getSqliteLOCALpath());
-                if (file.delete())
-                    log.info("Remove exist SQLite  DB");
-                log.info("get SQLite DB From HDFS ");
-                fsShell.run(new String[]{"-copyToLocal",sqliteSite,YamlLoader.instance.getSqliteLOCALpath()});
-                log.info("Finish load HDFS File from "+sqliteSite+" to "+YamlLoader.instance.getSqliteLOCALpath());
-            }
+//            if ( !Strings.isNullOrEmpty(System.getenv("sqlitedb")) ){
+//                sqliteSite=System.getenv("sqlitedb");
+//                log.info("start load HDFS SQLite DB to Local");
+//                FSFile fsFile=FSFile.newInstance(FSFile.FSType.HDFS);
+//                FsShell fsShell=new FsShell(fsFile.getFs().getConf());
+//                File file =new File(YamlLoader.instance.getSqliteLOCALpath());
+//                if (file.delete())
+//                    log.info("Remove exist SQLite  DB");
+//                log.info("get SQLite DB From HDFS ");
+//                fsShell.run(new String[]{"-copyToLocal",sqliteSite,YamlLoader.instance.getSqliteLOCALpath()});
+//                log.info("Finish load HDFS File from "+sqliteSite+" to "+YamlLoader.instance.getSqliteLOCALpath());
+//            }
 //            checkHDFSPath();
             DBmaintenance dbm=new DBmaintenance();
             dbm.maintain();
@@ -319,39 +316,39 @@ public class Init implements ServletContextListener{
     }
 
 
-    private  void checkHDFSPath(){
-        FSFile fsFile=FSFile.newInstance(FSFile.FSType.HDFS);
-        FsShell fsShell=new FsShell(fsFile.getFs().getConf());
-        try {
-
-            // check log dilr
-            //
-            if (! fsFile.getFs().exists(new Path(logpath))){
-                fsFile.getFs().mkdirs(new Path(logpath));
-                fsShell.run(new String[]{"-chmod","-R","775",logpath});
-                log.warn("Create [ Job Log ]  HDFS Dir!");
-            }else
-                log.info("Check [ Job Log ] HDFS path Exist !!!!");
-            //check csv temp dir
-            //
-            if (! fsFile.getFs().exists(new Path(csvtmphdfsPath))){
-                fsFile.getFs().mkdirs(new Path(csvtmphdfsPath));
-                fsShell.run(new String[]{"-chmod","-R","775",csvtmphdfsPath});
-                log.warn("Create [ CSV  Temp  ]  HDFS Dir!");
-            }else
-                log.info("Check [ CSV  Temp ] HDFS path Exist !!!!");
-            //check SQLite backup dir
-            //
-            if (! fsFile.getFs().exists(new Path( YamlLoader.instance.getSqliteHDFSpath()))){
-                fsFile.getFs().mkdirs(new Path( YamlLoader.instance.getSqliteHDFSpath()));
-                fsShell.run(new String[]{"-chmod","-R","775", YamlLoader.instance.getSqliteHDFSpath()});
-                log.warn("Create [ SQLite backup ]  HDFS Dir!");
-            }else
-                log.info("Check [ SQLite backup ] HDFS path Exist !!!!");
-        } catch (Exception e) {
-            log.error("check hdfs dir Error : "+ExceptionUtils.getStackTrace(e));
-        }
-
-
-    }
+//    private  void checkHDFSPath(){
+//        FSFile fsFile=FSFile.newInstance(FSFile.FSType.HDFS);
+//        FsShell fsShell=new FsShell(fsFile.getFs().getConf());
+//        try {
+//
+//            // check log dilr
+//            //
+//            if (! fsFile.getFs().exists(new Path(logpath))){
+//                fsFile.getFs().mkdirs(new Path(logpath));
+//                fsShell.run(new String[]{"-chmod","-R","775",logpath});
+//                log.warn("Create [ Job Log ]  HDFS Dir!");
+//            }else
+//                log.info("Check [ Job Log ] HDFS path Exist !!!!");
+//            //check csv temp dir
+//            //
+//            if (! fsFile.getFs().exists(new Path(csvtmphdfsPath))){
+//                fsFile.getFs().mkdirs(new Path(csvtmphdfsPath));
+//                fsShell.run(new String[]{"-chmod","-R","775",csvtmphdfsPath});
+//                log.warn("Create [ CSV  Temp  ]  HDFS Dir!");
+//            }else
+//                log.info("Check [ CSV  Temp ] HDFS path Exist !!!!");
+//            //check SQLite backup dir
+//            //
+//            if (! fsFile.getFs().exists(new Path( YamlLoader.instance.getSqliteHDFSpath()))){
+//                fsFile.getFs().mkdirs(new Path( YamlLoader.instance.getSqliteHDFSpath()));
+//                fsShell.run(new String[]{"-chmod","-R","775", YamlLoader.instance.getSqliteHDFSpath()});
+//                log.warn("Create [ SQLite backup ]  HDFS Dir!");
+//            }else
+//                log.info("Check [ SQLite backup ] HDFS path Exist !!!!");
+//        } catch (Exception e) {
+//            log.error("check hdfs dir Error : "+ExceptionUtils.getStackTrace(e));
+//        }
+//
+//
+//    }
 }

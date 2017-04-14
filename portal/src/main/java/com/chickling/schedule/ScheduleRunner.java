@@ -2,23 +2,15 @@ package com.chickling.schedule;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.chickling.boot.Init;
-import com.chickling.models.dfs.FSFile;
 import com.chickling.models.job.JobRunner;
 import com.chickling.models.job.PrestoContent;
 import com.chickling.util.*;
-import org.apache.hadoop.fs.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
-import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.appender.RollingFileAppender;
-import org.apache.logging.log4j.core.config.Configuration;
 import org.quartz.*;
 
 
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.*;

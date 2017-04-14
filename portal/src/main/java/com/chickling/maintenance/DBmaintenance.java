@@ -2,13 +2,9 @@ package com.chickling.maintenance;
 
 import com.chickling.sqlite.ConnectionManager;
 import com.chickling.boot.Init;
-import com.chickling.models.dfs.FSFile;
-import com.chickling.models.job.PrestoContent;
 import com.chickling.util.PrestoUtil;
 import com.chickling.util.TimeUtil;
-import com.chickling.util.YamlLoader;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.hadoop.fs.FsShell;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
@@ -17,14 +13,12 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.joda.time.DateTime;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by jw6v on 2016/1/11.
@@ -127,30 +121,30 @@ public class DBmaintenance {
         }
     }
 
-    public void deleteTempHDFSCSVdaily(){
-        log.info("====== Start Daily Delete HDFS Temp CSV file ====== ");
-        String csvHDFSpath=Init.getCsvtmphdfsPath()+"/csv";
-        FSFile fsFile=FSFile.newInstance(FSFile.FSType.HDFS);
-        List<String> files=new ArrayList<>();
-        try {
-            files.addAll(fsFile.listChildFileNames(csvHDFSpath));
-            for (String file:files){
-                String path=csvHDFSpath+"/"+file;
-                log.info("Delete File path is : "+path);
-                fsFile.deleteFile(path);
-            }
-            log.info("====== Delete HDFS Temp CSV Files Finish , Delete  files is [ "+files.size() +" ] ====== ");
-        } catch (IOException e) {
-            log.error("Delete HDFS Temp CSV Files Error : "+ExceptionUtils.getStackTrace(e));
-        }
-    }
+//    public void deleteTempHDFSCSVdaily(){
+//        log.info("====== Start Daily Delete HDFS Temp CSV file ====== ");
+//        String csvHDFSpath=Init.getCsvtmphdfsPath()+"/csv";
+//        FSFile fsFile=FSFile.newInstance(FSFile.FSType.HDFS);
+//        List<String> files=new ArrayList<>();
+//        try {
+//            files.addAll(fsFile.listChildFileNames(csvHDFSpath));
+//            for (String file:files){
+//                String path=csvHDFSpath+"/"+file;
+//                log.info("Delete File path is : "+path);
+//                fsFile.deleteFile(path);
+//            }
+//            log.info("====== Delete HDFS Temp CSV Files Finish , Delete  files is [ "+files.size() +" ] ====== ");
+//        } catch (IOException e) {
+//            log.error("Delete HDFS Temp CSV Files Error : "+ExceptionUtils.getStackTrace(e));
+//        }
+//    }
 
 
-    public void deleteTempCSVOverTTL(){
-        log.info("====== Start Delete  Temp CSV file ====== ");
+    public void deleteLocalTempFileOverTTL(){
+        log.info("====== Start Delete  Local Temp  file ====== ");
         String csvTTL="-"+Init.getExpiration();
         String csvDirPath=Init.getCsvlocalPath();
-        log.info("Temp CSV  Dir  : " +csvDirPath);
+        log.info("Temp File  Dir  : " +csvDirPath);
         File dir=null;
         try {
             int  deleteCount=0;
@@ -158,18 +152,19 @@ public class DBmaintenance {
             dir = new File(csvDirPath);
             if (null!=dir.listFiles()){
                 for (File logfile: dir.listFiles()){
-
+                    String fileName=logfile.getName();
                     Path path= Paths.get(logfile.toURI());
                     BasicFileAttributes attr= Files.readAttributes(path,BasicFileAttributes.class);
                     if (attr.creationTime().toMillis()< now.plusDays(Integer.parseInt(csvTTL)).getMillis()){
                         if (logfile.delete()){
+                            log.info("Delete File is : [ "+fileName+" ] ");
                             deleteCount++;
                             if (0==deleteCount%10 && deleteCount>0)
-                                log.info("Delete "+deleteCount+" csv File !! ");}
+                                log.info("Delete "+deleteCount+"  File !! ");}
                     }
                 }
             }
-            log.info("====== Delete Temp CSV Files Finish , Delete  files is [ "+deleteCount +" ] ====== ");
+            log.info("====== Delete Local Temp  Files Finish , Delete  files is [ "+deleteCount +" ] ====== ");
         } catch (Exception e) {
             log.error(ExceptionUtils.getStackTrace(e));
         }
@@ -239,23 +234,23 @@ public class DBmaintenance {
 
     }
 
-    public  void backupSQLiteDB(){
-        String hdfsPath= YamlLoader.instance.getSqliteHDFSpath();
-        String sqliteDBpath=YamlLoader.instance.getSqliteLOCALpath();
-        log.info("====== Start Backup SQLite DB to HDFS ====== ");
-        log.info("SQLite HDFS Path is   : " +hdfsPath);
-
-        FSFile fsFile=FSFile.newInstance(FSFile.FSType.HDFS);
-        FsShell fsShell=new FsShell(fsFile.getFs().getConf());
-        try {
-            fsShell.run(new String[]{"-copyFromLocal","-f",sqliteDBpath,hdfsPath});
-            log.info("====== Backup SQLite DB  to HDFS Finish  ====== ");
-        } catch (Exception e) {
-            log.error("====== Backup SQLite DB  to HDFS ERROR !!! ====== ");
-            log.error(ExceptionUtils.getStackTrace(e));
-        }
-
-    }
+//    public  void backupSQLiteDB(){
+//        String hdfsPath= YamlLoader.instance.getSqliteHDFSpath();
+//        String sqliteDBpath=YamlLoader.instance.getSqliteLOCALpath();
+//        log.info("====== Start Backup SQLite DB to HDFS ====== ");
+//        log.info("SQLite HDFS Path is   : " +hdfsPath);
+//
+//        FSFile fsFile=FSFile.newInstance(FSFile.FSType.HDFS);
+//        FsShell fsShell=new FsShell(fsFile.getFs().getConf());
+//        try {
+//            fsShell.run(new String[]{"-copyFromLocal","-f",sqliteDBpath,hdfsPath});
+//            log.info("====== Backup SQLite DB  to HDFS Finish  ====== ");
+//        } catch (Exception e) {
+//            log.error("====== Backup SQLite DB  to HDFS ERROR !!! ====== ");
+//            log.error(ExceptionUtils.getStackTrace(e));
+//        }
+//
+//    }
 
 
     public void jobResultMaintain(){
