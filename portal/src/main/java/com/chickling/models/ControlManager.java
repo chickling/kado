@@ -257,6 +257,7 @@ public class ControlManager {
             log.error(e);
             return MessageFactory.message("error", "Get Result count Fail!");
         }
+
         if(resultCount>0) {
             int pageCount = (int) Math.ceil((double) resultCount / (double) pageRowCount);
             //real start 0
@@ -315,48 +316,38 @@ public class ControlManager {
             page=(page>0)?page-1:0;
             int startRow = pageRowCount * page;
             if (page <= pageCount) {
-
-                //Read page from orcfileutil
-                OrcFileUtil orc = OrcFileUtil.newInstance();
-                ByteArrayInputStream stream = null;
+                ResultMap resultData;
                 try {
-                    stream = orc.readORCFiles(getResultFilePath(jhid), OrcFileUtil.TYPE.HDFS, startRow, pageRowCount);
+                    String path = getResultFilePath(jhid);
+                    resultData = new PrestoUtil().readJsonAsResult(Init.getDatabase() + "." + path.substring(path.lastIndexOf("/") + 1, path.length()), startRow, pageRowCount);
                 } catch (SQLException e) {
                     log.error("Get ResultFilePath Error");
                     log.error(e);
                     return "Get ResultFilePath Error";
                 }
-                // Read InputStream by InputStreamReader
-                InputStreamReader inReader = new InputStreamReader(stream);
-                BufferedReader br = new BufferedReader(inReader);
+                Object[] dataList= resultData.getData().stream().map(item-> {
+                    return item.stream().map(value->value.toString()).toArray();
+                }).toArray();
                 int i = 0;
                 String tHeader="";
                 String tBody="";
-                try {
-                    while (br.ready()) {
-                        String tmp = br.readLine();
-                        String[] rowArray = tmp.split("\001");
-                        //first line is header
-                        if (i == 0) {
-                            tHeader += "<tr>";
-                            for (String col : rowArray) {
-                                tHeader +="<th style='padding: 5px;border: 1px solid black;background-color: #5858FA;color: white;'>" + col + "</th>";
-                            }
-                            tHeader+="</tr>";
-                        }else {
-                            tBody+="<tr>";
-                            for (String col : rowArray) {
-                                tBody +="<td style='border: 1px solid black;'>" + col + "</td>";
-                            }
-                            tBody+="</tr>";
-                        }
-                        i++;
-                    }
-                } catch (IOException e) {
-                    log.error("Get Page IO Error");
-                    log.error(e);
-                    return  "Get Page IO Error";
+                //first line is header
+                tHeader += "<tr>";
+                for (String col : resultData.getSchema()) {
+                    tHeader +="<th style='padding: 5px;border: 1px solid black;background-color: #5858FA;color: white;'>" + col + "</th>";
                 }
+                tHeader+="</tr>";
+
+                for (Object dataRow: dataList) {
+                    tBody+="<tr>";
+
+                    for (Object col : (Object[]) dataRow) {
+                        tBody +="<td style='border: 1px solid black;'>" + col.toString() + "</td>";
+                    }
+                    tBody+="</tr>";
+                    i++;
+                }
+
 
                 return "<table style='border-collapse: collapse;border: 1px solid black;'>" +"<thead>"+tHeader+"</thead>"+"<tbody>"+tBody+"</tbody>"+"</table>";
             } else {
