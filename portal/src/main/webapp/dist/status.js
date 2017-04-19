@@ -225,7 +225,6 @@ function showJobHistory(jhid) {
                     $(".runingtimes label").html(JData["runingtime"]);
                     $(".user label").html(JData["user"]);
                     $(".storage label").html(JData["storage"]);
-
                     var saveType=getStorageLabelBySaveType(JData["save_type"]);
                     $(".save_type").html(saveType);
                     if(saveType.indexOf("Database")>0)

@@ -27,15 +27,13 @@ public class YamlLoader {
 	private  String siteURLBase="";
 	private  String expiration="";
 	private  String prestoCatalog="";
-	private  String csvtmphdfsPath="";
+
 	private  String csvlocalPath="";
 	private  String deleteLogTTL="";
 	private 	 String scheduleLogDir="";
-	private  String sqliteHDFSpath="";
-	private  String sqliteLOCALpath="";
 	private String wrtierinjection="";
 	private String downloadToken="";
-
+	private String presto_hdfs_user="";
 	static {
 		loadYaml();
 	}
@@ -101,14 +99,6 @@ public class YamlLoader {
 		this.prestoCatalog = prestoCatalog;
 	}
 
-	public String getCsvtmphdfsPath() {
-		return csvtmphdfsPath;
-	}
-
-	public void setCsvtmphdfsPath(String csvtmphdfsPath) {
-		this.csvtmphdfsPath = csvtmphdfsPath;
-	}
-
 	public String getCsvlocalPath() {
 		return csvlocalPath;
 	}
@@ -150,22 +140,6 @@ public class YamlLoader {
 		this.scheduleLogDir = scheduleLogDir;
 	}
 
-	public String getSqliteHDFSpath() {
-		return sqliteHDFSpath;
-	}
-
-	public void setSqliteHDFSpath(String sqliteHDFSpath) {
-		this.sqliteHDFSpath = sqliteHDFSpath;
-	}
-
-	public String getSqliteLOCALpath() {
-		return sqliteLOCALpath;
-	}
-
-	public void setSqliteLOCALpath(String sqliteLOCALpath) {
-		this.sqliteLOCALpath = sqliteLOCALpath;
-	}
-
 	public String getSqliteName() {
 		return sqliteName;
 	}
@@ -190,6 +164,14 @@ public class YamlLoader {
 		this.downloadToken = downloadToken;
 	}
 
+	public String getPresto_hdfs_user() {
+		return presto_hdfs_user;
+	}
+
+	public void setPresto_hdfs_user(String presto_hdfs_user) {
+		this.presto_hdfs_user = presto_hdfs_user;
+	}
+
 	@Override
 	public String toString() {
 		return "YamlLoader{" +
@@ -201,12 +183,9 @@ public class YamlLoader {
 				", SiteURLBase=" + siteURLBase +
 				", Expiration=" + expiration +
 				", Presto Catalog=" + prestoCatalog +
-				", CSV Temp HDFS Path=" + csvtmphdfsPath +
 				", CSV Local Path=" + csvlocalPath +
 				", Delete Log TTL=" + deleteLogTTL +
 				", Scheduled  Log Dir=" + scheduleLogDir +
-				", SQLite HDFS Path =" + sqliteHDFSpath +
-				", SQLite  Local  Path =" + sqliteLOCALpath +
 				'}';
 	}
 }

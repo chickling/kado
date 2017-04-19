@@ -1,20 +1,15 @@
 # Local
 prestoURL: "http://localhost:8080"
 siteURLBase: "http://localhost:8889"
-csvlocalPath: "/home/user/presto_temp"
-# HDFS  or Hive
+csvlocalPath: "/jetty/csv_temp"
+logpath: "/jetty/logs"
+# Hive
 database: "presto_temp"
-hivepath: "/user/hive/warehouse"
-logpath: "/tmp/presto-joblog"
 expiration: "7"
 prestoCatalog: "hive"
-csvtmphdfsPath: "/tmp/presto-csvtemp"
+hivepath: "/user/hive/warehouse"
 deleteLogTTL: "30"
 downloadToken: "a206379f7bffdcd01613869c448073ef98bfae8de4e17102b90f4758b2f316b7"
-#  Scheduled
-scheduleLogDir: "/logs/Schedule/"
-# backup SQLite DB to HDFS
-sqliteHDFSpath: "/tmp"
-sqliteHDFSpath: "/user/ec/presto_backup/Kado.sqlite"
 sqliteName: "Kado.sqlite"
-wrtierinjection: "com.chickling.models.writer.HdfsWriter$com.chickling.models.writer.LocalWriter"
+presto_hdfs_user: "root"
+wrtierinjection: "com.chickling.models.writer.LocalWriter"

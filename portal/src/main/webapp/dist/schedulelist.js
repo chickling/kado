@@ -1,4 +1,3 @@
-
  String.prototype.hashCode = function() {
         var hash = 0;
         if (this.length == 0) return hash;
@@ -45,7 +44,6 @@
  loadScheduleList();
  var timeoutId = setInterval(function() {
      loadScheduleList();
-
  }, 3000);
 
  function loadScheduleList() {
@@ -61,7 +59,6 @@
              if (JData["status"] != null) {
                  if (JData["status"] != "error") {
                      var tableHtml = "";
-
                      var tableList=[];
                      //GET LIST TO UPDATE TABLE
                      for (var i = 0; i < JData["list"].length; i++) {
@@ -72,7 +69,6 @@
                              if (JData["list"][i]["user"] == $.cookie('username'))
                                  continue;
                          }
-
                          var tableRow=[];
                          tableHtml += '<tr>';
                          tableRow.push('<td>' + JData["list"][i]["schedule_id"] + '</td>');
@@ -106,7 +102,6 @@
                          }
 
                      });
-
 
                      //GET TIME SET
 
@@ -155,7 +150,6 @@
          }
      });
  }
-
  function updateTableRow(table,dataRows){
     if($(table).children("tr").length==dataRows.length){
         $(table).children("tr").each(function(key,value){
@@ -228,7 +222,6 @@
                      }
                      $(".ui.schedule.history .description").css("max-height", ($(window).height() - 180) + "px");
                      $(".ui.modal.schedule.history tbody").html(tableHtml);
-
                       $("#scheduleHistoryLoader").hide();
                      $(".ui.modal.schedule.history").modal("show");
                      //popup show job basic info and function
@@ -289,7 +282,6 @@
                              type: 'error',
                              showCloseButton: true
                          });
-
                          $("#scheduleHistoryLoader").hide();
 
 
@@ -304,7 +296,6 @@
                  type: 'error',
                  showCloseButton: true
              });
-
              $("#scheduleHistoryLoader").hide();
          }
      });
@@ -463,7 +454,6 @@
   * 
   */
  function showJobHistory(jhid) {
-
      $(".ui.modal.schedule.history").modal("hide");
      $.ajax({
          url: './job/manage/run/history/get/info/' + jhid,

@@ -108,7 +108,6 @@ public class JobCRUDUtils {
     public synchronized static String updateJobtoDB(Map args,int JobID, String token) {
         PreparedStatement stat = null;
         String QuerySQL = "";
-
         try {
             if (JobIsExist(JobID)) {
 
