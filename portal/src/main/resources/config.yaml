@@ -1,8 +1,8 @@
 # Local
-prestoURL: "http://172.16.157.11:8080"
+prestoURL: "http://localhost:8080"
 siteURLBase: "http://localhost:8889"
-csvlocalPath: "D:\\0_projects\\github\\kado\\logs"
-logpath: "D:\\0_projects\\github\\kado\\logs"
+csvlocalPath: "/jetty/csv_temp"
+logpath: "/jetty/logs"
 # Hive
 database: "presto_temp"
 expiration: "7"
