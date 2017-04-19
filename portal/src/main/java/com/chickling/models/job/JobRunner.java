@@ -4,6 +4,8 @@ import com.amazonaws.util.json.JSONException;
 import com.amazonaws.util.json.JSONObject;
 import com.chickling.bean.job.Job;
 import com.chickling.bean.job.JobLog;
+
+import com.chickling.bean.result.ResultMap;
 import com.chickling.face.ResultWriter;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
@@ -11,22 +13,12 @@ import com.google.gson.internal.LinkedTreeMap;
 import com.chickling.boot.Init;
 import com.chickling.models.Auth;
 import com.chickling.models.ControlManager;
-import com.chickling.models.dfs.FSFile;
-import com.chickling.models.dfs.OrcFileUtil;
 import com.chickling.util.*;
 import com.chickling.bean.job.JobHistory;
-import org.apache.commons.io.IOCase;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.hadoop.fs.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
-import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.appender.RollingFileAppender;
-import org.apache.logging.log4j.core.config.Configuration;
-
-import java.io.File;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.util.*;
@@ -78,7 +70,7 @@ public class JobRunner   implements Callable<Boolean> {
         //set Log FileName  for Log4j Router Appender
         String logFileName= "joblog-"+jobUUID;
         ThreadContext.put("logFileName", logFileName);
-        log.info("log File name : joblog-" + jobUUID);
+        log.info("log File name : " + logFileName);
 
         //******************************************************************************************
         // Replace Sql  Conditions
@@ -114,7 +106,8 @@ public class JobRunner   implements Callable<Boolean> {
             //******************************************************************************************
             if (!isAdmin){
                 try {
-                    prestoUtil.post(dropTable, jobType, Init.getDatabase());
+//                    prestoUtil.post(dropTable, jobType, Init.getDatabase());
+                    prestoUtil.doJdbcRequest(dropTable);
                 } catch (Exception e) {
                     log.error("drop table " + tempTableName + " error : " + e);
                     this.exception.append(e.getMessage()).append("\n");
@@ -129,9 +122,8 @@ public class JobRunner   implements Callable<Boolean> {
             // drop table t2 | DROP  if exists t2
             // insert into t3 | INSERT INTO t3
             ///******************************************************************************************
-            //default Result and LogFile Path in HDFS
             String jobOutPut=Init.getHivepath()+"/"+Init.getDatabase()+".db/temp_"+jobUUID;
-            String logFileOutPut=Init.getLogpath()+"/"+ThreadContext.get("logFileName");
+            String logFileOutPut=Init.getLogpath()+Init.getFileseparator()+ThreadContext.get("logFileName")+".log";
             String[] tableFullName;
             List<String> tableFullNameLsit=new ArrayList<>();
             Matcher matcher=PrestoContent.SQL_PASER.matcher(sql.trim());
@@ -223,7 +215,8 @@ public class JobRunner   implements Callable<Boolean> {
                 log.error("Insert Job Log  Error  : " + ExceptionUtils.getStackTrace(e));
                 try {
                     prestoUtil.delete(prestoid, jobType);
-                    prestoUtil.post(dropTable, jobType, Init.getDatabase());
+                    prestoUtil.doJdbcRequest(dropTable);
+//                    prestoUtil.post(dropTable, jobType, Init.getDatabase());
                 } catch (Exception e1) {
                     log.error("Delete job "+prestoid + "Error  : " +e1);
                 }
@@ -253,7 +246,9 @@ public class JobRunner   implements Callable<Boolean> {
                 log.error("Insert Job History Error  : "+ ExceptionUtils.getStackTrace(e));
                 try {
                     prestoUtil.delete(prestoid,jobType);
-                    prestoUtil.post(dropTable, jobType, Init.getDatabase());
+
+                    prestoUtil.doJdbcRequest(dropTable);
+//                    prestoUtil.post(dropTable, jobType, Init.getDatabase());
                 } catch (Exception e1) {
                     log.error("Delete job [ "+prestoid + " ] Error  : " +e1);
                 }
@@ -279,7 +274,8 @@ public class JobRunner   implements Callable<Boolean> {
                         try {
                             // delete presto job, drop temp table , remove jobhistory fom deletejobList
                             prestoUtil.delete(prestoid,jobType);
-                            prestoUtil.post(dropTable, jobType, Init.getDatabase());
+                            prestoUtil.doJdbcRequest(dropTable);
+//                            prestoUtil.post(dropTable, jobType, Init.getDatabase());
                             Init.getDeleteJobList().remove(jobHistoryid);
                             isdelete=true;
                         } catch (Exception e) {
@@ -307,7 +303,8 @@ public class JobRunner   implements Callable<Boolean> {
                         if (queryMap.containsKey("error") || "FAILED".equals(jobstatus)) {
                             log.error("Query Error , Kill this Job !!!!");
                             prestoUtil.delete(prestoid, jobType);
-                            prestoUtil.post(dropTable, jobType, Init.getDatabase());
+                            prestoUtil.doJdbcRequest(dropTable);
+//                            prestoUtil.post(dropTable, jobType, Init.getDatabase());
                             jobHistory.setStatus(PrestoContent.FAILED.toString());
                             isdelete=true;
                             isSuccess=Boolean.FALSE;
@@ -367,14 +364,12 @@ public class JobRunner   implements Callable<Boolean> {
                 //******************************************************************************************
                 if (!sql.toLowerCase().startsWith("drop") && !sql.toLowerCase().startsWith("insert")) {
                     log.info("Finish Presto job , now start row Count");
-                    String countStr="select count(*) from "+ tempTableName;
-                    String postCount=prestoUtil.post(countStr, jobType);
-                    if (!Strings.isNullOrEmpty(postCount)) {
-                        HashMap<String, ArrayList<ArrayList<Object>>> tmp = new Gson().fromJson(postCount, HashMap.class);
-                        resultCount = ((Number) tmp.get("data").get(0).get(0)).intValue();
-                    }
+                    String countStr="select count(*)  from "+ tempTableName;
+                    ResultMap resultMap=prestoUtil.doJdbcRequest(countStr);
+                    if (resultMap.getCount()>0)
+                        resultCount=Integer.parseInt(resultMap.getData().get(0).get(0).toString());
+//                    }
                     log.info("Result Count is : " + resultCount);
-
                 }else
                     log.info("Is Drop or Insert Job , we don't COUNT this job result");
                 //******************************************************************************************
@@ -395,6 +390,7 @@ public class JobRunner   implements Callable<Boolean> {
                     parameter.put("location_id",job.getLocation_id());
                     parameter.put("insertsql",job.getInsertsql());
                     parameter.put("resultCount",resultCount);
+                    parameter.put("tableName",tempTableName);
                     // start Writer
                     //
                     if(!doWriter(activeWriter,parameter)){
@@ -410,7 +406,8 @@ public class JobRunner   implements Callable<Boolean> {
                 prestoUtil.delete(prestoid, jobType);
                 if (!prestoUtil.isSuccess())
                     log.error("Delete job "+prestoid + "Error  : " +prestoUtil.getException());
-                prestoUtil.post(dropTable, jobType, Init.getDatabase());
+                prestoUtil.doJdbcRequest(dropTable);
+//                prestoUtil.post(dropTable, jobType, Init.getDatabase());
                 if (!prestoUtil.isSuccess())
                     log.error("Drop Table "+tempTableName + "Error  : " +prestoUtil.getException());
                 isSuccess=Boolean.FALSE;
@@ -465,10 +462,6 @@ public class JobRunner   implements Callable<Boolean> {
                     String[] recipients=job.getReportEmail().split(";");
                     Notification.notification(jobHistoryid, content.toString(), "(info)[Job Report][" + jobHistoryid+"]"+job.getJobname(), recipients);
                 }
-            //******************************************************************************************
-            //   save  Log File to HDFS
-            //******************************************************************************************
-            saveLog(ThreadContext.get("logFileName"));
             log.info("Job End");
             StopLogger.stopLogger(log);
             ThreadContext.remove("logFileName");
@@ -517,7 +510,6 @@ public class JobRunner   implements Callable<Boolean> {
         }
         return rtnMap;
     }
-
 
 
     /**
@@ -608,7 +600,6 @@ public class JobRunner   implements Callable<Boolean> {
         //todo get JOB info
     }
 
-
     public JobRunner(Integer jobID,Integer jobType,String UserLevel,int ScheduleHistoryID,int JobSortIndex,int jobOwner) throws Exception {
         assert jobID!=null;
         assert jobType!=null;
@@ -656,70 +647,6 @@ public class JobRunner   implements Callable<Boolean> {
             }
         }
     }
-
-    private void saveLog(final String logName){
-
-        //********************************************
-        // Save Log
-        //********************************************
-        String sparetor=File.separator;
-        FSFile hdfs=FSFile.newInstance(FSFile.FSType.HDFS);
-        LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
-        Configuration config = ctx.getConfiguration();
-        RollingFileAppender app= (RollingFileAppender) config.getAppender("getLogDir");
-        String logDirPath=app.getFileName().replaceFirst("[^\\/]+$", "");
-        log.info("Local Log Dir  : " +logDirPath);
-        File dir = new File(logDirPath);
-        String  localLogPath=dir.getAbsolutePath()+sparetor;
-
-        log.info("Local File Path : "+localLogPath.trim());
-        File file =new File(localLogPath.trim());
-        //        FileFilter
-        String [] filename=file.list((file1, s) -> IOCase.SYSTEM.checkStartsWith(s, logName));
-
-        String path=Init.getLogpath()+"/"+logName+"/";
-        Path logDir =new Path(path);
-        log.info("Target HDFS  File Path : "+path.trim());
-        try {
-            if (!hdfs.getFs().exists(logDir)){
-                log.info("Create File Dir : " + hdfs.getFs().mkdirs(logDir));
-            }
-            for (String logFile : filename){
-                log.info("Copy File { "+(localLogPath + logFile)+" }  to HDFS : "+path + logFile);
-                hdfs.copyFileLocalToFs(localLogPath + logFile, path + logFile);
-            }
-            log.info("upload Log to HDFS Complete");
-        } catch (Exception e) {
-            log.error(ExceptionUtils.getStackTrace(e));
-
-        }
-
-    }
-
-    @Deprecated
-    public boolean saveResultToCSV(JobLog jobLog){
-        String csvResultPath=job.getFilepath().trim().replace(" ","").replaceAll("\\\\","").replaceAll("/+","/");
-        if (!csvResultPath.startsWith("/"))
-            csvResultPath="/"+csvResultPath;
-        if (!csvResultPath.endsWith("/"))
-            csvResultPath=csvResultPath+"/";
-        if (!Strings.isNullOrEmpty(job.getFilename()))
-            csvResultPath=csvResultPath+job.getFilename();
-        String sourceDir=jobLog.getJoboutput();
-        if(!sourceDir.endsWith("/"))
-            sourceDir=sourceDir+"/";
-        log.info("Start Save CSV Format Result  to HDFS Path :  "+csvResultPath);
-
-        OrcFileUtil orcFileUtil=OrcFileUtil.newInstance();
-        if(orcFileUtil.writeORCFilestoCSV(sourceDir,csvResultPath, OrcFileUtil.TYPE.HDFS, FSFile.FSType.HDFS))
-            log.info("Save Orc File to CSV File Success !!! ");
-        else{
-            log.error("Save CSV File Error");
-            return false;
-        }
-        return true;
-    }
-
     /**
      * ex: 3 to '010'
      * @param saveType
@@ -738,14 +665,7 @@ public class JobRunner   implements Callable<Boolean> {
     private boolean doWriter(List<String> activeWriter , Map parameter) throws Exception {
 
         int resultCode = 0;
-//            HDFS binary  100
         String name = "";
-        if ("1".equals(activeWriter.get(0))) {
-            name = "com.chickling.models.writer.HdfsWriter";
-            ResultWriter hdfsWriter =Init.getInjectionInstance(name);
-            hdfsWriter.init(parameter);
-            resultCode += (int) hdfsWriter.call();
-        }
         //LOCAL  binary 010
         //
         if ("1".equals(activeWriter.get(1))) {
@@ -756,28 +676,6 @@ public class JobRunner   implements Callable<Boolean> {
         }
         return resultCode > 0;
     }
-    @Deprecated
-    public   boolean saveResult(String userPath, String resultPath  )   {
-        //********************************************
-        // Save Result
-        //********************************************
-        FSFile hdfs=FSFile.newInstance(FSFile.FSType.HDFS);
 
-        if (!Strings.isNullOrEmpty(userPath)){
-            try {
-                if (hdfs.getFs().exists(new Path(userPath)))
-                    hdfs.getFs().mkdirs(new Path(userPath));
-                for (String resultfile : hdfs.listChildFileNames(resultPath)){
-                    hdfs.copyFileFsToFs(resultPath+"/"+resultfile,userPath+"/"+resultfile);
-                }
-            } catch (IOException e) {
-                log.error(ExceptionUtils.getStackTrace(e));
-                return false;
-            }
-            log.info("upload Results to Customize  Path Complete");
-        }else
-            log.info("No Results need to  upload");
-        return true;
-    }
 
 }

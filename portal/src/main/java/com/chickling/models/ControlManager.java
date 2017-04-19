@@ -1,17 +1,17 @@
 package com.chickling.models;
 
-import com.google.common.base.Strings;
+import com.chickling.bean.result.ResultMap;
+import com.chickling.util.PrestoUtil;
+import com.facebook.presto.hive.$internal.org.apache.commons.lang3.exception.ExceptionUtils;
 import com.google.gson.Gson;
 import com.chickling.sqlite.ConnectionManager;
 import com.chickling.boot.Init;
-import com.chickling.models.dfs.FSFile;
-import com.chickling.models.dfs.OrcFileUtil;
 import com.chickling.models.job.JobRunner;
 import com.chickling.models.job.PrestoContent;
 import com.chickling.util.JobHistoryCatch;
 import com.chickling.util.TimeUtil;
 import com.chickling.util.YamlLoader;
-import org.apache.commons.lang.exception.ExceptionUtils;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -45,8 +45,6 @@ public class ControlManager {
         //SQLite
         PreparedStatement stat = null;
         ResultSet rs = null;
-
-
         String sql = "SELECT * FROM (SELECT *,jh.JobOwner UID FROM (SELECT * FROM Job_History WHERE JobType=0 ORDER BY JHID DESC limit ?) jh,Job_Log jl WHERE jl.JLID=jh.JobLog) jhr,User u WHERE jhr.JobOwner =u.UID;";
         try {
             stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
@@ -219,8 +217,7 @@ public class ControlManager {
             @Override
             public void write(OutputStream os) throws IOException,
                     WebApplicationException {
-                FSFile fsFile=FSFile.newInstance(FSFile.FSType.HDFS);
-                InputStream is = fsFile.createInputStreamWithAbsoultePath(filepath);
+                InputStream is = new FileInputStream(new File(filepath));
                 try {
                     byte[] buffer = new byte[1024];
                     int len = 0;
@@ -269,40 +266,20 @@ public class ControlManager {
                 resultInfo.put("nowPage", page+1);
                 resultInfo.put("startRow", startRow);
                 resultInfo.put("pageRowCount", pageRowCount);
-                //Read page from orcfileutil
-                OrcFileUtil orc = OrcFileUtil.newInstance();
-                ByteArrayInputStream stream = null;
+
                 try {
-                    stream = orc.readORCFiles(getResultFilePath(jhid), OrcFileUtil.TYPE.HDFS, startRow, pageRowCount);
-                } catch (SQLException e) {
+                    String path=getResultFilePath(jhid);
+                    ResultMap resultData=new PrestoUtil().readJsonAsResult(Init.getDatabase()+"."+path.substring(path.lastIndexOf("/")+1,path.length()),startRow, pageRowCount);
+                    resultInfo.put("header", resultData.getSchema());
+                    resultInfo.put("row", resultData.getData().stream().map(item-> {
+                        return item.stream().map(value->value.toString()).toArray();
+                    }).toArray());
+                    return new Gson().toJson(resultInfo);
+                }catch (Exception e){
                     log.error("Get ResultFilePath Error");
-                    log.error(e);
+                    log.error(ExceptionUtils.getMessage(e));
                     return MessageFactory.message("error", "Get ResultFilePath Error");
                 }
-                // Read InputStream by InputStreamReader
-                InputStreamReader inReader = new InputStreamReader(stream);
-                BufferedReader br = new BufferedReader(inReader);
-                List result = new ArrayList<>();
-                int i = 0;
-                try {
-                    while (br.ready()) {
-                        String tmp = br.readLine();
-                        String[] rowArray = tmp.split("\001");
-                        //first line is header
-                        if (i == 0)
-                            resultInfo.put("header", rowArray);
-                        else
-                            result.add(rowArray);
-                        i++;
-                    }
-                } catch (IOException e) {
-                    log.error("Get Page IO Error");
-                    log.error(e);
-                    return MessageFactory.message("error", "Get Page IO Error");
-                }
-                resultInfo.put("row", result);
-                Gson gson = new Gson();
-                return gson.toJson(resultInfo);
             } else {
                 return MessageFactory.message("error", "Page number out of index");
             }
@@ -335,47 +312,36 @@ public class ControlManager {
             page=(page>0)?page-1:0;
             int startRow = pageRowCount * page;
             if (page <= pageCount) {
-
-                //Read page from orcfileutil
-                OrcFileUtil orc = OrcFileUtil.newInstance();
-                ByteArrayInputStream stream = null;
+                ResultMap resultData;
                 try {
-                    stream = orc.readORCFiles(getResultFilePath(jhid), OrcFileUtil.TYPE.HDFS, startRow, pageRowCount);
+                    String path = getResultFilePath(jhid);
+                    resultData = new PrestoUtil().readJsonAsResult(Init.getDatabase() + "." + path.substring(path.lastIndexOf("/") + 1, path.length()), startRow, pageRowCount);
                 } catch (SQLException e) {
                     log.error("Get ResultFilePath Error");
                     log.error(e);
                     return "Get ResultFilePath Error";
                 }
-                // Read InputStream by InputStreamReader
-                InputStreamReader inReader = new InputStreamReader(stream);
-                BufferedReader br = new BufferedReader(inReader);
+                Object[] dataList= resultData.getData().stream().map(item-> {
+                    return item.stream().map(value->value.toString()).toArray();
+                }).toArray();
                 int i = 0;
                 String tHeader="";
                 String tBody="";
-                try {
-                    while (br.ready()) {
-                        String tmp = br.readLine();
-                        String[] rowArray = tmp.split("\001");
-                        //first line is header
-                        if (i == 0) {
-                            tHeader += "<tr>";
-                            for (String col : rowArray) {
-                                tHeader +="<th style='padding: 5px;border: 1px solid black;background-color: #5858FA;color: white;'>" + col + "</th>";
-                            }
-                            tHeader+="</tr>";
-                        }else {
-                            tBody+="<tr>";
-                            for (String col : rowArray) {
-                                tBody +="<td style='border: 1px solid black;'>" + col + "</td>";
-                            }
-                            tBody+="</tr>";
-                        }
-                        i++;
+                //first line is header
+                tHeader += "<tr>";
+                for (String col : resultData.getSchema()) {
+                    tHeader +="<th style='padding: 5px;border: 1px solid black;background-color: #5858FA;color: white;'>" + col + "</th>";
+                }
+                tHeader+="</tr>";
+
+                for (Object dataRow: dataList) {
+                    tBody+="<tr>";
+
+                    for (Object col : (Object[]) dataRow) {
+                        tBody +="<td style='border: 1px solid black;'>" + col.toString() + "</td>";
                     }
-                } catch (IOException e) {
-                    log.error("Get Page IO Error");
-                    log.error(e);
-                    return  "Get Page IO Error";
+                    tBody+="</tr>";
+                    i++;
                 }
 
                 return "<table style='border-collapse: collapse;border: 1px solid black;'>" +"<thead>"+tHeader+"</thead>"+"<tbody>"+tBody+"</tbody>"+"</table>";
@@ -413,19 +379,20 @@ public class ControlManager {
      * Get result csv path
      * @return
      */
-    public String getResultCSVPath(String sourcePath){
-        OrcFileUtil orcFileUtil=OrcFileUtil.newInstance();
 
-//        String csvFilePath=sourcePath.replace("/user/hive/warehouse/" + Init.getDatabase() + "/", "/tmp/presto-job-manager/csv/");
-        String csvFilePath= YamlLoader.instance.getCsvtmphdfsPath()+"/csv"+sourcePath.substring(sourcePath.lastIndexOf("/"))+"/";
-//        String csvFilePath="/tmp/presto-job-manager/csv"+sourcePath.substring(sourcePath.lastIndexOf("/"))+"/";
-        String resultPath=orcFileUtil.downloadORCFilestoCSV(sourcePath + "/", csvFilePath + "/", OrcFileUtil.TYPE.HDFS);
-        if(Strings.isNullOrEmpty(resultPath))
-            return "";
-        else
-            return csvFilePath+resultPath;
-
-    }
+//    public String getResultCSVPath(String sourcePath){
+//        OrcFileUtil orcFileUtil=OrcFileUtil.newInstance();
+//
+////        String csvFilePath=sourcePath.replace("/user/hive/warehouse/" + Init.getDatabase() + "/", "/tmp/presto-job-manager/csv/");
+//        String csvFilePath= YamlLoader.instance.getCsvtmphdfsPath()+"/csv"+sourcePath.substring(sourcePath.lastIndexOf("/"))+"/";
+////        String csvFilePath="/tmp/presto-job-manager/csv"+sourcePath.substring(sourcePath.lastIndexOf("/"))+"/";
+//        String resultPath=orcFileUtil.downloadORCFilestoCSV(sourcePath + "/", csvFilePath + "/", OrcFileUtil.TYPE.HDFS);
+//        if(Strings.isNullOrEmpty(resultPath))
+//            return "";
+//        else
+//            return csvFilePath+resultPath;
+//
+//    }
 
     /**
      * Get result row count
@@ -455,7 +422,8 @@ public class ControlManager {
      * @return [file name]
      */
     public String getFilenameFromPath(String Path){
-        return Path.substring(Path.lastIndexOf("/"),Path.length());
+
+        return Path.substring(Path.lastIndexOf("/")+1,Path.length());
     }
 
     /**
@@ -466,12 +434,11 @@ public class ControlManager {
      */
     public String getLogFile(String filepath) {
         if (!filepath.equals("")) {
-            FSFile fsFile = FSFile.newInstance(FSFile.FSType.HDFS);
-//            System.out.println(fsFile.getFs().getConf().toString());
-//            System.out.println(filepath);
+            File localFile=new File(filepath);
+//            FSFile fsFile = FSFile.newInstance(FSFile.FSType.LocalFs);
             String logMessage = "";
             try {
-                InputStreamReader inReader = new InputStreamReader(fsFile.createInputStream(filepath));
+                InputStreamReader inReader = new InputStreamReader(new FileInputStream(localFile));
                 BufferedReader br = new BufferedReader(inReader);
                 while (br.ready()) {
                     String tmp = br.readLine();
@@ -507,9 +474,10 @@ public class ControlManager {
         while (rs.next()){
             logOutput=rs.getString("JobLogfile");
         }
-        if(!logOutput.equals("")){
-            logOutput=logOutput+logOutput.substring(logOutput.lastIndexOf("/"),logOutput.length())+".log";
-        }
+
+//        if(!logOutput.equals("")){
+//            logOutput=logOutput+logOutput.substring(logOutput.lastIndexOf("/"),logOutput.length())+".log";
+//        }
         return logOutput;
     }
 
@@ -519,6 +487,6 @@ public class ControlManager {
      * @return [log file path]
      */
     public String getScheduleLogPath(int shid){
-        return YamlLoader.instance.getLogpath()+"/Schedule/ScheduleHistoryLog_"+shid;
+        return YamlLoader.instance.getLogpath()+Init.getFileseparator()+"ScheduleHistoryLog_"+shid+".log";
     }
 }

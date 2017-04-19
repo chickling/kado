@@ -9,7 +9,6 @@
   <url>http://maven.apache.org</url>
 
   <modules>
-
     <module>base</module>
     <module>portal</module>
   </modules>

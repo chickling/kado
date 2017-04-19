@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <#-- INCLUDE NAV -->
+  <#include "header.ftl">
   <!-- Standard Meta -->
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
@@ -206,13 +208,15 @@
               $(".item.next").attr("onclick","loadResultPage("+jhid+","+getNext(page,JData["pageCount"])+");");
               //update table 
               var tableHtml="";  
-              var tableHeader="<tr>"; 
+              var tableHeader="<tr>";
+              tableHeader+="<th>#</th>";
               for(var i=0;i<JData["header"].length;i++){
                 tableHeader+="<th>"+JData["header"][i]+"</th>";
               } 
               tableHeader+="</tr>";
               for(var i=0;i<JData["row"].length;i++){                
                 tableHtml+='<tr>';
+                tableHtml+='<td>'+(JData["startRow"]+i)+'</td>';
                 for(var j=0;j<JData["row"][i].length;j++){
                   tableHtml+='<td>'+JData["row"][i][j]+'</td>';
                 }  

@@ -1,5 +1,9 @@
 package com.chickling.controllers;
 
+
+import com.chickling.boot.Init;
+import com.chickling.util.PrestoUtil;
+import com.facebook.presto.hive.$internal.org.apache.commons.lang3.exception.ExceptionUtils;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.chickling.models.Auth;
@@ -9,7 +13,6 @@ import com.chickling.models.job.JobRunner;
 import com.chickling.models.job.PrestoContent;
 import com.chickling.util.JobHistoryCatch;
 import com.chickling.util.TimeUtil;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
@@ -58,7 +61,8 @@ public class QueryUI {
         try {
             if ((Boolean) auth.verify(token).get(4) == true) {
                 Map datas = gson.fromJson(json, type);
-                String sql = new String(base64.decode((String) datas.get("sql")), "UTF-8");
+
+                String sql = new String(base64.decode( ((String)datas.get("sql")).getBytes()),"UTF-8");
                 String jobHistoryCatchKey=TimeUtil.getCurrentTime()+":QueryUI:"+sql.hashCode();
                 System.out.println(sql);
                 future = executor.submit(new JobRunner(0, PrestoContent.QUERY_UI, token,jobHistoryCatchKey, sql));
@@ -102,15 +106,15 @@ public class QueryUI {
         Type type = new TypeToken<Map>() {}.getType();
         Gson gson = new Gson();
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        Future<Boolean> future = null;
         Auth auth = new Auth();
 
         try {
             if ((Boolean) auth.verify(token).get(4) == true) {
                 Map datas = gson.fromJson(json, type);
-                String sql = new String(base64.decode((String) datas.get("sql")), "UTF-8");
+
+                String sql = new String(base64.decode( ((String)datas.get("sql")).getBytes()),"UTF-8");
                 String jobHistoryCatchKey=TimeUtil.getCurrentTime()+":QueryUI:"+sql.hashCode();
-                future = executor.submit(new JobRunner(0, PrestoContent.QUERY_UI, token,jobHistoryCatchKey, sql));
+                executor.submit(new JobRunner(0, PrestoContent.QUERY_UI, token,jobHistoryCatchKey, sql));
                 int waitCount=0;
                 while (waitCount<100){
                     Integer jhid= JobHistoryCatch.getInstance().jobHistoryIDs.get(jobHistoryCatchKey);
@@ -214,9 +218,11 @@ public class QueryUI {
                 ControlManager controlManager = new ControlManager();
                 String filePath = "";
                 filePath = controlManager.getResultFilePath(jobrunid);
+
+                String fileName=controlManager.getFilenameFromPath(filePath);
                 ContentDisposition contentDisposition = ContentDisposition.type("attachment")
-                        .fileName(controlManager.getFilenameFromPath(filePath) + ".csv").creationDate(new Date()).build();
-                return Response.ok(controlManager.getResultFile(controlManager.getResultCSVPath(filePath))).header("Content-Disposition", contentDisposition).build();
+                        .fileName(fileName + ".csv").creationDate(new Date()).build();
+                return Response.ok(controlManager.getResultFile(new PrestoUtil().downloadCSV(Init.getDatabase()+"."+fileName))).header("Content-Disposition", contentDisposition).build();
             } else {
                 log.warn("Get Result File Verify Error");
                 log.warn("JHID->"+jobrunid+";Token->"+token);

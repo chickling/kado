@@ -2,23 +2,15 @@ package com.chickling.schedule;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.chickling.boot.Init;
-import com.chickling.models.dfs.FSFile;
 import com.chickling.models.job.JobRunner;
 import com.chickling.models.job.PrestoContent;
 import com.chickling.util.*;
-import org.apache.hadoop.fs.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
-import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.appender.RollingFileAppender;
-import org.apache.logging.log4j.core.config.Configuration;
 import org.quartz.*;
 
 
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.*;
@@ -48,8 +40,6 @@ public class ScheduleRunner implements Job{
             log.info("execute schedule" + Thread.currentThread().getName());
 
             ArrayList<String> ScheduleHistoryInput =new ArrayList<>();
-
-            logPath= YamlLoader.instance.getScheduleLogDir();
 
             Type type = new TypeToken<Map>() {}.getType();
             Gson gson = new Gson();
@@ -87,6 +77,8 @@ public class ScheduleRunner implements Job{
             logPath="ScheduleHistoryLog_"+ScheduleHistoryID;
 
             ThreadContext.put("logFileName", logPath);
+
+            logPath=logPath+".log";
 
             ArrayList Jobs=(ArrayList)info.get("runjob");
 
@@ -160,17 +152,13 @@ public class ScheduleRunner implements Job{
             log.error(e.toString());
             // ThreadContext.remove("logFileName");
             //ScheduleCRUDUtils.UpdateScheduleHistory(ScheduleHistoryID,TimeUtil.getCurrentTime(),0,logPath);
-            return;
+            return ;
         } finally {
             executor.shutdown();
             log.info(logPath);
-            saveLogToHDFS(ThreadContext.get("logFileName"));
             StopLogger.stopLogger(log);
             ThreadContext.remove("logFileName");
-
-
         }
-
     }
 
     public ArrayList<String> insertInfo(Map info, int ScheduleID,int ScheduleOwner){
@@ -203,32 +191,6 @@ public class ScheduleRunner implements Job{
         ScheduleHistoryInput.add((String) info.get("notification"));//notification
 
         return ScheduleHistoryInput;
-    }
-
-    public void saveLogToHDFS(String logName)   {
-
-        FSFile hdfs=FSFile.newInstance(FSFile.FSType.HDFS);
-//        FSFile localfs=FSFile.newInstance(FSFile.FSType.LocalFs);
-//        String localLogPath=JobRunner.class.getResource("/")+ThreadContext.get("logFileName");
-        LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
-        Configuration config = ctx.getConfiguration();
-        RollingFileAppender app= (RollingFileAppender) config.getAppender("getLogDir");
-        File dir = new File(app.getFileName().replaceFirst("[^\\/]+$", ""));
-        String  localLogPath=dir.getAbsolutePath()+"/";
-        File file =new File(localLogPath.trim());
-        log.info(logName);
-        String path=Init.getLogpath()+"/Schedule/";
-        Path logDir =new Path(path);
-
-        try {
-            if (!hdfs.getFs().exists(logDir))
-                hdfs.getFs().mkdirs(logDir);
-            hdfs.copyFileLocalToFs(localLogPath + logName+".log", path + logName);
-
-        } catch (IOException e) {
-            log.error(e);
-        }
-
     }
 
 }

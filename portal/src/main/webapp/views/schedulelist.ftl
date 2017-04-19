@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <#-- INCLUDE NAV -->
+  <#include "header.ftl">
   <!-- Standard Meta -->
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
@@ -85,7 +87,6 @@
 
   <#-- INCLUDE NAV -->
   <#include "nav.ftl">
-
     <div class="ui active dimmer load" id="scheduleHistoryLoader" style="display:none">
         <div class="ui huge text loader">Loading</div>
     </div>
@@ -93,7 +94,6 @@
     <div class="ui top  attached progress"  id="pg" style="margin-top:50px">
       <div class="bar"></div>
     </div>
-
 
     <!-- Site content !-->
     <div class="full height">

@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <#-- INCLUDE NAV -->
+  <#include "header.ftl">
   <!-- Standard Meta -->
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
@@ -90,6 +92,21 @@
       .search.dropdown > .menu{
         width:280px !important;
       }
+    .hidd p::after {
+        background-color: #fff;
+        bottom: 0;
+        content: "...";
+        padding: 0 5px;
+        position: absolute;
+        right: 0;
+    }
+
+    .hidd p {
+        height: 5em;
+        line-height: 1em;
+        overflow: hidden;
+        position: relative;
+    }
 
       </style>
 

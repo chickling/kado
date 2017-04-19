@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <#-- INCLUDE NAV -->
+  <#include "header.ftl">
   <!-- Standard Meta -->
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
@@ -173,7 +175,7 @@
           <i class="icon flag"></i>
           Every
         </div>
-        <input placeholder="Who long.." type="text">
+        <input placeholder="how long.." type="text">
         <div class="ui basic floating dropdown button unit">
           <div class="text">Hour</div>
           <i class="dropdown icon"></i>
