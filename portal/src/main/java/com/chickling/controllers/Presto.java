@@ -34,6 +34,7 @@ public class Presto {
     @Path("list")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getTableList(@Context ServletContext context,@HeaderParam("AUTHORIZATION") String token){
+
         PrestoUtil prestoUtil=new PrestoUtil();
         String sql="SELECT * FROM information_schema.tables where table_schema<> 'presto_temp'";
         ResultMap resultMap=prestoUtil.doJdbcRequest(sql);
@@ -59,7 +60,8 @@ public class Presto {
             responseMap.put("status", "success");
             responseMap.put("time", TimeUtil.toString(DateTime.now()));
 
-            return Response.ok(gson.toJson(responseMap)).build();
+                return Response.ok(gson.toJson(responseMap)).build();
+
         }
     }
 

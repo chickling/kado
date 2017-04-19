@@ -177,7 +177,7 @@
           <i class="icon flag"></i>
           Every
         </div>
-        <input placeholder="Who long.." type="text">
+        <input placeholder="how long.." type="text">
         <div class="ui basic floating dropdown button unit">
           <div class="text">Hour</div>
           <i class="dropdown icon"></i>
