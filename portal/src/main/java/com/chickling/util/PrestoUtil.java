@@ -354,7 +354,11 @@ public class PrestoUtil  implements PrestoResult {
         resultMap.setStart(start);
         // check file
         String fileName=tableName+".json";
-        String filePath=Init.getCsvlocalPath()+File.separator+fileName;
+        String filePath="";
+        if (Strings.isNullOrEmpty(Init.getTempDir()))
+            filePath=Init.getCsvlocalPath()+File.separator+fileName;
+        else
+            filePath=Init.getCsvlocalPath()+File.separator+Init.getTempDir()+File.separator+fileName;
         File jsonFile=new File(filePath);
 
 
@@ -436,7 +440,13 @@ public class PrestoUtil  implements PrestoResult {
 
         // check file
         String fileName=table+".json";
-        String filePath=Init.getCsvlocalPath()+File.separator+fileName;
+
+        String filePath="";
+        if (Strings.isNullOrEmpty(Init.getTempDir()))
+            filePath=Init.getCsvlocalPath()+File.separator+fileName;
+        else
+            filePath=Init.getCsvlocalPath()+File.separator+Init.getTempDir()+File.separator+fileName;
+
         File jsonfile=new File(filePath);
 
         if (!jsonfile.getParentFile().exists())

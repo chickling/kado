@@ -35,6 +35,7 @@ public class Init implements ServletContextListener{
     private static String deleteLogTTL="";
     private static String presto_user="";
     private  static String fileseparator=File.separator;
+    private static String tempDir="json";
     private static Map<String,ResultWriter> injectionMap;
 
     public static String getDeleteLogTTL() {
@@ -142,6 +143,14 @@ public class Init implements ServletContextListener{
 
     public static void setPresto_user(String presto_user) {
         Init.presto_user = presto_user;
+    }
+
+    public static String getTempDir() {
+        return tempDir;
+    }
+
+    public static void setTempDir(String tempDir) {
+        Init.tempDir = tempDir;
     }
 
     public Init() {

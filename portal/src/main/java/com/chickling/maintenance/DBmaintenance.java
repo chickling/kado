@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.RollingFileAppender;
 import org.apache.logging.log4j.core.config.Configuration;
-import org.joda.time.DateTime;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -18,6 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.*;
+import java.time.*;
 import java.util.ArrayList;
 
 /**
@@ -148,19 +148,39 @@ public class DBmaintenance {
         File dir=null;
         try {
             int  deleteCount=0;
-            DateTime now=DateTime.now();
+            ZonedDateTime znow=ZonedDateTime.now();
+//            DateTime now=DateTime.now();
             dir = new File(csvDirPath);
             if (null!=dir.listFiles()){
                 for (File logfile: dir.listFiles()){
-                    String fileName=logfile.getName();
-                    Path path= Paths.get(logfile.toURI());
-                    BasicFileAttributes attr= Files.readAttributes(path,BasicFileAttributes.class);
-                    if (attr.creationTime().toMillis()< now.plusDays(Integer.parseInt(csvTTL)).getMillis()){
-                        if (logfile.delete()){
-                            log.info("Delete File is : [ "+fileName+" ] ");
-                            deleteCount++;
-                            if (0==deleteCount%10 && deleteCount>0)
-                                log.info("Delete "+deleteCount+"  File !! ");}
+                    //delete temp json
+                    if (logfile.isDirectory() && Init.getTempDir().equalsIgnoreCase(logfile.getName()) ){
+                        for (File jsonFile:logfile.listFiles()){
+                            String fileName = jsonFile.getName();
+                            Path path = Paths.get(jsonFile.toURI());
+                            BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class);
+                            if (attr.creationTime().toMillis() < znow.plusDays(Integer.parseInt(csvTTL)).toInstant().toEpochMilli()) {
+                                if (logfile.delete()) {
+                                    log.info("Delete json File is : [ " + fileName + " ] ");
+                                    deleteCount++;
+                                    if (0 == deleteCount % 10 && deleteCount > 0)
+                                        log.info("Delete " + deleteCount + "  File !! ");
+                                }
+                            }
+                        }
+                    }else {
+                        //delete temp csv
+                        String fileName = logfile.getName();
+                        Path path = Paths.get(logfile.toURI());
+                        BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class);
+                        if (attr.creationTime().toMillis() < znow.plusDays(Integer.parseInt(csvTTL)).toInstant().toEpochMilli()) {
+                            if (logfile.delete()) {
+                                log.info("Delete csv File is : [ " + fileName + " ] ");
+                                deleteCount++;
+                                if (0 == deleteCount % 10 && deleteCount > 0)
+                                    log.info("Delete " + deleteCount + "  Files !! ");
+                            }
+                        }
                     }
                 }
             }
@@ -181,14 +201,14 @@ public class DBmaintenance {
         File dir=null;
         try {
             int  deleteCount=0;
-            DateTime now=DateTime.now();
+            ZonedDateTime znow=ZonedDateTime.now();
             dir = new File(logDirPath);
             if (null!=dir.listFiles()){
                 for (File logfile: dir.listFiles()){
                     if (logfile.getName().contains("joblog") || logfile.getName().contains("ScheduleHistoryLog")){
                         Path path= Paths.get(logfile.toURI());
                         BasicFileAttributes attr= Files.readAttributes(path,BasicFileAttributes.class);
-                        if (attr.creationTime().toMillis()< now.plusDays(Integer.parseInt(logTTL)).getMillis()){
+                        if (attr.creationTime().toMillis()< znow.plusDays(Integer.parseInt(logTTL)).toInstant().toEpochMilli()){
                             if (logfile.delete()){
                                 deleteCount++;
                                 if (0==deleteCount%10 && deleteCount>0)
@@ -269,5 +289,15 @@ public class DBmaintenance {
         }
     }
 
+    public static void main(String[] args) {
+        DBmaintenance maintain=new DBmaintenance();
+        Init.setCsvlocalPath("D:\\0_projects\\Kado\\csvtemp");
+        Init.setExpiration("1");
+
+        maintain.deleteLocalTempFileOverTTL();
+
+
+
+    }
 
 }
