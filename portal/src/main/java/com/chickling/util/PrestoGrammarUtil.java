@@ -3,10 +3,9 @@ package com.chickling.util;
 import com.amazonaws.util.json.JSONException;
 import com.amazonaws.util.json.JSONObject;
 import com.chickling.models.job.PrestoContent;
-import org.apache.commons.collections.MapUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.time.DateUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -277,7 +276,7 @@ public class PrestoGrammarUtil {
 		String result = cmd;
 		int k = 0;
 		do {
-			if (MapUtils.isNotEmpty(map)) {
+			if (!map.isEmpty()) {
 				String[] searchList = map.keySet().toArray(new String[] {});
 				String[] valueList = map.values().toArray(new String[] {});
 				result = StringUtils.replaceEach(result, searchList, valueList);

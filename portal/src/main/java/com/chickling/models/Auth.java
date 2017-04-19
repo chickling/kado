@@ -3,7 +3,7 @@ package com.chickling.models;
 import com.chickling.sqlite.ConnectionManager;
 import com.chickling.bean.job.User;
 import com.chickling.util.YamlLoader;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import com.facebook.presto.hive.$internal.org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

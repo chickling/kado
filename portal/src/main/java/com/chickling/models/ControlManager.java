@@ -2,18 +2,15 @@ package com.chickling.models;
 
 import com.chickling.bean.result.ResultMap;
 import com.chickling.util.PrestoUtil;
-import com.google.common.base.Strings;
+import com.facebook.presto.hive.$internal.org.apache.commons.lang3.exception.ExceptionUtils;
 import com.google.gson.Gson;
 import com.chickling.sqlite.ConnectionManager;
 import com.chickling.boot.Init;
-import com.chickling.models.dfs.FSFile;
-import com.chickling.models.dfs.OrcFileUtil;
 import com.chickling.models.job.JobRunner;
 import com.chickling.models.job.PrestoContent;
 import com.chickling.util.JobHistoryCatch;
 import com.chickling.util.TimeUtil;
 import com.chickling.util.YamlLoader;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -384,19 +381,19 @@ public class ControlManager {
      * Get result csv path
      * @return
      */
-    public String getResultCSVPath(String sourcePath){
-        OrcFileUtil orcFileUtil=OrcFileUtil.newInstance();
-
-//        String csvFilePath=sourcePath.replace("/user/hive/warehouse/" + Init.getDatabase() + "/", "/tmp/presto-job-manager/csv/");
-        String csvFilePath= YamlLoader.instance.getCsvtmphdfsPath()+"/csv"+sourcePath.substring(sourcePath.lastIndexOf("/"))+"/";
-//        String csvFilePath="/tmp/presto-job-manager/csv"+sourcePath.substring(sourcePath.lastIndexOf("/"))+"/";
-        String resultPath=orcFileUtil.downloadORCFilestoCSV(sourcePath + "/", csvFilePath + "/", OrcFileUtil.TYPE.HDFS);
-        if(Strings.isNullOrEmpty(resultPath))
-            return "";
-        else
-            return csvFilePath+resultPath;
-
-    }
+//    public String getResultCSVPath(String sourcePath){
+//        OrcFileUtil orcFileUtil=OrcFileUtil.newInstance();
+//
+////        String csvFilePath=sourcePath.replace("/user/hive/warehouse/" + Init.getDatabase() + "/", "/tmp/presto-job-manager/csv/");
+//        String csvFilePath= YamlLoader.instance.getCsvtmphdfsPath()+"/csv"+sourcePath.substring(sourcePath.lastIndexOf("/"))+"/";
+////        String csvFilePath="/tmp/presto-job-manager/csv"+sourcePath.substring(sourcePath.lastIndexOf("/"))+"/";
+//        String resultPath=orcFileUtil.downloadORCFilestoCSV(sourcePath + "/", csvFilePath + "/", OrcFileUtil.TYPE.HDFS);
+//        if(Strings.isNullOrEmpty(resultPath))
+//            return "";
+//        else
+//            return csvFilePath+resultPath;
+//
+//    }
 
     /**
      * Get result row count

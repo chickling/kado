@@ -1,12 +1,12 @@
 package com.chickling.controllers;
 
+import com.facebook.presto.hive.$internal.org.apache.commons.lang3.exception.ExceptionUtils;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.chickling.schedule.ScheduleMgr;
 import com.chickling.models.Auth;
 import com.chickling.models.ControlManager;
 import com.chickling.models.MessageFactory;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -50,7 +50,7 @@ public class Control {
                 return Response.ok(MessageFactory.rtnJobHistoryMessage("error", "","Permission Denied", "")).build();
             }
         }catch (Exception e) {
-            return Response.ok(MessageFactory.rtnJobHistoryMessage("error", "",ExceptionUtils.getMessage(e), "")).build();
+            return Response.ok(MessageFactory.rtnJobHistoryMessage("error", "", ExceptionUtils.getMessage(e), "")).build();
         }
     }
 

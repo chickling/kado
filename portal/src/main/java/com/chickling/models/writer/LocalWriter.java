@@ -3,16 +3,12 @@ package com.chickling.models.writer;
 import com.chickling.bean.job.JobLog;
 import com.chickling.boot.Init;
 import com.chickling.face.ResultWriter;
-import com.chickling.models.dfs.FSFile;
-import com.chickling.models.dfs.OrcFileUtil;
 import com.chickling.util.PrestoUtil;
 import com.google.common.base.Strings;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 
 /**
@@ -44,7 +40,11 @@ public class LocalWriter implements ResultWriter {
     public Integer call()   {
         String fs=File.separator;
         String csvResultPath= Init.getCsvlocalPath()+fs+jobLog.getFilepath().trim().replace(" ","");
-        String result=new PrestoUtil().writeAsCSV(tableName,csvResultPath);
+        while (csvResultPath.endsWith("\\") || csvResultPath.endsWith("/")){
+            csvResultPath=csvResultPath.substring(0,csvResultPath.length()-1);
+        }
+        String fileName=jobLog.getFilename().trim().replaceAll("\\\\","").replaceAll("/","");
+        String result=new PrestoUtil().writeAsCSV(tableName,csvResultPath+File.separator+fileName,true);
         log.info("tmp csv file Path is "+result);
         if(!Strings.isNullOrEmpty(result)) {
             log.info("Save Result to  Local  CSV File Success !!! ");

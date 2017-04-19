@@ -38,11 +38,6 @@ public class PrestoUtil  implements PrestoResult {
     private String  jdbcUrl;
     private Properties prop=new Properties();
     public PrestoUtil() {
-        Init.setPrestoURL("http://172.16.157.11:8080");
-        Init.setPresto_user("root");
-        Init.setCsvlocalPath("D:\\0_projects\\Kado\\logs");
-        Init.setPrestoCatalog("hive");
-
         prstoUrl=Init.getPrestoURL();
         catalog=Init.getPrestoCatalog();
         prop.setProperty("user",Init.getPresto_user());
@@ -545,23 +540,31 @@ public class PrestoUtil  implements PrestoResult {
      * @return               The local absolute path of the file output
      */
     public  String downloadCSV(String table){
-        return writeAsCSV(table,Init.getCsvlocalPath());
+        return writeAsCSV(table,Init.getCsvlocalPath(),false);
     }
+
 
     /**
      *  Write Result to CSV format file
      * @param table          table name
      * @param outputPath Local custom output path
+     * @param  finalName      if outputPath contain file name
      * @return                   The local absolute path of the file output
      */
-    public String writeAsCSV(String table,String outputPath){
+
+
+    public String writeAsCSV(String table,String outputPath,boolean finalName){
 
         // Remove the extra separator
         while (outputPath.lastIndexOf(File.separator)==(outputPath.length()-1)){
             outputPath=outputPath.substring(0,outputPath.length()-1);
         }
+        String resultPath="";
+        if (finalName)
+            resultPath=outputPath+"@"+ Instant.now().toEpochMilli() +".csv";
+        else
+            resultPath=outputPath+File.separator+table+"@"+ Instant.now().toEpochMilli() +".csv";
 
-        String resultPath=outputPath+File.separator+table+"@"+ Instant.now().toEpochMilli() +".csv";
         ResultMap resultMap=readJsonAsResult(table,0,-1);
 
         File csvfile =new File(resultPath);
