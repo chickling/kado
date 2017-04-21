@@ -21,8 +21,7 @@ More information in the [Wiki](https://github.com/chickling/kado/wiki)
 - Maven 3.3.9+ (for building)
 
 ### Presto
-- Hadoop cluster 2.6.0 ( HDFS,HIVE )
-- Presto 0.143 
+- Presto 0.170
 
 ## Build Kado
 Kado is a standard Maven project. Simply run the following command from the project root directory :
