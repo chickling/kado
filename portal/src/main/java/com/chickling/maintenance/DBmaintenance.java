@@ -1,5 +1,6 @@
 package com.chickling.maintenance;
 
+import com.chickling.models.job.PrestoContent;
 import com.chickling.sqlite.ConnectionManager;
 import com.chickling.boot.Init;
 import com.chickling.util.PrestoUtil;
@@ -29,6 +30,9 @@ public class DBmaintenance {
      * 2. Add the stop time of unfinished schedule.
      * 3. Add a default job if it is necessary.
      **/
+
+
+
     public Logger log = LogManager.getLogger(DBmaintenance.class);
     public DBmaintenance(){}
 
@@ -142,7 +146,7 @@ public class DBmaintenance {
 
     public void deleteLocalTempFileOverTTL(){
         log.info("====== Start Delete  Local Temp  file ====== ");
-        String csvTTL="-"+Init.getExpiration();
+        String csvTTL= PrestoContent.CSV_TTL;
         String csvDirPath=Init.getCsvlocalPath();
         log.info("Temp File  Dir  : " +csvDirPath);
         File dir=null;

@@ -12,21 +12,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.stream.IntStream;
-
+enum Sqltype{none,insert,update};
 /**
  * Created by gl08 on 2016/1/6.
  */
 public class ImportDB {
 
     private Logger log= LogManager.getLogger(ImportDB.class);
-    private int RETRY_COUNT=3;
-    private int RETRT_SLEEP=500;
     private String importSQL="";
     private int batchSize=SqlContent.MAX_BATCH_ROWS;
     private String tableName ="";
     private StringBuilder exception=null;
     private boolean success=false;
     private String connName="";
+
 
     public String getConnName() {
         return connName;
@@ -95,13 +94,13 @@ public class ImportDB {
     public void execute()  {
 
         String sql=getImportSQL();
-        Matcher matcher= null;
-        Matcher matcher2= null;
+        Matcher insertMatch= null;
+        Matcher updateMatch= null;
 
         if (SqlContent.SQL_UNION_PATTERN2.matcher(sql.toLowerCase()).find())
-            matcher= SqlContent.SQL_UNION_PATTERN2.matcher(sql);
+            insertMatch= SqlContent.SQL_UNION_PATTERN2.matcher(sql);
         if (SqlContent.SQL_UPDATE_PATTEN.matcher(sql.toLowerCase()).find())
-            matcher2= SqlContent.SQL_UPDATE_PATTEN.matcher(sql);
+            updateMatch= SqlContent.SQL_UPDATE_PATTEN.matcher(sql);
 
         log.info("DB SQL Find Matcher");
         ResultMap resultMap=null;
@@ -114,20 +113,20 @@ public class ImportDB {
             log.error(ExceptionUtils.getStackTrace(e));
         }
         assert resultMap != null;
-        int type=0;
+        Sqltype type=Sqltype.none;
         String original="";
-        if (null != matcher && matcher.find()) {
-            original = matcher.group(0);
-            type=1;
-        } else if (null != matcher2 &&  matcher2.find()){
-            original=matcher2.group(0);
-            type=2;
+        if (null != insertMatch && insertMatch.find()) {
+            original = insertMatch.group(0);
+            type=Sqltype.insert;
         }
-        if (type>0) {
+        else if (null != updateMatch &&  updateMatch.find()){
+            type=Sqltype.update;
+        }
+        if (type == Sqltype.update || type==Sqltype.insert) {
             log.info("Total Row is : "+resultMap.getCount()+" , Batch Size is : "+getBatchSize());
             List<Integer> fieldIndex = parseFieldsIndex(sql);
             List<String> sqlList=new ArrayList<>();
-            if ( type==1) {
+            if ( type==Sqltype.insert) {
                 String relpace = original.replaceAll("#\\{", "VALUES(").replaceAll("}", ")");
                 sql = sql.replace(original, relpace);
             }
@@ -136,27 +135,25 @@ public class ImportDB {
 
 
             IntStream.range(0,resultMap.getCount()).forEach( dataIndex->{
-                        String tmpSql="";
+                        String tmpSql=execSQL;
                         List<Object>  rowData=map.getData().get(dataIndex);
                         if (fieldIndex.size()>0) {
                             for (Integer index : fieldIndex) {
-                                if (index <= 0 || index > map.getCount() - 1)
-                                    tmpSql = execSQL.replaceAll("\\$" + index + "\\$", "");
+                                if (index <= 0 || index > rowData.size())
+                                    tmpSql = tmpSql.replaceAll("\\$" + index + "\\$", "");
                                 else {
                                     try {
-                                        tmpSql = execSQL.replaceAll("\\$" + index + "\\$", rowData.get(index).toString());
+                                        tmpSql = tmpSql.replaceAll("\\$" + index + "\\$", rowData.get(index-1).toString());
                                     } catch (Exception e2) {
                                         log.error(ExceptionUtils.getStackTrace(e2));
                                     }
                                 }
                             }
-                        }else
-                            tmpSql=execSQL;
+                        }
 
                         sqlList.add(tmpSql);
                         if(dataIndex<10){
                             log.info(tmpSql);
-                            System.err.println("index is "+dataIndex);
                         }
                         if (dataIndex==(map.getCount()-1)){
                             if (startImport(sqlList)){
@@ -187,13 +184,14 @@ public class ImportDB {
          */
         DBConnectionManager dbconn = null;
         try {
-            dbconn = DBConnectionManager.getNewInstance();
+            dbconn = DBConnectionManager.getSingletonInstance();
         } catch (Exception e) {
             setException(e.getMessage());
             return false;
         }
         SQLoption sqlOption = new SQLoption(dbconn, getConnName());
         boolean isSuccess=sqlOption.batchExecute(sqlList);
+
         if (isSuccess) {
             log.info("Success Import DB ");
             return true;
@@ -229,10 +227,17 @@ public class ImportDB {
 //        } catch (IllegalAccessException | InstantiationException | ClassNotFoundException e) {
 //            e.printStackTrace();
 //        }
-        String table = "presto_temp.temp_d6f867a9b9df4970833b5205729e0748";
+        String table = "presto_temp.temp_7523db10414a47cabcf34c2741dffcaf";
         String sql = "insert into Presto.dbo.EC_CrawlerList (Content,utma,TotalClicks,Memo,[Type],[Level],[Domain],[ResStr1]) #{'$1$',null,$5$,'Top_Mobile_Site_SSL_HTTPS_Access_ReCaptcha','I',5,'WWWSSL','ALL'}";
+       table=" presto_temp.temp_295ff9e9ac46443195ba1a814ded2ba4";
+       sql="UPDATE  Fraud.dbo.HistoricNVTCDataForBI  SET [count_www]=$8$,[count_secure]=$9$,[count_review]=$10$  WHERE [SONumber]=$1$ and [count_www] is null";
 
-        sql="UPDATE   Presto.dbo.EC_CrawlerList  SET [Content]=111  WHERE [Status]='B' and [InUser] is null";
+//        Init.setPrestoURL("http://172.16.157.11:8080");
+//        Init.setPrestoCatalog("hive");
+//        Init.setPresto_user("presto");
+
+
+//        sql="UPDATE   Presto.dbo.EC_CrawlerList  SET [Content]=111  WHERE [Status]='B' and [InUser] is null";
         String connName = "ST02CPS03";
 //        Matcher matcher2=SqlContent.SQL_UPDATE_PATTEN.matcher(sql.toLowerCase());
         ImportDB importDB = new ImportDB(sql, table, connName, 2);

@@ -16,7 +16,8 @@ public class SqlContent {
 	public static final Pattern FINDEX_PATTERN = Pattern.compile("\\$([\\d]+)\\$");
 	public static final Pattern SQL_UNION_PATTERN = Pattern.compile("#\\{([^#\\{\\}]+)\\}(:([\\d][\\,]?)+)");
 	public static final Pattern SQL_UNION_PATTERN2 = Pattern.compile("#\\{([^#\\{\\}]+)\\}");
-	public static final Pattern SQL_UPDATE_PATTEN = Pattern.compile("^update +([\\[]{0,1}[\\w]+[\\]]{0,1}.[\\[]{0,1}[\\w]+[\\]]{0,1}.[\\[]{0,1}[\\w]+[\\]]{0,1}) +set");
+//	public static final Pattern SQL_UPDATE_PATTEN = Pattern.compile("^(update|UPDATE)+([\\[]{0,1}[\\w]+[\\]]{0,1}.[\\[]{0,1}[\\w]+[\\]]{0,1}.[\\[]{0,1}[\\w]+[\\]]{0,1}) +set");
+	public static final Pattern SQL_UPDATE_PATTEN = Pattern.compile("^(update|UPDATE)( +)([\\[]{0,1}[\\w]+[\\]]{0,1}.[\\[]{0,1}[\\w]+[\\]]{0,1}.[\\[]{0,1}[\\w]+[\\]]{0,1})( +)(set|SET)( +)");
 	public static final Pattern SQL_UDML_CMD_PATTERN = Pattern.compile("^(insert|update|delete)+");
 	public static final Pattern SQL_SDML_CMD_PATTERN = Pattern.compile("^(select)+");
 	public static final Pattern SQL_DDL_CMD_PATTERN = Pattern.compile("([\\W](drop|alter)[\\W])+");

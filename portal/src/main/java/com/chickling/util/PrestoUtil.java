@@ -252,12 +252,17 @@ public class PrestoUtil  implements PrestoResult {
 //        String sql="drop table mars.orders";
 
 //        Init.setPrestoURL("http://10.16.205.110:8889");
-
+        Init.setPrestoURL("http://bigdata.newegg.org:8080");
+        Init.setPresto_user("presto");
+        Init.setPrestoCatalog("hive");
         PrestoUtil util=new PrestoUtil();
-//        util.doJdbcRequest("SELECT * FROM information_schema.tables where table_schema<> 'presto_temp'");
+
+        ResultMap test=util.doJdbcRequest("DROP TABLE if EXISTS presto_temp.temp_311f95e6099144a78a7510d124a25750");
+
+        int pause=0;
 
 //       util.witerAsJson("presto_temp.temp_586721bafdfd41548f187898fe4f7e72");
-        util.readJsonAsResult("presto_temp.temp_c66612e49f414aceaefc442df4ca811e ",0,100);
+//        util.readJsonAsResult("presto_temp.temp_c66612e49f414aceaefc442df4ca811e ",0,100);
 //        String out="D:\\0_projects\\Kado\\logs\\\\\\\\";
 //        util.writeAsCsV(" presto_temp.temp_b1ad3c34b6084cf185b77e3984034e15",out);
 //        String downloadPath=util.downloadCSV("presto_temp.temp_b1ad3c34b6084cf185b77e3984034e15");
@@ -276,7 +281,6 @@ public class PrestoUtil  implements PrestoResult {
 //            }
 //
 //        }
-        int pause=0;
 //        util.doJdbcRequest(sql,1);
     }
 

@@ -30,7 +30,7 @@
         <dependency>
             <groupId>com.newegg.ec.bigdata</groupId>
             <artifactId>dbclient</artifactId>
-            <version>0.6.3</version>
+            <version>0.8.1</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->

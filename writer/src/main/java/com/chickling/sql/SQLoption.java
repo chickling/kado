@@ -1,7 +1,14 @@
 package com.chickling.sql;
 
 import com.chickling.util.YamlConfig;
+import com.newegg.ec.db.AutoRecycleConnectionManager;
+import com.newegg.ec.db.DBClient;
 import com.newegg.ec.db.DBConnectionManager;
+import com.newegg.ec.db.ManagerConfig;
+import com.newegg.ec.db.module.AlterAction;
+import com.newegg.ec.db.module.BatchInsert;
+import com.newegg.ec.db.module.Delete;
+import com.newegg.ec.db.module.Update;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,10 +29,11 @@ public class SQLoption {
 
     private Logger logger= LogManager.getLogger(SQLoption.class);
     private static final int MAX_RETRY_TIMES = 3;
-    private static final int SLEEP_TIMES = 3000;
+    private static final int SLEEP_TIMES = 2000;
     private DBConnectionManager connMgr=null;
     private  String dsName ="";
     private StringBuilder exception=null;
+//    private  DBConnectionManager dbcm=null;
 
     public String getException() {
         return exception.toString();
@@ -52,6 +60,7 @@ public class SQLoption {
                 isSuccess = statement.execute(sql);
                 conn.commit();
                 statement.close();
+
                 return isSuccess;
             } catch (Exception e) {
                 try {
@@ -61,12 +70,22 @@ public class SQLoption {
                 }
                 setException(ExceptionUtils.getStackTrace(e));
                 return false;
+            }finally {
+                connMgr.recycleConnection(dsName,conn);
             }
+
         } else {
             setException("NO SQL CONNECTION TO DATABASE :" + dsName);
             return false;
         }
     }
+
+
+//    private void stopDBConnectionManager(){
+//        this.dbcm.removeAllDBConn();
+//        this.dbcm.stopCheckTimer();
+//        this.dbcm=null;
+//    }
 
 
     public boolean batchExecute(List<String> sqls)   {
@@ -76,7 +95,7 @@ public class SQLoption {
             try {
                 if (null!=conn){
                     if (executeBatch(sqls,conn)){
-                        conn.close();
+                        logger.info("DB  insert/update  Finished !!");
                         break;
                     }
                 }else
@@ -84,29 +103,20 @@ public class SQLoption {
 
             } catch (SQLException sqle) {
                 if (retryTimes < MAX_RETRY_TIMES) {
-                    // close connection
-                    connMgr.recycleConnection(dsName,conn);
-//                    connMgr.recycleDBConneciton(conn);
+                    logger.info("get New  DBConnectionManager Instance ");
                     try {
                         Thread.sleep(SLEEP_TIMES);
                     } catch (InterruptedException e) {
                         /*do Nothing*/
                     }
                     retryTimes++;
-                    // reopen
+                    // get Connection from  New DBConnectionManager Instance
                     conn = connMgr.getConnection(dsName);
-                } else {
-                    try {
-                        conn.close();
-                    } catch (SQLException e) {
-                        setException(ExceptionUtils.getStackTrace(e));
-                    }
-                    setException(ExceptionUtils.getStackTrace(sqle));
+                }else
                     return false;
-                }
             }
-
         }
+        connMgr.recycleConnection(dsName,conn);
         return true;
     }
 
@@ -121,7 +131,7 @@ public class SQLoption {
                 String nobatchdb= YamlConfig.instance.getNotbatchdb();
                 Set<String> noBatchDB=new HashSet<>();
                 if (!Strings.isNotEmpty(nobatchdb))
-                        noBatchDB.addAll(Arrays.asList(nobatchdb.split(",")));
+                    noBatchDB.addAll(Arrays.asList(nobatchdb.split(",")));
 
                 if (noBatchDB.contains(dsName)){
                     for (String sql : sqlList) {
@@ -146,7 +156,7 @@ public class SQLoption {
                 try {
                     conn.rollback();
                 } catch (SQLException e1) {
-                 logger.error("SQL Roll Back Error" + e);
+                    logger.error("SQL Roll Back Error" + e);
                 }
                 logger.error("Batch Insert  Error with : "+e);
                 logger.error("This Batch SQL is : "+sqlList);
