@@ -11,6 +11,7 @@ import com.chickling.models.job.PrestoContent;
 import com.chickling.util.JobHistoryCatch;
 import com.chickling.util.TimeUtil;
 import com.chickling.util.YamlLoader;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -56,7 +57,7 @@ public class ControlManager {
                 Map<String,Object> queryInfo = new LinkedHashMap<>();
                 queryInfo.put("jobrunid", rs.getInt("JHID"));
                 String jobSql = rs.getString("JobSQL").replace("\n", " ").replace("\r", " ");
-                queryInfo.put("sql", jobSql);
+                queryInfo.put("sql", getLimitSQL(jobSql));
                 queryInfo.put("jobLevel", rs.getString("JobLevel"));
                 queryInfo.put("type", rs.getString("JobType"));
                 queryInfo.put("job_status", rs.getString("JobStatus"));
@@ -270,7 +271,7 @@ public class ControlManager {
                 resultInfo.put("pageRowCount", pageRowCount);
                 try {
                     String path=getResultFilePath(jhid);
-                    ResultMap resultData=new PrestoUtil().readJsonAsResult(Init.getDatabase()+"."+path.substring(path.lastIndexOf("/")+1,path.length()),page);
+                    ResultMap resultData=new PrestoUtil().readJsonAsResult(Init.getDatabase()+"."+path.substring(path.lastIndexOf("/")+1,path.length()),page+1);
                     resultInfo.put("header", resultData.getSchema());
                     resultInfo.put("row", resultData.getData().stream().map(item-> {
                         return item.stream().map(value->value.toString()).toArray();
@@ -316,7 +317,7 @@ public class ControlManager {
                 ResultMap resultData;
                 try {
                     String path = getResultFilePath(jhid);
-                    resultData = new PrestoUtil().readJsonAsResult(Init.getDatabase() + "." + path.substring(path.lastIndexOf("/") + 1, path.length()), page);
+                    resultData = new PrestoUtil().readJsonAsResult(Init.getDatabase() + "." + path.substring(path.lastIndexOf("/") + 1, path.length()), page+1);
                 } catch (SQLException e) {
                     log.error("Get ResultFilePath Error");
                     log.error(e);
@@ -487,5 +488,18 @@ public class ControlManager {
      */
     public String getScheduleLogPath(int shid){
         return YamlLoader.instance.getLogpath()+Init.getFileseparator()+"ScheduleHistoryLog_"+shid+".log";
+    }
+
+    public String getLimitSQL(String sqlBase64){
+        Base64 base64 = new Base64();
+        try {
+            String sql=new String(base64.decode(sqlBase64.getBytes()),"UTF-8");
+            if(sql.length()>5000)
+                return new String(base64.encode((sql.substring(0,5000)+"...").getBytes()),"UTF-8");
+            else
+                return sqlBase64;
+        } catch (UnsupportedEncodingException e) {
+            return sqlBase64;
+        }
     }
 }
