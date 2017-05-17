@@ -156,32 +156,38 @@ public class DBmaintenance {
 //            DateTime now=DateTime.now();
             dir = new File(csvDirPath);
             if (null!=dir.listFiles()){
-                for (File logfile: dir.listFiles()){
+                for (File localfiles: dir.listFiles()){
                     //delete temp json
-                    if (logfile.isDirectory() && Init.getTempDir().equalsIgnoreCase(logfile.getName()) ){
-                        for (File jsonFile:logfile.listFiles()){
-                            String fileName = jsonFile.getName();
-                            Path path = Paths.get(jsonFile.toURI());
+                    if (localfiles.isDirectory() && Init.getTempDir().equalsIgnoreCase(localfiles.getName()) ){
+
+                        for (File jsonDir:localfiles.listFiles()){
+//                            String fileName = jsonDir.getName();
+                            Path path = Paths.get(jsonDir.toURI());
                             BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class);
                             if (attr.creationTime().toMillis() < znow.plusDays(Integer.parseInt(csvTTL)).toInstant().toEpochMilli()) {
-                                if (logfile.delete()) {
-                                    log.info("Delete json File is : [ " + fileName + " ] ");
-                                    deleteCount++;
-                                    if (0 == deleteCount % 10 && deleteCount > 0)
-                                        log.info("Delete " + deleteCount + "  File !! ");
+                                //delete all json file from Temp JsonDir
+                                for (File jsonfile:jsonDir.listFiles()){
+                                    if (jsonfile.delete()) {
+//                                        log.info("Delete json File is : [ " + jsonfile.getName() + " ] ");
+                                        deleteCount++;
+                                        if (0 == deleteCount % 50 && deleteCount > 0)
+                                            log.info("Delete " + deleteCount + "  File !! ");
+                                    }
                                 }
+                                //delete Json Dir
+                                jsonDir.delete();
                             }
                         }
                     }else {
                         //delete temp csv
-                        String fileName = logfile.getName();
-                        Path path = Paths.get(logfile.toURI());
+                        String fileName = localfiles.getName();
+                        Path path = Paths.get(localfiles.toURI());
                         BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class);
                         if (attr.creationTime().toMillis() < znow.plusDays(Integer.parseInt(csvTTL)).toInstant().toEpochMilli()) {
-                            if (logfile.delete()) {
+                            if (localfiles.delete()) {
                                 log.info("Delete csv File is : [ " + fileName + " ] ");
                                 deleteCount++;
-                                if (0 == deleteCount % 10 && deleteCount > 0)
+                                if (0 == deleteCount % 50 && deleteCount > 0)
                                     log.info("Delete " + deleteCount + "  Files !! ");
                             }
                         }
@@ -295,8 +301,9 @@ public class DBmaintenance {
 
     public static void main(String[] args) {
         DBmaintenance maintain=new DBmaintenance();
-        Init.setCsvlocalPath("D:\\0_projects\\Kado\\csvtemp");
+        Init.setCsvlocalPath("D:\\0_projects\\Kado\\logs");
         Init.setExpiration("1");
+
 
         maintain.deleteLocalTempFileOverTTL();
 

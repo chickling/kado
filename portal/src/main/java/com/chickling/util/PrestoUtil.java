@@ -31,7 +31,8 @@ public class PrestoUtil  implements PrestoResult {
     private boolean success=false;
     private Gson gson=new Gson();
     private StringBuilder exception;
-    private int batchSize=300;
+    private int batchSize=PrestoContent.JSON_SIZE;
+//    private int batchSize=2;
 
     private String catalog;
     private String prstoUrl;
@@ -247,24 +248,43 @@ public class PrestoUtil  implements PrestoResult {
         return sb.toString();
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
 //        String sql="select * from mars.truesight_page_orc_v4 limit 13";
 //        String sql="drop table mars.orders";
 
 //        Init.setPrestoURL("http://10.16.205.110:8889");
         Init.setPrestoURL("http://bigdata.newegg.org:8080");
-        Init.setPresto_user("presto");
         Init.setPrestoCatalog("hive");
+        Init.setPresto_user("hive");
         PrestoUtil util=new PrestoUtil();
+//        util.doJdbcRequest("drop table if exists presto_temp.temp_7aaac99ace2e4c37bbb4dd545c6d8f55");
 
-        ResultMap test=util.doJdbcRequest("DROP TABLE if EXISTS presto_temp.temp_311f95e6099144a78a7510d124a25750");
+//
+        ResultMap tempTables=util.doJdbcRequest("show tables from presto_temp" );
+        for (List table:tempTables.getData()){
+            String drop="drop table if exists presto_temp."+table.get(0);
+//            Init.setPresto_user("presto");
+//            PrestoUtil presto=new PrestoUtil();
+//            presto.doJdbcRequest(drop);
+
+            Init.setPresto_user("root");
+            PrestoUtil root=new PrestoUtil();
+            root.doJdbcRequest(drop);
+            Thread.currentThread().sleep(100);
+        }
+//        String out="D:\\0_projects\\Kado\\logs";
+//        Init.setCsvlocalPath(out);
+//
+//        Init.setJsonDir(Init.getCsvlocalPath()+Init.getFileseparator()+Init.getTempDir());
+//        boolean writeJSON=util.witerAsJson("presto_temp.temp_12d65e30eeae4ad18dcf92f03b692dd2");
+//        ResultMap resultMap=util.readJsonAsResult("presto_temp.temp_12d65e30eeae4ad18dcf92f03b692dd2",3,0);
+//        System.out.println(new Gson().toJson(resultMap));
+//        util.writeAsCSV(" presto_temp.temp_12d65e30eeae4ad18dcf92f03b692dd2",out,false);
 
         int pause=0;
 
 //       util.witerAsJson("presto_temp.temp_586721bafdfd41548f187898fe4f7e72");
 //        util.readJsonAsResult("presto_temp.temp_c66612e49f414aceaefc442df4ca811e ",0,100);
-//        String out="D:\\0_projects\\Kado\\logs\\\\\\\\";
-//        util.writeAsCsV(" presto_temp.temp_b1ad3c34b6084cf185b77e3984034e15",out);
 //        String downloadPath=util.downloadCSV("presto_temp.temp_b1ad3c34b6084cf185b77e3984034e15");
 //        String csvfile=util.readAsCSV("presto_temp.temp_be3d22c827b240c08ff4b129bfa7d74d","D:\\0_projects\\Kado\\logs\\","test");
 //        ByteArrayInputStream bais=util.readAsStream("presto_temp.temp_586721bafdfd41548f187898fe4f7e72",0,100);
@@ -347,32 +367,36 @@ public class PrestoUtil  implements PrestoResult {
 //
 //        return resultFinalPath;
 //    }
+
+
     /**
      * @param tableName  result table Name,  ex: " presto_temp.temp_586721bafdfd41548f187898fe4f7e72 "
      * @param start            start index
-     * @param rowCount    how many rows will be taken  , if rowCount==-1 , read All rows
      * @return
      */
-    public ResultMap readJsonAsResult(String tableName, int start, int rowCount){
+    public ResultMap readJsonAsResult(String tableName, int start){
         ResultMap resultMap=new ResultMap();
         resultMap.setStart(start);
+
+        int fileindex=1;
         // check file
-        String fileName=tableName+".json";
-        String filePath="";
-        if (Strings.isNullOrEmpty(Init.getTempDir()))
-            filePath=Init.getCsvlocalPath()+File.separator+fileName;
-        else
-            filePath=Init.getCsvlocalPath()+File.separator+Init.getTempDir()+File.separator+fileName;
-        File jsonFile=new File(filePath);
+        String dirpath=Init.getJsonDir()+File.separator+tableName+File.separator+fileindex+".json";
+        File firstjson=new File(dirpath);
 
 
         try {
-            // no exist file , create as csv
-            if (!jsonFile.exists()) {
+            // no exist file , create  json files
+            if (!firstjson.exists()) {
                 witerAsJson(tableName);
             }
 
-            FileReader fr=new FileReader(jsonFile);
+            int jsonCount=0;
+            jsonCount=firstjson.getParentFile().list().length;
+
+            //check start less than json count
+            if (jsonCount<start)
+                return resultMap;
+            FileReader fr=new FileReader(firstjson.getParentFile()+File.separator+start+".json");
 
             // starting read result json file
             JsonParser parser=new JsonParser();
@@ -389,10 +413,10 @@ public class PrestoUtil  implements PrestoResult {
                 resultMap.getType().add(column.getAsString());
             });
 
-            int count=0;
+//            int count=0;
             JsonArray ja= jo.getAsJsonArray("data");
-
-            for (int i=start ;i<ja.size();i++){
+            resultMap.setCount(ja.size());
+            for (int i=0 ;i<ja.size();i++){
                 List<Object> rowdata=new ArrayList<>();
                 for (int  index=0; index<ja.get(i).getAsJsonArray().size() ; index++){
                     JsonPrimitive jp= ja.get(i).getAsJsonArray().get(index).getAsJsonPrimitive();
@@ -410,20 +434,20 @@ public class PrestoUtil  implements PrestoResult {
                         rowdata.add(jp.getAsBoolean());
                 }
                 resultMap.getData().add(rowdata);
-
-                if (-1==rowCount){
-                    count++;
-                }else{
-                    if (count<rowCount-1)
-                        count++;
-                    else
-                        break;
-                }
+//               if (-1==rowCount){
+//                    count++;
+//                }else{
+//                    if (count<rowCount-1)
+//                        count++;
+//                    else
+//                        break;
+//                }
             }
-            if (-1==rowCount) {
-                resultMap.setCount(count);
-            }else
-                resultMap.setCount(rowCount);
+//            if (-1==rowCount) {
+//                resultMap.setCount(count);
+//            }else
+//                resultMap.setCount(rowCount);
+
         } catch (FileNotFoundException e) {
             this.setException(ExceptionUtils.getStackTrace(e));
             this.setSuccess(false);
@@ -441,23 +465,24 @@ public class PrestoUtil  implements PrestoResult {
         Connection  conn=null;
         Statement state=null;
         String sql="select * from "+table;
+//
+        int fileindex=1;
+        String fileName=table+File.separator+fileindex+".json";
 
         // check file
-        String fileName=table+".json";
+        String filePath=Init.getJsonDir()+File.separator+fileName;
 
-        String filePath="";
-        if (Strings.isNullOrEmpty(Init.getTempDir()))
-            filePath=Init.getCsvlocalPath()+File.separator+fileName;
-        else
-            filePath=Init.getCsvlocalPath()+File.separator+Init.getTempDir()+File.separator+fileName;
-
+        // check json file dir
         File jsonfile=new File(filePath);
 
         if (!jsonfile.getParentFile().exists())
             jsonfile.getParentFile().mkdirs();
-
-        if (jsonfile.exists())
-            jsonfile.delete();
+        else{
+            //delete all old files
+            for (File file:jsonfile.getParentFile().listFiles()){
+                file.delete();
+            }
+        }
 
         // Json
         JsonArray ja=null;
@@ -469,7 +494,7 @@ public class PrestoUtil  implements PrestoResult {
 
             ResultSet resultSet = state.executeQuery(sql);
             int count = 0;
-            boolean first = true;
+
             rsmd=resultSet.getMetaData();
             Object cValue=null;
 
@@ -477,21 +502,22 @@ public class PrestoUtil  implements PrestoResult {
 
             while (resultSet.next()) {
                 ja=new JsonArray();
-                if (first){
+                if (count%batchSize==0){
+                    if (count>0){
+                        fw.write("]}");
+                        fw.flush();
+                        fw.close();
+
+                        //next json file
+                        File nextFile=new File(jsonfile.getParentFile()+File.separator+(++fileindex)+".json");
+//                        if (!nextFile.exists())
+//                            nextFile.mkdirs();
+                        fw=new FileWriter(nextFile);
+                    }
                     JsonArray type=new JsonArray();
                     //
-                    //add columns and types
+                    //add columns and types in front of jsonfile
                     for (int i = 0; i < rsmd.getColumnCount(); i++) {
-
-//                        cValue=resultSet.getObject(i+1);
-//                        if (null== cValue || cValue instanceof String || cValue instanceof Timestamp)
-//                            type.add("string");
-//                        else if (cValue instanceof Boolean)
-//                            type.add("boolean");
-//                        else if (cValue instanceof Long)
-//                            type.add("long");
-//                        else
-//                            type.add("double");
                         ja.add(rsmd.getColumnName(i + 1));
                         String cType=rsmd.getColumnTypeName(i+1);
                         if ("bigint".equalsIgnoreCase(cType))
@@ -507,7 +533,6 @@ public class PrestoUtil  implements PrestoResult {
                     fw.write("\"types\":"+type.toString()+",");
                     fw.write("\"data\":[");
                     fw.flush();
-                    first=false;
                     ja=new JsonArray();
                 }else
                     fw.write(",");
@@ -529,8 +554,7 @@ public class PrestoUtil  implements PrestoResult {
                 }
                 fw.write(ja.toString());
                 count++;
-                if (count%batchSize==0)
-                    fw.flush();
+
             }
             fw.write("]}");
             fw.flush();
@@ -579,7 +603,8 @@ public class PrestoUtil  implements PrestoResult {
         else
             resultPath=outputPath+File.separator+table+"@"+ Instant.now().toEpochMilli() +".csv";
 
-        ResultMap resultMap=readJsonAsResult(table,0,-1);
+
+
 
         File csvfile =new File(resultPath);
         // create parent dir
@@ -589,20 +614,28 @@ public class PrestoUtil  implements PrestoResult {
             csvfile.delete();
 
         CSVPrinter csvp=null;
-        CSVFormat format=CSVFormat.EXCEL;
         try {
             FileWriter fw=new FileWriter(csvfile);
 
-            csvp=new CSVPrinter(fw,format);
-            csvp.printRecord(resultMap.getSchema());
-            for (int i =0 ; i<resultMap.getCount();i++){
-                csvp.printRecord(resultMap.getData().get(i));
-                if (i%batchSize==0)
-                    fw.flush();
+            csvp=new CSVPrinter(fw,CSVFormat.EXCEL);
+            ResultMap resultMap=readJsonAsResult(table,1);
+            int jsonCount=new File(Init.getJsonDir()+File.separator+table).list().length;
+            // write data to CSV from Json Files
+            for (int fileCount=1;fileCount<=jsonCount ; fileCount++){
+                if (fileCount==1)
+                    csvp.printRecord(resultMap.getSchema());
+                else
+                    resultMap=readJsonAsResult(table,fileCount);
+                for (int i =0 ; i<resultMap.getCount();i++){
+                    csvp.printRecord(resultMap.getData().get(i));
+                    if (i%batchSize==0)
+                        fw.flush();
+                }
             }
             fw.flush();
             fw.close();
             csvp.close();
+            this.setSuccess(true);
         } catch (IOException e) {
             this.setSuccess(false);
             this.setException(ExceptionUtils.getStackTrace(e));

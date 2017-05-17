@@ -37,6 +37,7 @@ public class PrestoContent {
     public final static Long JOB_RESULT_SIZE = 10 * 1024 * 1024 * 1024L;  //10G
 
     public final static String CSV_TTL="-1";
+    public final static int JSON_SIZE=100;
 
 
 
