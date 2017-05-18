@@ -38,6 +38,7 @@ public class PrestoContent {
 
     public final static String CSV_TTL="-1";
     public final static int JSON_SIZE=100;
+    public final static int RESULT_LIMIT=20000;
 
 
 

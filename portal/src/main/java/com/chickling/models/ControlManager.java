@@ -271,7 +271,7 @@ public class ControlManager {
                 resultInfo.put("pageRowCount", pageRowCount);
                 try {
                     String path=getResultFilePath(jhid);
-                    ResultMap resultData=new PrestoUtil().readJsonAsResult(Init.getDatabase()+"."+path.substring(path.lastIndexOf("/")+1,path.length()),page+1);
+                    ResultMap resultData=new PrestoUtil().readJsonAsResult(Init.getDatabase()+"."+path.substring(path.lastIndexOf("/")+1,path.length()),page+1,resultCount);
                     resultInfo.put("header", resultData.getSchema());
                     resultInfo.put("row", resultData.getData().stream().map(item-> {
                         return item.stream().map(value->value.toString()).toArray();
@@ -317,7 +317,7 @@ public class ControlManager {
                 ResultMap resultData;
                 try {
                     String path = getResultFilePath(jhid);
-                    resultData = new PrestoUtil().readJsonAsResult(Init.getDatabase() + "." + path.substring(path.lastIndexOf("/") + 1, path.length()), page+1);
+                    resultData = new PrestoUtil().readJsonAsResult(Init.getDatabase() + "." + path.substring(path.lastIndexOf("/") + 1, path.length()), page+1,resultCount);
                 } catch (SQLException e) {
                     log.error("Get ResultFilePath Error");
                     log.error(e);

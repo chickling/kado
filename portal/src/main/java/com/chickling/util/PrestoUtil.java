@@ -31,7 +31,8 @@ public class PrestoUtil  implements PrestoResult {
     private boolean success=false;
     private Gson gson=new Gson();
     private StringBuilder exception;
-    private int batchSize=PrestoContent.JSON_SIZE;
+
+
 //    private int batchSize=2;
 
     private String catalog;
@@ -374,7 +375,7 @@ public class PrestoUtil  implements PrestoResult {
      * @param start            start index
      * @return
      */
-    public ResultMap readJsonAsResult(String tableName, int start){
+    public ResultMap readJsonAsResult(String tableName, int start,int resultCount){
         ResultMap resultMap=new ResultMap();
         resultMap.setStart(start);
 
@@ -387,7 +388,7 @@ public class PrestoUtil  implements PrestoResult {
         try {
             // no exist file , create  json files
             if (!firstjson.exists()) {
-                witerAsJson(tableName);
+                witerAsJson(tableName,resultCount);
             }
 
             int jsonCount=0;
@@ -459,12 +460,16 @@ public class PrestoUtil  implements PrestoResult {
      * @param table  result table
      * @return
      */
-    public  boolean witerAsJson(String table){
+    public  boolean witerAsJson(String table,int resultCount){
 
         // initial SQL
         Connection  conn=null;
         Statement state=null;
         String sql="select * from "+table;
+
+        // if table result over Limit 20000 , only writer 20000 data
+        if (resultCount>PrestoContent.RESULT_LIMIT)
+            sql=sql+" limit "+PrestoContent.RESULT_LIMIT;
 //
         int fileindex=1;
         String fileName=table+File.separator+fileindex+".json";
@@ -502,7 +507,7 @@ public class PrestoUtil  implements PrestoResult {
 
             while (resultSet.next()) {
                 ja=new JsonArray();
-                if (count%batchSize==0){
+                if (count%PrestoContent.JSON_SIZE==0){
                     if (count>0){
                         fw.write("]}");
                         fw.flush();
@@ -618,17 +623,17 @@ public class PrestoUtil  implements PrestoResult {
             FileWriter fw=new FileWriter(csvfile);
 
             csvp=new CSVPrinter(fw,CSVFormat.EXCEL);
-            ResultMap resultMap=readJsonAsResult(table,1);
+            ResultMap resultMap=readJsonAsResult(table,1,1);
             int jsonCount=new File(Init.getJsonDir()+File.separator+table).list().length;
             // write data to CSV from Json Files
             for (int fileCount=1;fileCount<=jsonCount ; fileCount++){
                 if (fileCount==1)
                     csvp.printRecord(resultMap.getSchema());
                 else
-                    resultMap=readJsonAsResult(table,fileCount);
+                    resultMap=readJsonAsResult(table,fileCount,1);
                 for (int i =0 ; i<resultMap.getCount();i++){
                     csvp.printRecord(resultMap.getData().get(i));
-                    if (i%batchSize==0)
+                    if (i%PrestoContent.JSON_SIZE==0)
                         fw.flush();
                 }
             }
