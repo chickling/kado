@@ -265,7 +265,7 @@ public class ControlManager {
                 resultInfo.put("status", "success");
                 resultInfo.put("time", TimeUtil.getCurrentTime());
                 resultInfo.put("resultCount", resultCount);
-                resultInfo.put("pageCount", pageCount);
+                resultInfo.put("pageCount", pageCount>200?200:pageCount);
                 resultInfo.put("nowPage", page+1);
                 resultInfo.put("startRow", startRow);
                 resultInfo.put("pageRowCount", pageRowCount);
