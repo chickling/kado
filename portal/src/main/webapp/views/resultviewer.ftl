@@ -202,6 +202,12 @@
         success: function(JData){
           if(JData["status"]!=null){
             if(JData["status"]!="error"){ 
+              //check system limit
+              
+              if(JData["resultCount"]>20000){
+                $(".item.download").html('<font color="red">The result rows is out of system limit, just display 20000 row</font>');
+                $(".item.download").attr("onclick","");
+              }
               //update page info
               $(".item.previous").attr("onclick","loadResultPage("+jhid+","+getPrevious(page)+");");
               $(".item.pagestatus").html("Page "+JData["nowPage"]+" of "+JData["pageCount"]);
