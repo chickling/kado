@@ -37,6 +37,11 @@ public class PrestoContent {
     public final static Long JOB_IDLE_TIME = 2 * 60 * 60 * 1000L;  // 2HR idle
     public final static Long JOB_RESULT_SIZE = 10 * 1024 * 1024 * 1024L;  //10G
 
+    public final static String CSV_TTL="-1";
+    public final static int JSON_SIZE=100;
+    public final static int RESULT_LIMIT=20000;
+
+
 
     public final static Pattern SQL_PASER = Pattern.compile("(((delete|DELETE)\\s*(FROM|from))|((((CREATE|create)|(DROP|drop))\\s*((table|TABLE)(\\s*(if\\s*((exists|EXISTS)|((not|NOT)\\s*(exists|EXISTS))))|)))|((insert|INSERT)\\s*(into|INTO))))\\s*([\\w.]+)");
     public final static Pattern LIMIT_CHECK = Pattern.compile("limit\\s+[0-9]+");

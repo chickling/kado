@@ -78,7 +78,7 @@ public class ScheduleRunner implements Job{
 
             ThreadContext.put("logFileName", logPath);
 
-            logPath=logPath+".log";
+//            logPath=logPath+".log";
 
             ArrayList Jobs=(ArrayList)info.get("runjob");
 

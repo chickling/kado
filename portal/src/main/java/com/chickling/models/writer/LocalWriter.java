@@ -1,6 +1,4 @@
 package com.chickling.models.writer;
-
-
 import com.chickling.bean.job.JobLog;
 import com.chickling.boot.Init;
 import com.chickling.face.ResultWriter;
@@ -10,7 +8,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
-
 import java.util.HashMap;
 
 /**
@@ -31,7 +28,6 @@ public class LocalWriter implements ResultWriter {
     public void init(Object parameter) {
         HashMap map= (HashMap) parameter;
         this.jobLog= (JobLog) map.get("jobLog");
-
         this.tableName= (String) map.get("tableName");
     }
 
