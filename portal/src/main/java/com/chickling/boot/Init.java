@@ -36,6 +36,7 @@ public class Init implements ServletContextListener{
     private static String deleteLogTTL="";
     private static String presto_user="";
     private  static String fileseparator=File.separator;
+    private static String jsonDir="";
     private static String tempDir="json";
     private static Map<String,ResultWriter> injectionMap;
 
@@ -151,6 +152,14 @@ public class Init implements ServletContextListener{
         return tempDir;
     }
 
+    public static String getJsonDir() {
+        return jsonDir;
+    }
+
+    public static void setJsonDir(String jsonDir) {
+        Init.jsonDir = jsonDir;
+    }
+
     public static void setTempDir(String tempDir) {
         Init.tempDir = tempDir;
     }
@@ -263,6 +272,7 @@ public class Init implements ServletContextListener{
             setDeleteLogTTL(deleteLogTTL);
             setPrestoCatalog(prestoCatalog);
             setPresto_user(presto_user);
+            setJsonDir(csvlocalPath+fileseparator+tempDir);
             DBmaintenance dbm=new DBmaintenance();
             dbm.maintain();
             ScheduleMgr smgr=new ScheduleMgr();

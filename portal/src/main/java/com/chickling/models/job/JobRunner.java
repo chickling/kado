@@ -669,6 +669,7 @@ public class JobRunner   implements Callable<Boolean> {
         //LOCAL  binary 010
         //
         if ("1".equals(activeWriter.get(1))) {
+            log.info("do [ Local ]  Writer");
             name = "com.chickling.models.writer.LocalWriter";
             ResultWriter localWriter =Init.getInjectionInstance(name);
             localWriter.init(parameter);
@@ -676,6 +677,4 @@ public class JobRunner   implements Callable<Boolean> {
         }
         return resultCode > 0;
     }
-
-
 }

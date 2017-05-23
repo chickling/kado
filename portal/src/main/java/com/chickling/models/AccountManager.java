@@ -2,6 +2,7 @@ package com.chickling.models;
 
 
 import com.facebook.presto.hive.$internal.org.apache.commons.lang3.exception.ExceptionUtils;
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.chickling.sqlite.ConnectionManager;
 import com.chickling.util.TimeUtil;
@@ -762,14 +763,15 @@ public class AccountManager {
         Auth auth=new Auth();
         try {
             ArrayList<Object> verify=auth.verify(token);
-            if((Integer)verify.get(0)==2)
-                return true;
-            else
+            if (Strings.isNullOrEmpty(verify.get(0).toString()))
                 return false;
+            else if((Integer)verify.get(0)==2)
+                return true;
         } catch (SQLException e) {
             log.error(ExceptionUtils.getStackTrace(e));
             return false;
         }
+        return false;
     }
     public boolean isSelfToken(int UID,String token){
         Auth auth=new Auth();
