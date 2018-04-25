@@ -151,6 +151,7 @@
     <#-- INCLUDE FOOTER -->
     <#include "footer.ftl">
   </div>
+
   <!-- LOG MODAL -->
   <div class="ui modal schedule history fullscreen">
   <i class="close icon"></i>
@@ -179,6 +180,8 @@
           </tbody>
         </table>
       </div>
+
+
     </div>
   <div class="actions">
     

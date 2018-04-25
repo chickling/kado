@@ -1,0 +1,5 @@
+!dbclient-config
+DBType: SQLServer
+maxThreadNum: 20
+dataSourceList:
+

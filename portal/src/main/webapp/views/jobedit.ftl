@@ -385,7 +385,7 @@
     </div>
   </div>
   <script src="../dist/jquery.js"></script>
-  <script src="../dist/semantic.js"></script>
+  <script src="../dist/semantic.min.js"></script>
   <!-- load ace -->
   <script src="../dist/ace-src/ace.js"></script>
   <!-- load ace language tools -->

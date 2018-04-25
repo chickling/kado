@@ -45,6 +45,8 @@ public class TimeUtil {
     public static String toString(DateTime time){
         return time.toString(DATE_FORMAT);
     }
+    public static String toString(Date time){return new DateTime(time.getTime()).toString(DATE_FORMAT);}
+    public static String toString(long time){return new DateTime(time).toString(DATE_FORMAT);}
 
     public static String getCurrentTime(){
         DateTime dt = new DateTime();

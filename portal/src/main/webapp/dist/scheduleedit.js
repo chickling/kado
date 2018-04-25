@@ -419,7 +419,7 @@ function loadScheduleInfo() {
                             $(".intervaltime.every input").val(JData["every"]);
                             $(".intervaltime.every .unit").dropdown('set value', JData["unit"]);
                             $(".intervaltime.every .unit").dropdown();
-                            setIntervalView(JData["startwith"], JData["every"], $(".intervaltime.every .unit").val());
+                            setIntervalView(JData["startwith"], JData["every"], $(".intervaltime.every .unit").dropdown('get value'));
 
                         } else if (timemode == "cycle") {
 
@@ -609,9 +609,9 @@ function getStartTime(startwith) {
  * @return {[type]}      []
  */
 function getUnitTime(unit) {
-    if (unit == "hour") {
+    if (unit == "Hour") {
         return 60 * 60 * 1000;
-    } else if (unit == "day") {
+    } else if (unit == "Day") {
         return 24 * 60 * 60 * 1000;
     } else {
         return 60 * 1000;

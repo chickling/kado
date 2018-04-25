@@ -1,11 +1,17 @@
 package com.chickling.models;
 
-
+import com.chickling.util.DBClientUtil;
+import com.chickling.util.KadoRow;
 import com.facebook.presto.hive.$internal.org.apache.commons.lang3.exception.ExceptionUtils;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
-import com.chickling.sqlite.ConnectionManager;
+
 import com.chickling.util.TimeUtil;
+import owlstone.dbclient.db.DBClient;
+import owlstone.dbclient.db.module.DBResult;
+import owlstone.dbclient.db.module.Query;
+import owlstone.dbclient.db.module.PStmt;
+import owlstone.dbclient.db.module.Row;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -64,19 +70,23 @@ public class AccountManager {
      * @throws NoSuchAlgorithmException
      */
     public String login(String account,String password)  {
-        //SQLite
-        PreparedStatement stat = null;
-        ResultSet rs = null;
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
         //Check User Account and Password
-        String sql = "select * from `User`  U,`Group`  G where U.Gid=G.GID AND U.AccountID=? AND U.Password=? AND U.Enable=1";
+        String sql = "select * from `User`  U,`Groups`  G where U.Gid=G.GID AND U.AccountID=? AND U.Password=? AND U.Enable=1";
 
 
         try {
-            stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
-            stat.setString(1, account);
-            stat.setString(2, password);
-            rs = stat.executeQuery();
-        } catch (SQLException e) {
+            queryBean=PStmt.buildQueryBean("kado-meta",sql,new Object[]{
+                    account,
+                    password
+            });
+            rs=dbClient.execute(queryBean);
+            if(!rs.isSuccess())
+                throw rs.getException();
+        } catch (Exception e) {
             log.error(e);
             log.error("Error SQL:"+sql);
             log.error("account->"+account+";password"+password);
@@ -91,33 +101,35 @@ public class AccountManager {
         Map loginMessage=new LinkedHashMap();
 
         try {
-            while(rs.next())
-            {
+
+            for(Row row:rs.getRowList()){
                 //Generate TOKEN
-                token=sha256("95e945b0fd96631979e5580b1297947200684d09db4b185450b6f6dc9c9255e0" + rs.getString("UserName") + TimeUtil.getCurrentTime());
-                uid=rs.getInt("UID");
-                admin=rs.getBoolean("Admin");
+                KadoRow r=new KadoRow(row);
+
+                token=sha256("95e945b0fd96631979e5580b1297947200684d09db4b185450b6f6dc9c9255e0" + r.getString("UserName") + TimeUtil.getCurrentTime());
+                uid=r.getInt("UID");
+                admin=r.getBoolean("Admin");
                 //Store to Map
                 loginMessage.put("status","success");
                 loginMessage.put("token",token);
                 loginMessage.put("time", TimeUtil.getCurrentTime());
-                loginMessage.put("uid",rs.getString("UID"));
-                loginMessage.put("username",rs.getString("UserName"));
-                loginMessage.put("group", rs.getString("GroupName"));
-                if(rs.getBoolean("Admin")) {
+                loginMessage.put("uid",r.getString("UID"));
+                loginMessage.put("username",r.getString("UserName"));
+                loginMessage.put("group", r.getString("GroupName"));
+                if(r.getBoolean("Admin")) {
                     loginMessage.put("level", "Admin");
                 }else {
                     loginMessage.put("level", "User");
                 }
             }
-        } catch (SQLException e) {
-            log.error("SQL Error:");
-            log.error(ExceptionUtils.getStackTrace(e));
-            return message("error", "SQL:"+e.getMessage());
-        }catch (NoSuchAlgorithmException|UnsupportedEncodingException e) {
+        } catch (NoSuchAlgorithmException|UnsupportedEncodingException e) {
             log.error("SHA 256 Error:");
             log.error(ExceptionUtils.getStackTrace(e));
             return message("error", "SHA 256:"+e.getMessage());
+        } catch (Exception e) {
+            log.error("SQL Error:");
+            log.error(ExceptionUtils.getStackTrace(e));
+            return message("error", "SQL:"+e.getMessage());
         }
 
         if(!token.equals("")){
@@ -125,22 +137,20 @@ public class AccountManager {
             //Add login info to DataBase
             sql = "INSERT INTO `User_Login` (`UID`,`Admin`,`LoginTime`,`Token`) VALUES (?,?,?,?)";
 
-
             try {
-                stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
-                stat.setInt(1, uid);
-                stat.setBoolean(2, admin);
-                stat.setString(3, TimeUtil.getCurrentTime());
-                stat.setString(4, token);
-                synchronized (ConnectionManager.class) {
-                    stat.executeUpdate();
-                }
-            } catch (SQLException e) {
+                rs=dbClient.execute(PStmt.buildQueryBean("kado-meta",sql,new Object[]{
+                        uid,
+                        admin,
+                        TimeUtil.getCurrentTime(),
+                        token
+                }));
+                if(!rs.isSuccess())
+                    throw rs.getException();
+            } catch (Exception e) {
                 log.error(e);
                 log.error("Error SQL:"+sql);
                 log.error("token->"+token+";uid->"+uid);
                 return message("error", e.getMessage());
-
             }
             Gson gson=new Gson();
             return gson.toJson(loginMessage);
@@ -156,40 +166,47 @@ public class AccountManager {
      * @throws SQLException
      */
     public String logout(String token) {
-        //SQLite
-        PreparedStatement stat = null;
-        ResultSet rs = null;
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
         //Check Token
-        String sql = "SELECT `LogoutTime` FROM `main`.`User_Login` WHERE `Token`=?";
+        String sql = "SELECT `LogoutTime` FROM `User_Login` WHERE `Token`=?";
 
         try {
-            stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
-            stat.setString(1, token);
-            rs = stat.executeQuery();
+
+            queryBean=PStmt.buildQueryBean("kado-meta",sql,new Object[]{
+                    token
+            });
+            rs=dbClient.execute(queryBean);
+            if(!rs.isSuccess())
+                throw rs.getException();
 
 
             boolean flag = false;
             String logoutTime = "";
-            while (rs.next()) {
+            for(Row row:rs.getRowList()){
+                KadoRow r=new KadoRow(row);
                 flag = true;
-                logoutTime = rs.getString("LogoutTime");
-
+                logoutTime = r.getString("LogoutTime");
             }
             if ((logoutTime == null || logoutTime.equals("")) && flag == true) {
-                sql = "UPDATE `main`.`User_Login` SET `LogoutTime` = ? WHERE  `token` = ?";
-                stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
-                stat.setString(1, TimeUtil.getCurrentTime());
-                stat.setString(2, token);
-                synchronized (ConnectionManager.class) {
-                    stat.executeUpdate();
-                }
+                sql = "UPDATE `User_Login` SET `LogoutTime` = ? WHERE  `token` = ?";
+
+                queryBean=PStmt.buildQueryBean("kado-meta",sql,new Object[]{
+                        TimeUtil.getCurrentTime(),
+                        token
+                });
+                rs=dbClient.execute(queryBean);
+                if(!rs.isSuccess())
+                    throw rs.getException();
                 return message("success", "Logout successful");
             } else if (flag == false) {
                 return message("error", "Token Error!");
             } else {
                 return message("error", "It had previously been Logout");
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.error(ExceptionUtils.getStackTrace(e));
             log.error("Error Token:" + token);
             return message("error", "sql error");
@@ -212,31 +229,25 @@ public class AccountManager {
             try {
                 if(gidIsExist(groupID)){
                     if(!accountIsExist(account)) {
-                        //SQLite
-                        PreparedStatement stat = null;
-                        ResultSet rs = null;
+                        //DBClient
+                        PStmt queryBean=null;
+                        DBResult rs=null;
+                        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
                         //INSERT SQL
-                        String sql = "INSERT INTO `main`.`User` (`AccountID`,`UserName`,`Password`,`Email`,`Gid`,`Admin`,`General`,`Enable`,`ChartBuilder`) VALUES (?,?,?,?,?,?,?,1,?)";
-                        stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
-                        stat.setString(1, account);
-                        stat.setString(2, username);
-                        stat.setString(3, password);
-                        stat.setString(4, email);
-                        stat.setInt(5, groupID);
-                        if (level == 1) {
-                            stat.setBoolean(6, false);
-                            stat.setBoolean(7, false);
-                        } else if (level == 2) {
-                            stat.setBoolean(6, true);
-                            stat.setBoolean(7, false);
-                        } else {
-                            stat.setBoolean(6, false);
-                            stat.setBoolean(7, true);
-                        }
-                        stat.setBoolean(8,chartBuilder);
-                        synchronized (ConnectionManager.class) {
-                            stat.executeUpdate();
-                        }
+                        String sql = "INSERT INTO `User` (`AccountID`,`UserName`,`Password`,`Email`,`Gid`,`Admin`,`General`,`Enable`,`ChartBuilder`) VALUES (?,?,?,?,?,?,?,1,?)";
+                        queryBean=PStmt.buildQueryBean("kado-meta",sql,new Object[]{
+                                account,
+                                username,
+                                password,
+                                email,
+                                groupID,
+                                level == 1 ? false:(level == 2 ? true:false),
+                                level == 1 ? false:(level == 2 ? false:true),
+                                chartBuilder
+                        });
+                        rs=dbClient.execute(queryBean);
+                        if(!rs.isSuccess())
+                            throw rs.getException();
                         return message("success", "Account successfully added");
                     }else {
                         return message("error","Account is exist");
@@ -245,7 +256,7 @@ public class AccountManager {
                 }else {
                     return message("error","Group does not exist");
                 }
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 log.error(ExceptionUtils.getStackTrace(e));
                 return message("error","Sql error");
             }
@@ -266,23 +277,25 @@ public class AccountManager {
 
             try {
                 if(!groupIsExist(group)){
-                        //SQLite
-                        PreparedStatement stat = null;
+                        //DBClient
+                        PStmt queryBean=null;
+                        DBResult rs=null;
+                        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
                         //INSERT SQL
-                        String sql = "INSERT INTO `main`.`Group` (`GroupName`,`Memo`) VALUES (?,?)";
-                        stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
-                        stat.setString(1, group);
-                        stat.setString(2, group_info);
-                        synchronized (ConnectionManager.class) {
-                            stat.executeUpdate();
-                        }
+                        String sql = "INSERT INTO `Groups` (`GroupName`,`Memo`) VALUES (?,?)";
+
+                        queryBean=PStmt.buildQueryBean("kado-meta",sql,new Object[]{
+                                group,
+                                group_info
+                        });
+                        rs=dbClient.execute(queryBean);
+                        if(!rs.isSuccess())
+                            throw rs.getException();
                         return message("success", "Group successfully added");
-
-
                 }else {
                     return message("error","Group is exist");
                 }
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 log.error(ExceptionUtils.getStackTrace(e));
                 return message("error","Sql error");
             }
@@ -309,46 +322,43 @@ public class AccountManager {
             try {
                 if(gidIsExist(groupID)){
                     if(uidIsExist(UID)) {
-                        //SQLite
-                        PreparedStatement stat = null;
+                        //DBClient
+                        PStmt queryBean=null;
+                        DBResult rs=null;
+                        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
                         //INSERT SQL
                         String sql;
-
-                        //if password is blank don't update it
-                        if(!password.equals(""))
-                            sql = "UPDATE `main`.`User` SET `AccountID` = ?, `UserName` = ?,`Email` = ?, `Gid` = ?, `Admin` = ?, `General` = ?, `Password` = ?,`ChartBuilder` = ? WHERE  `UID` = ?  AND Enable=1";
-                        else
-                            sql = "UPDATE `main`.`User` SET `AccountID` = ?, `UserName` = ?,`Email` = ?, `Gid` = ?, `Admin` = ?, `General` = ? ,`ChartBuilder` = ? WHERE  `UID` = ?  AND Enable=1";
-                        stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
-                        stat.setString(1, account);
-                        stat.setString(2, username);
-                        stat.setString(3, email);
-                        stat.setInt(4, groupID);
-                        if (level == 1) {
-                            stat.setBoolean(5, false);
-                            stat.setBoolean(6, false);
-                        } else if (level == 2) {
-                            stat.setBoolean(5, true);
-                            stat.setBoolean(6, false);
-                        } else {
-                            stat.setBoolean(5, false);
-                            stat.setBoolean(6, true);
-                        }
-
                         //if password is blank don't update it
                         if(!password.equals("")) {
-                            stat.setString(7, password);
-                            stat.setBoolean(8, chartBuilder);
-                            stat.setInt(9, UID);
-
+                            sql = "UPDATE `User` SET `AccountID` = ?, `UserName` = ?,`Email` = ?, `Gid` = ?, `Admin` = ?, `General` = ?, `Password` = ?,`ChartBuilder` = ? WHERE  `UID` = ?  AND Enable=1";
+                            queryBean=PStmt.buildQueryBean("kado-meta",sql,new Object[]{
+                                    account,
+                                    username,
+                                    email,
+                                    groupID,
+                                    level == 1 ? false:(level == 2 ? true:false),
+                                    level == 1 ? false:(level == 2 ? false:true),
+                                    password,
+                                    chartBuilder,
+                                    UID
+                            });
                         }else {
-                            stat.setBoolean(7, chartBuilder);
-                            stat.setInt(8, UID);
+                            sql = "UPDATE `User` SET `AccountID` = ?, `UserName` = ?,`Email` = ?, `Gid` = ?, `Admin` = ?, `General` = ? ,`ChartBuilder` = ? WHERE  `UID` = ?  AND Enable=1";
+                            queryBean=PStmt.buildQueryBean("kado-meta",sql,new Object[]{
+                                    account,
+                                    username,
+                                    email,
+                                    groupID,
+                                    level == 1 ? false:(level == 2 ? true:false),
+                                    level == 1 ? false:(level == 2 ? false:true),
+                                    chartBuilder,
+                                    UID
+                            });
+                        }
+                        rs=dbClient.execute(queryBean);
+                        if(!rs.isSuccess())
+                            throw rs.getException();
 
-                        }
-                        synchronized (ConnectionManager.class) {
-                            stat.executeUpdate();
-                        }
                         return message("success", "Account successfully added");
                     }else {
                         return message("error","UID does not exist");
@@ -357,7 +367,7 @@ public class AccountManager {
                 }else {
                     return message("error","Group does not exist");
                 }
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 log.error(ExceptionUtils.getStackTrace(e));
                 return message("error","Sql error");
             }
@@ -381,16 +391,20 @@ public class AccountManager {
                 if(uidIsExist(UID)){
                     //Check old password is correct?
                     if(checkPassword(UID, oldPassword)) {
-                        //SQLite
-                        PreparedStatement stat = null;
+                        //DBClient
+                        PStmt queryBean=null;
+                        DBResult rs=null;
+                        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
                         //INSERT SQL
-                        String sql = "UPDATE `main`.`User` SET  `Password` = ?  WHERE  `UID` = ?  AND Enable=1";
-                        stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
-                        stat.setString(1, newPassword);
-                        stat.setInt(2, UID);
-                        synchronized (ConnectionManager.class) {
-                            stat.executeUpdate();
-                        }
+                        String sql = "UPDATE `User` SET  `Password` = ?  WHERE  `UID` = ?  AND Enable=1";
+                        queryBean=PStmt.buildQueryBean("kado-meta",sql,new Object[]{
+                                newPassword,
+                                UID
+                        });
+
+                        rs=dbClient.execute(queryBean);
+                        if(!rs.isSuccess())
+                            throw rs.getException();
                         return message("success", "Password successfully update");
                     }else {
                         return message("error","Old password error");
@@ -399,7 +413,7 @@ public class AccountManager {
                 }else {
                     return message("error","UID does not exist");
                 }
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 log.error(ExceptionUtils.getStackTrace(e));
                 return message("error","Sql error");
             }
@@ -420,24 +434,30 @@ public class AccountManager {
         if(!group.equals("")&&!group_info.equals("")){
             try {
                 if(gidIsExist(GID)){
-                    //SQLite
-                    PreparedStatement stat = null;
+                    //DBClient
+                    PStmt queryBean=null;
+                    DBResult rs=null;
+                    DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
                     //INSERT SQL
-                    String sql = "UPDATE `main`.`Group` SET `GroupName` = ?, `Memo` = ? WHERE  `GID` = ?";
-                    stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
-                    stat.setString(1, group);
-                    stat.setString(2, group_info);
-                    stat.setInt(3, GID);
-                    synchronized (ConnectionManager.class) {
-                        stat.executeUpdate();
-                    }
+                    String sql = "UPDATE `Groups` SET `GroupName` = ?, `Memo` = ? WHERE  `GID` = ?";
+
+                    queryBean=PStmt.buildQueryBean("kado-meta",sql,new Object[]{
+                            group,
+                            group_info,
+                            GID
+                    });
+
+                    rs=dbClient.execute(queryBean);
+                    if(!rs.isSuccess())
+                        throw rs.getException();
+
                     return message("success", "Group successfully update");
 
 
                 }else {
                     return message("error","Group is not exist");
                 }
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 log.error(ExceptionUtils.getStackTrace(e));
                 return message("error","Sql error");
             }
@@ -452,35 +472,40 @@ public class AccountManager {
      * @throws SQLException
      */
     public String getUserList() {
-        //SQLite
-        PreparedStatement stat = null;
-        ResultSet rs = null;
+        //DBClient
+        Query queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
         //Check User Account and Password
-        String sql = "SELECT * FROM  `User`  U LEFT JOIN `Group`  G ON U.Gid=G.GID AND U.Enable=1 ";
+        String sql = "SELECT * FROM  `User`  U LEFT JOIN `Groups`  G ON U.Gid=G.GID WHERE U.Enable=1 ";
 
         try {
-            stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
 
-            rs = stat.executeQuery();
+            queryBean=new Query("kado-meta",sql);
+
+            rs=dbClient.execute(queryBean);
+            if(!rs.isSuccess())
+                throw rs.getException();
             List<Map> userList = new ArrayList<>();
-            while (rs.next()) {
+            for(Row row:rs.getRowList()){
+                KadoRow r=new KadoRow(row);
                 int level = 0;
-                if (rs.getBoolean("Admin") == true && rs.getBoolean("General") == false) {
+                if (r.getBoolean("Admin") == true && r.getBoolean("General") == false) {
                     level = 2;
-                } else if (rs.getBoolean("Admin") == false && rs.getBoolean("General") == true) {
+                } else if (r.getBoolean("Admin") == false && r.getBoolean("General") == true) {
                     level = 0;
                 } else {
                     level = 1;
                 }
                 Map userInfo = new LinkedHashMap();
-                userInfo.put("userid", rs.getInt("UID"));
-                userInfo.put("account", rs.getString("AccountID"));
-                userInfo.put("username", rs.getString("UserName"));
-                userInfo.put("groupid", rs.getString("GID"));
-                userInfo.put("group", rs.getString("GroupName"));
+                userInfo.put("userid", r.getInt("UID"));
+                userInfo.put("account", r.getString("AccountID"));
+                userInfo.put("username", r.getString("UserName"));
+                userInfo.put("groupid", r.getString("GID"));
+                userInfo.put("group", r.getString("GroupName"));
                 userInfo.put("level", level);
-                userInfo.put("email", rs.getString("Email"));
-                userInfo.put("chartbuilder",rs.getBoolean("ChartBuilder"));
+                userInfo.put("email", r.getString("Email"));
+                userInfo.put("chartbuilder",r.getBoolean("ChartBuilder"));
                 userList.add(userInfo);
             }
             if (userList.size() != 0) {
@@ -488,7 +513,7 @@ public class AccountManager {
             } else {
                 return message("error", "Not any user");
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.error(ExceptionUtils.getStackTrace(e));
             return message("error", "Sql error");
         }
@@ -504,41 +529,48 @@ public class AccountManager {
     public String getUserInfo(int UID){
         try {
             if(uidIsExist(UID)) {
-                //SQLite
-                PreparedStatement stat = null;
-                ResultSet rs = null;
+                //DBClient
+                PStmt queryBean=null;
+                DBResult rs=null;
+                DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
                 //Check User Account and Password
-                String sql = "SELECT * FROM  `User`  U LEFT JOIN `Group`  G ON  U.Gid=G.GID WHERE U.UID=?  AND U.Enable=1";
-                stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
-                stat.setInt(1, UID);
-                rs = stat.executeQuery();
+                String sql = "SELECT * FROM  `User`  U LEFT JOIN `Groups`  G ON  U.Gid=G.GID WHERE U.UID=?  AND U.Enable=1";
+
+                queryBean=PStmt.buildQueryBean("kado-meta",sql,new Object[]{
+                        UID
+                });
+
+                rs=dbClient.execute(queryBean);
+                if(!rs.isSuccess())
+                    throw rs.getException();
                 Map userInfo = new LinkedHashMap();
                 userInfo.put("status","success");
                 userInfo.put("time",TimeUtil.getCurrentTime());
-                while (rs.next()) {
+                for(Row row:rs.getRowList()){
+                    KadoRow r=new KadoRow(row);
                     int level = 0;
-                    if (rs.getBoolean("Admin") == true && rs.getBoolean("General") == false) {
+                    if (r.getBoolean("Admin") == true && r.getBoolean("General") == false) {
                         level = 2;
-                    } else if (rs.getBoolean("Admin") == false && rs.getBoolean("General") == true) {
+                    } else if (r.getBoolean("Admin") == false && r.getBoolean("General") == true) {
                         level = 0;
                     } else {
                         level = 1;
                     }
-                    userInfo.put("userid", rs.getInt("UID"));
-                    userInfo.put("account", rs.getString("AccountID"));
-                    userInfo.put("username", rs.getString("UserName"));
-                    userInfo.put("groupid", rs.getString("GID"));
-                    userInfo.put("group", rs.getString("GroupName"));
+                    userInfo.put("userid", r.getInt("UID"));
+                    userInfo.put("account", r.getString("AccountID"));
+                    userInfo.put("username", r.getString("UserName"));
+                    userInfo.put("groupid", r.getString("GID"));
+                    userInfo.put("group", r.getString("GroupName"));
                     userInfo.put("level", level);
-                    userInfo.put("email", rs.getString("Email"));
-                    userInfo.put("chartbuilder",rs.getBoolean("ChartBuilder"));
+                    userInfo.put("email", r.getString("Email"));
+                    userInfo.put("chartbuilder",r.getBoolean("ChartBuilder"));
                 }
                 Gson gson=new Gson();
                 return gson.toJson(userInfo);
             }else {
                 return message("error","User ID is not exist");
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.error(ExceptionUtils.getStackTrace(e));
             return message("error", "Sql error");
         }
@@ -551,21 +583,25 @@ public class AccountManager {
      * @throws SQLException
      */
     public String getGroupList()  {
-        //SQLite
-        PreparedStatement stat = null;
-        ResultSet rs = null;
+        //DBClient
+        Query queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
         //Check User Account and Password
-        String sql = "SELECT * FROM `Group`";
+        String sql = "SELECT * FROM `Groups`";
 
         try {
-            stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
-            rs = stat.executeQuery();
+            queryBean=new Query("kado-meta",sql);
+            rs=dbClient.execute(queryBean);
+            if(!rs.isSuccess())
+                throw rs.getException();
             List<Map> groupList=new ArrayList<>();
-            while (rs.next()){
+            for(Row row:rs.getRowList()){
+                KadoRow r=new KadoRow(row);
                 Map groupInfo=new LinkedHashMap();
-                groupInfo.put("groupid",rs.getInt("GID"));
-                groupInfo.put("group", rs.getString("GroupName"));
-                groupInfo.put("group_info",rs.getString("Memo"));
+                groupInfo.put("groupid",r.getInt("GID"));
+                groupInfo.put("group", r.getString("GroupName"));
+                groupInfo.put("group_info",r.getString("Memo"));
                 groupList.add(groupInfo);
             }
             if(groupList.size()!=0){
@@ -573,7 +609,7 @@ public class AccountManager {
             }else {
                 return message("error","Not any user");
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.error(ExceptionUtils.getStackTrace(e));
             return message("error", "Sql error");
 
@@ -591,21 +627,25 @@ public class AccountManager {
     public String delUser(int UID) {
         try {
             if(uidIsExist(UID)) {
-                //SQLite
-                PreparedStatement stat = null;
+                //DBClient
+                PStmt queryBean=null;
+                DBResult rs=null;
+                DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
                 //Check User Account and Password
-                String sql = "UPDATE `main`.`User` SET  `Enable` = '0'  WHERE  `UID` = ?";
-                stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
-                stat.setInt(1, UID);
-                synchronized (ConnectionManager.class) {
-                    stat.executeUpdate();
-                }
+                String sql = "UPDATE `User` SET  `Enable` = 0  WHERE  `UID` = ?";
+                queryBean=PStmt.buildQueryBean("kado-meta",sql,new Object[]{
+                        UID
+                });
+                rs=dbClient.execute(queryBean);
+                if(!rs.isSuccess())
+                    throw rs.getException();
+
                 return message("success", "User delete is success");
             }else {
                 return message("error","User ID is not exist");
 
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.error(ExceptionUtils.getStackTrace(e));
             return message("error", "Sql error");
         }
@@ -622,21 +662,25 @@ public class AccountManager {
     public String delGroup(int GID) {
         try {
             if(gidIsExist(GID)) {
-                //SQLite
-                PreparedStatement stat = null;
+                //DBClient
+                PStmt queryBean=null;
+                DBResult rs=null;
+                DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
                 //Check User Account and Password
-                String sql = "DELETE FROM `main`.`Group`  WHERE  `GID` = ?";
-                stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
-                stat.setInt(1, GID);
-                synchronized (ConnectionManager.class) {
-                    stat.executeUpdate();
-                }
+                String sql = "DELETE FROM `Groups`  WHERE  `GID` = ?";
+                queryBean=PStmt.buildQueryBean("kado-meta",sql,new Object[]{
+                        GID
+                });
+                rs=dbClient.execute(queryBean);
+                if(!rs.isSuccess())
+                    throw rs.getException();
+
                 return message("success", "Group delete is success");
             }else {
                 return message("error","Group ID is not exist");
 
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.error(ExceptionUtils.getStackTrace(e));
             return message("error", "Sql error");
         }
@@ -648,20 +692,21 @@ public class AccountManager {
      * @return is Exist?
      * @throws SQLException
      */
-    public boolean gidIsExist(int groupID) throws SQLException {
-        //SQLite
-        PreparedStatement stat = null;
-        ResultSet rs = null;
+    public boolean gidIsExist(int groupID) throws Exception {
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
         //Check User Account and Password
-        String sql = "select `GroupName` from `Group` where  GID=?";
-        stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
-        stat.setInt(1, groupID);
-        rs = stat.executeQuery();
-        boolean flag=false;
-        while (rs.next()){
-            flag=true;
-        }
-        return flag;
+        String sql = "select `GroupName` from `Groups` where  GID=?";
+
+        queryBean=PStmt.buildQueryBean("kado-meta",sql,new Object[]{
+                groupID
+        });
+        rs=dbClient.execute(queryBean);
+        if(!rs.isSuccess())
+            throw rs.getException();
+        return rs.getRowSize()>0;
     }
 
     /**
@@ -670,20 +715,22 @@ public class AccountManager {
      * @return is Exist?
      * @throws SQLException
      */
-    public boolean groupIsExist(String groupName) throws SQLException {
-        //SQLite
-        PreparedStatement stat = null;
-        ResultSet rs = null;
+    public boolean groupIsExist(String groupName) throws Exception {
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
         //Check User Account and Password
-        String sql = "select `GID` from `Group` where  GroupName=?";
-        stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
-        stat.setString(1, groupName);
-        rs = stat.executeQuery();
-        boolean flag=false;
-        while (rs.next()){
-            flag=true;
-        }
-        return flag;
+        String sql = "select `GID` from `Groups` where  GroupName=?";
+
+        queryBean=PStmt.buildQueryBean("kado-meta",sql,new Object[]{
+                groupName
+        });
+        rs=dbClient.execute(queryBean);
+        if(!rs.isSuccess())
+            throw rs.getException();
+
+        return rs.getRowSize()>0;
     }
     /**
      * Check UID Exist
@@ -691,20 +738,22 @@ public class AccountManager {
      * @return is Exist?
      * @throws SQLException
      */
-    public boolean uidIsExist(int userID) throws SQLException {
-        //SQLite
-        PreparedStatement stat = null;
-        ResultSet rs = null;
+    public boolean uidIsExist(int userID) throws Exception {
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
         //Check User Account and Password
         String sql = "select `UserName` from `User` where  UID=?  AND Enable=1";
-        stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
-        stat.setInt(1, userID);
-        rs = stat.executeQuery();
-        boolean flag=false;
-        while (rs.next()){
-            flag=true;
-        }
-        return flag;
+
+        queryBean=PStmt.buildQueryBean("kado-meta",sql,new Object[]{
+                userID
+        });
+        rs=dbClient.execute(queryBean);
+        if(!rs.isSuccess())
+            throw rs.getException();
+
+        return rs.getRowSize()>0;
     }
 
     /**
@@ -713,20 +762,22 @@ public class AccountManager {
      * @return is Exist?
      * @throws SQLException
      */
-    public boolean accountIsExist(String accountID) throws SQLException {
-        //SQLite
-        PreparedStatement stat = null;
-        ResultSet rs = null;
+    public boolean accountIsExist(String accountID) throws Exception {
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
         //Check User Account and Password
         String sql = "select `UserName` from `User` where  AccountID=?  AND Enable=1";
-        stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
-        stat.setString(1, accountID);
-        rs = stat.executeQuery();
-        boolean flag=false;
-        while (rs.next()){
-            flag=true;
-        }
-        return flag;
+
+        queryBean=PStmt.buildQueryBean("kado-meta",sql,new Object[]{
+                accountID
+        });
+        rs=dbClient.execute(queryBean);
+        if(!rs.isSuccess())
+            throw rs.getException();
+
+        return rs.getRowSize()>0;
     }
 
     /**
@@ -736,21 +787,23 @@ public class AccountManager {
      * @return is correct?
      * @throws SQLException
      */
-    public boolean checkPassword(int UID,String password) throws SQLException {
-        //SQLite
-        PreparedStatement stat = null;
-        ResultSet rs = null;
+    public boolean checkPassword(int UID,String password) throws Exception {
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
         //Check User Account and Password
         String sql = "select `AccountID` from `User`  where UID=? AND Password=?  AND Enable=1";
-        stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
-        stat.setInt(1, UID);
-        stat.setString(2, password);
-        rs = stat.executeQuery();
-        boolean flag=false;
-        while (rs.next()){
-            flag=true;
-        }
-        return flag;
+
+        queryBean=PStmt.buildQueryBean("kado-meta",sql,new Object[]{
+                UID,
+                password
+        });
+        rs=dbClient.execute(queryBean);
+        if(!rs.isSuccess())
+            throw rs.getException();
+
+        return rs.getRowSize()>0;
 
     }
 
@@ -767,7 +820,7 @@ public class AccountManager {
                 return false;
             else if((Integer)verify.get(0)==2)
                 return true;
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.error(ExceptionUtils.getStackTrace(e));
             return false;
         }
@@ -781,7 +834,7 @@ public class AccountManager {
                 return true;
             else
                 return false;
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.error(ExceptionUtils.getStackTrace(e));
             return false;
         }

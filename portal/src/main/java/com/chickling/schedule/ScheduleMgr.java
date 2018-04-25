@@ -1,15 +1,18 @@
 package com.chickling.schedule;
 
+import com.chickling.util.*;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.chickling.sqlite.ConnectionManager;
 import com.chickling.models.Auth;
 import com.chickling.models.MessageFactory;
 import com.chickling.bean.job.User;
-import com.chickling.util.StringUtil;
-import com.chickling.util.TimeUtil;
-import com.chickling.util.ScheduleCRUDUtils;
 
+import owlstone.dbclient.db.DBClient;
+import owlstone.dbclient.db.module.DBResult;
+import owlstone.dbclient.db.module.PStmt;
+import owlstone.dbclient.db.module.Query;
+import owlstone.dbclient.db.module.Row;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.quartz.*;
@@ -39,14 +42,23 @@ public class ScheduleMgr {
         /**Find out the schedule is triggered before service shut down or reboot**/
         String query="SELECT `ScheduleID` FROM `Schedule` WHERE `ScheduleStatus`='1';";
         int sid=0;
+        //DBClient
+        Query queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
         try {
-            PreparedStatement stat = ConnectionManager.getInstance().getConnection().prepareStatement(query);
-            ResultSet rs=stat.executeQuery();
+
+
+            queryBean=new Query("kado-meta",query);
+            rs=dbClient.execute(queryBean);
+            if(!rs.isSuccess())
+                throw rs.getException();
             ArrayList<Integer> schedule=new ArrayList<>();
-            while(rs.next()){
-                schedule.add(rs.getInt("ScheduleID"));
+            for(Row row:rs.getRowList()){
+                KadoRow r=new KadoRow(row);
+                schedule.add(r.getInt("ScheduleID"));
             }
-            stat.close();
+
 
             /**Start schedule of Quartz**/
             for(int id:schedule) {
@@ -74,8 +86,8 @@ public class ScheduleMgr {
             User user = new User();
             try {
                 user = au.verify2(token);
-            } catch (SQLException e) {
-                e.printStackTrace();
+            } catch (Exception e) {
+                log.error(ExceptionUtils.getMessage(e));
             }
 
             log.info("start");
@@ -92,15 +104,24 @@ public class ScheduleMgr {
                 } else {
                     /**Initiating**/
                     String query = "SELECT `ScheduleOwner` from `Schedule_History` where `ScheduleID`=? and `ScheduleStatus`=1 order by `ScheduleStartTime` DESC limit 1;";
-                    PreparedStatement stat = ConnectionManager.getInstance().getConnection().prepareStatement(query);
-                    stat.setInt(1, scheduleID);
+                    //DBClient
+                    PStmt queryBean=null;
+                    DBResult rs=null;
+                    DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
+                    queryBean=PStmt.buildQueryBean("kado-meta",query,new Object[]{
+                            scheduleID
+                    });
+                    rs=dbClient.execute(queryBean);
+
+                    if(!rs.isSuccess())
+                        throw rs.getException();
                     //log.info("Start schedule id: "+scheduleID);
-                    ResultSet rs = stat.executeQuery();
-                    if(rs.next()){
-                        scheduleOwner = rs.getInt("ScheduleOwner");
+
+                    if(rs.getRowSize()>0){
+                        KadoRow r=new KadoRow(rs.getRowList().get(0));
+                        scheduleOwner = r.getInt("ScheduleOwner");
                     }
                     //log.info("Start Schedule Owner: "+scheduleOwner);
-                    stat.close();
                     scheduleInfo = ScheduleCRUDUtils.getScheduleInfo(scheduleID);
                 }
             } catch (Exception e) {
@@ -189,7 +210,7 @@ public class ScheduleMgr {
                     /**Update Schedule info**/
                     ScheduleCRUDUtils.updateScheduleStatus(scheduleID, 1);
                     ScheduleCRUDUtils.updateScheduleStartTime(scheduleID, TimeUtil.getCurrentTime());
-                } catch (SQLException e) {
+                } catch (Exception e) {
                     log.error(e.getMessage());
                     return MessageFactory.rtnScheduleMessage("error", TimeUtil.getCurrentTime(), "Update status failed, " + e.toString(), Integer.toString(scheduleID));
                 }
@@ -249,7 +270,7 @@ public class ScheduleMgr {
                 return MessageFactory.rtnScheduleMessage("success", TimeUtil.getCurrentTime(), "", Integer.toString(scheduleID));
             }
         }
-        catch(SchedulerException | SQLException sche){
+        catch(Exception sche){
             return MessageFactory.rtnScheduleMessage("error", TimeUtil.getCurrentTime(), sche.toString(), Integer.toString(scheduleID));
         }
     }

@@ -1,7 +1,9 @@
 package com.chickling.util;
 
-import com.chickling.sqlite.ConnectionManager;
 import com.chickling.boot.Init;
+import owlstone.dbclient.db.DBClient;
+import owlstone.dbclient.db.module.DBResult;
+import owlstone.dbclient.db.module.PStmt;
 import org.apache.logging.log4j.Logger;
 import javax.mail.*;
 import javax.mail.internet.AddressException;
@@ -9,9 +11,6 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Properties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
@@ -27,20 +26,27 @@ public class Notification {
     private static String recipients="";
 
     public synchronized static void notification(int JobHistoryID, String contents,String subject, String[] Recipients){
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
+        String SQLQuery="SELECT Email from `Job_History`,`User` Where `JHID`=? and `Job_History`.`JobOwner`=`User`.`UID`";
 
-        String SQLQuery="SELECT Email from `main`.`Job_History`,`main`.`User` Where `JHID`=? and `Job_History`.`JobOwner`=`User`.`UID`";
-        PreparedStatement stat = null;
-        ResultSet rs = null;
         String to="";
         try{
-            stat = ConnectionManager.getInstance().getConnection().prepareStatement(SQLQuery);
-            stat.setInt(1,JobHistoryID);
-            rs=stat.executeQuery();
-            to=rs.getString("Email");
+
+            queryBean=PStmt.buildQueryBean("kado-meta",SQLQuery,new Object[]{
+                    JobHistoryID
+            });
+            rs=dbClient.execute(queryBean);
+
+            if(!rs.isSuccess())
+                throw rs.getException();
+            KadoRow r=new KadoRow(rs.getRowList().get(0));
+            to=r.getString("Email");
             recipients=to;
-            stat.close();
         }
-        catch(SQLException ex){
+        catch(Exception ex){
             log.error("Default Job Insert Failed cause: "+ex.toString());
         }
 

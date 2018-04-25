@@ -1,13 +1,15 @@
 package com.chickling.util;
 
-import com.chickling.sqlite.ConnectionManager;
+
 import com.chickling.models.MessageFactory;
+import com.facebook.presto.hive.$internal.org.apache.commons.lang3.exception.ExceptionUtils;
+import owlstone.dbclient.db.DBClient;
+import owlstone.dbclient.db.module.DBResult;
+import owlstone.dbclient.db.module.PStmt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -16,47 +18,64 @@ import java.util.Map;
  */
 public class TemplateCRUDUtils {
 
-    private final static String InsertSQLTemplate="INSERT INTO `main`.`SQLtemplate` (`JobID`,`URLKey`,`SQLKey`,`DefaultValue`) VALUES (?,?,?,?);";
-    private final static String DeleteSQLTemplate="DELETE FROM `main`.`SQLtemplate` WHERE `JobID`=?;";
-    private final static String GetSQLTemplate="SELECT * FROM `main`.`SQLtemplate` WHERE `JobID`=?;";
+    private final static String InsertSQLTemplate="INSERT INTO `SQLtemplate` (`JobID`,`URLKey`,`SQLKey`,`DefaultValue`) VALUES (?,?,?,?);";
+    private final static String DeleteSQLTemplate="DELETE FROM `SQLtemplate` WHERE `JobID`=?;";
+    private final static String GetSQLTemplate="SELECT * FROM `SQLtemplate` WHERE `JobID`=?;";
 
     private static Logger log = LogManager.getLogger(TemplateCRUDUtils.class);
 
     public synchronized static boolean addSqlTemplate(int jobID, ArrayList<Map<String,String>> templateMaps){
-        PreparedStatement stat = null;
-        String QuerySQL="";
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
+
         try {
-            stat = ConnectionManager.getInstance().getConnection().prepareStatement(InsertSQLTemplate);
+            List<Object[]> data=new ArrayList<>();
             for(Map templateMap: templateMaps) {
-                stat.setInt(1, jobID);
-                stat.setString(2, (String) templateMap.get("URLKey"));//userID
-                stat.setString(3, (String) templateMap.get("SQLKey"));
-                stat.setString(4, (String) templateMap.get("DefaultValue"));
-                stat.executeUpdate();
-                QuerySQL = stat.toString();
+                data.add(new Object[]{
+                        jobID,
+                        (String) templateMap.get("URLKey"),
+                        (String) templateMap.get("SQLKey"),
+                        (String) templateMap.get("DefaultValue")
+                });
             }
-            stat.close();
+
+            queryBean=PStmt.buildBatchUpdateBean("kado-meta",InsertSQLTemplate,data);
+            rs=dbClient.execute(queryBean);
+
+            if(!rs.isSuccess())
+                throw rs.getException();
+
             log.info( "Status:success; TimeStamp:"+TimeUtil.getCurrentTime()+"; JobID:"+jobID);
             return true;
-        }catch (SQLException sqle){
-            log.error(sqle.toString()+";SQL:"+QuerySQL);
+        }catch (Exception sqle){
+            log.error(ExceptionUtils.getMessage(sqle));
             return false;
         }
     }
 
     public synchronized static boolean deleteSqlTemplate(int jobID){
-        PreparedStatement stat = null;
-        String QuerySQL = DeleteSQLTemplate;
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
+
+        String querySQL = DeleteSQLTemplate;
         try {
-            stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
-            QuerySQL=stat.toString();
-            stat.setInt(1, jobID);
-            stat.execute();
-            stat.close();
+
+            queryBean=PStmt.buildQueryBean("kado-meta",querySQL,new Object[]{
+                    jobID
+            });
+            querySQL=queryBean.getSql();
+            rs=dbClient.execute(queryBean);
+
+            if(!rs.isSuccess())
+                throw rs.getException();
             log.info( "Status:success; TimeStamp:"+TimeUtil.getCurrentTime()+"; JobID:"+jobID);
             return true;
-        }catch(SQLException sqle){
-            log.error(sqle.toString()+";SQL:"+QuerySQL);
+        }catch(Exception sqle){
+            log.error(sqle.toString()+";SQL:"+querySQL);
             return false;
         }
     }
@@ -66,21 +85,28 @@ public class TemplateCRUDUtils {
     }
 
     public synchronized static List<Map> readSqlTemplate(int jobID){
-        String QuerySQL = "";
-        PreparedStatement stat = null;
-        ResultSet rs = null;
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
+        String querySQL = "";
+
         try {
-            QuerySQL = GetSQLTemplate;
-            stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
-            stat.setInt(1, jobID);
-            QuerySQL=stat.toString();
-            rs = stat.executeQuery();
+            querySQL = GetSQLTemplate;
+            queryBean=PStmt.buildQueryBean("kado-meta",querySQL,new Object[]{
+                    jobID
+            });
+            querySQL=queryBean.getSql();
+            rs=dbClient.execute(queryBean);
+
+            if(!rs.isSuccess())
+                throw rs.getException();
             List<Map> rtn = MessageFactory.rtnTemplateMessage(rs);
-            stat.close();
+
             return rtn;
         }
-        catch(SQLException sqle){
-            log.error(sqle.toString()+";SQL:"+QuerySQL);
+        catch(Exception sqle){
+            log.error(sqle.toString()+";SQL:"+querySQL);
             return new ArrayList<>();
         }
     }

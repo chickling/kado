@@ -1,17 +1,15 @@
 package com.chickling.util;
 
-
 import com.chickling.bean.result.ResultMap;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.chickling.sqlite.ConnectionManager;
 import com.chickling.models.MessageFactory;
+import owlstone.dbclient.db.DBClient;
+import owlstone.dbclient.db.module.DBResult;
+import owlstone.dbclient.db.module.PStmt;
 
 
 import java.lang.reflect.Type;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.*;
 
 /**
@@ -84,42 +82,59 @@ public class DrawUtils {
     }
 
 
-    public String getLastResult(int JobID)throws SQLException{
-        String QuerySQL="Select JobOutput from main.Job_Log JOIN main.Job_History on JobLog=JLID where JobID=? and JobStatus=1 and ResultCount>0 order by JobStopTime DESC limit 1";
-        PreparedStatement stat = null;
-        ResultSet rs = null;
-        stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
-        stat.setInt(1, JobID);
-        rs = stat.executeQuery();
+    public String getLastResult(int JobID)throws Exception{
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
 
-        if(!rs.next()){
+        String QuerySQL="Select JobOutput from Job_Log JOIN Job_History on JobLog=JLID where JobID=? and JobStatus=1 and ResultCount>0 order by JobStopTime DESC limit 1";
+
+        queryBean=PStmt.buildQueryBean("kado-meta",QuerySQL,new Object[]{
+                JobID
+        });
+        rs=dbClient.execute(queryBean);
+
+        if(!rs.isSuccess())
+            throw rs.getException();
+
+        if(rs.getRowList().size()==0){
             return "";
         }
         else{
-            String jobOutPut=rs.getString("JobOutput");
+            KadoRow r=new KadoRow(rs.getRowList().get(0));
+            String jobOutPut=r.getString("JobOutput");
             String tmp[]=jobOutPut.split("\\/");
             jobOutPut=tmp[tmp.length-1];
             return jobOutPut;
         }
     }
 
-    public String getResultTable(int JHID) throws SQLException{
-        String QuerySQL="Select `JobOutput` from `main`.`Job_Log` JOIN `main`.`Job_History` on `JobLog`=`JLID` where `JHID`=?";
+    public String getResultTable(int JHID) throws Exception{
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
 
-        PreparedStatement stat = null;
-        ResultSet rs = null;
-        stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
-        stat.setInt(1, JHID);
-        rs = stat.executeQuery();
+        String QuerySQL="Select `JobOutput` from `Job_Log` JOIN `Job_History` on `JobLog`=`JLID` where `JHID`=?";
 
-        if(!rs.next()){
+
+        queryBean=PStmt.buildQueryBean("kado-meta",QuerySQL,new Object[]{
+                JHID
+        });
+        rs=dbClient.execute(queryBean);
+        if(!rs.isSuccess())
+            throw rs.getException();
+        if(rs.getRowList().size()==0){
             return "";
         }
         else{
-            String jobOutPut=rs.getString("JobOutput");
+            KadoRow r=new KadoRow(rs.getRowList().get(0));
+            String jobOutPut=r.getString("JobOutput");
             String tmp[]=jobOutPut.split("\\/");
             jobOutPut=tmp[tmp.length-1];
-            return jobOutPut;}
+            return jobOutPut;
+        }
     }
 
     public String getQueryResult(ArrayList<String> cols,int limit, String orderby, String orderOption,String table){
@@ -133,7 +148,6 @@ public class DrawUtils {
             }
         }
         query=selectTemplate+"from presto_temp."+table+" order by "+ orderby+ " "+orderOption+ " limit "+ limit;
-
         ResultMap resultMap=new PrestoUtil().doJdbcRequest(query);
 
         return new Gson().toJson(resultMap);
@@ -160,9 +174,10 @@ public class DrawUtils {
         int index_x=0;
         Type type = new TypeToken<Map>() {}.getType();
         Map<String,Map> obj = gson.fromJson(queryResult, type);
+
+
         ArrayList<Map> rtndata=new ArrayList<>();
         ArrayList<String> cols=new ArrayList<>();
-
         for(String col: (ArrayList<String>) obj.get("schema")){
             cols.add(col);
         }
@@ -177,7 +192,6 @@ public class DrawUtils {
             }
         }
         rtndata.add(m);
-
         return rtndata;
 
     }
@@ -206,7 +220,6 @@ public class DrawUtils {
         int index_x=0;
         Type type = new TypeToken<Map>() {}.getType();
         Map<String,Map> obj = gson.fromJson(queryResult, type);
-
         HashMap<String,ArrayList<Map>> rtndata=new HashMap<>();
         ArrayList<String> cols=new ArrayList<>();
         int i=0;
