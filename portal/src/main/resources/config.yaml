@@ -9,14 +9,13 @@ csvlocalPath: "/jetty/csv_temp"
 deleteLogTTL: "30"
 wrtierinjection: "com.chickling.writer.DBWriter$com.chickling.models.writer.LocalWriter"
 presto_hdfs_user: "presto"
-downloadToken: "a206379f7bffdcd01613869c448073ef98bfae8de4e17102b90f4758b2f316b7"
+downloadToken: "a206379f7bffdcd01613869c448073ef98bfae8de4e17102b90f4758b2f0000"
 downloadLimit: 40000
 #HDFS Upload Setting
 hdfsHost: "http://{hdfs_namenode}:50070"
 hdfsUser: "hdfs"
 externalTableHDFSRootPath: "/user/ec/kado_external"
 prestoDBWhitelist:
- - mars
  - test
  - tmp
 
