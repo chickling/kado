@@ -25,6 +25,10 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
             <param-name>jersey.config.servlet.filter.staticContentRegex</param-name>
             <param-value>/.*html|/.*js|/.*css|.*jpg|.*png|.*json|.*ttf|.*woff|.*ftl|.*woff2</param-value>
         </init-param>
+        <init-param>
+            <param-name>jersey.config.server.provider.classnames</param-name>
+            <param-value>org.glassfish.jersey.media.multipart.MultiPartFeature</param-value>
+        </init-param>
 
     </filter>
     <filter-mapping>

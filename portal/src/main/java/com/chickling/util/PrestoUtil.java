@@ -2,6 +2,7 @@ package com.chickling.util;
 
 import com.chickling.bean.result.ResultMap;
 import com.chickling.face.PrestoResult;
+import com.facebook.presto.jdbc.PrestoArray;
 import com.google.common.base.Strings;
 import com.chickling.boot.Init;
 import com.chickling.models.job.PrestoContent;
@@ -15,14 +16,15 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.Charset;
 import java.sql.*;
+import java.sql.Date;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 /**
  * Created by gl08 on 2015/12/3.
  */
-
 public class PrestoUtil  implements PrestoResult {
 
 //    private static Logger logger= LogManager.getLogger(PrestoUtil.class);
@@ -30,7 +32,6 @@ public class PrestoUtil  implements PrestoResult {
     private int RETRY_COUNT=3;
     private long RECONNECT_TIME=500;
     private boolean success=false;
-
     private Gson gson=new Gson();
     private StringBuilder exception;
 
@@ -88,7 +89,6 @@ public class PrestoUtil  implements PrestoResult {
     }
 
     public  String post(String SQL,Integer jobType,String... schema) {
-
         String result = "";
         String temp="";
         ArrayList tempdata=new ArrayList();
@@ -176,7 +176,6 @@ public class PrestoUtil  implements PrestoResult {
         try {
             conn.setRequestMethod(method);
         } catch (ProtocolException e) {
-
             setException("URL Parse Exception " + ExceptionUtils.getStackTrace(e));
 
         }
@@ -184,7 +183,6 @@ public class PrestoUtil  implements PrestoResult {
         conn.setDoOutput(true);
         conn.setRequestProperty("Content-Type", "application/json");
         conn.setRequestProperty("Content-Length", String.valueOf(postSQL));
-
         conn.setRequestProperty("x-presto-user", Init.getPresto_user());
         conn.setRequestProperty("x-presto-catalog", Init.getPrestoCatalog());
 
@@ -254,7 +252,6 @@ public class PrestoUtil  implements PrestoResult {
         return sb.toString();
     }
 
-
     public static void main(String[] args) throws IOException, InterruptedException {
 //        String sql="select * from mars.truesight_page_orc_v4 limit 13";
 //        String sql="drop table mars.orders";
@@ -263,28 +260,30 @@ public class PrestoUtil  implements PrestoResult {
         Init.setPrestoURL("http://bigdata.newegg.org:8080");
         Init.setPrestoCatalog("hive");
         Init.setPresto_user("hive");
+        Init.setCsvlocalPath("D:\\0_projects\\Kado\\logs");
+        Init.setJsonDir("D:\\0_projects\\Kado\\logs\\json");
         PrestoUtil util=new PrestoUtil();
 //        util.doJdbcRequest("drop table if exists presto_temp.temp_7aaac99ace2e4c37bbb4dd545c6d8f55");
 
 //
-        ResultMap tempTables=util.doJdbcRequest("show tables from presto_temp" );
-        for (List table:tempTables.getData()){
-            String drop="drop table if exists presto_temp."+table.get(0);
+        ResultMap tempTables=util.doJdbcRequest("select * from ec.ordermap" );
+//        for (List table:tempTables.getData()){
+//            String drop="drop table if exists presto_temp."+table.get(0);
 //            Init.setPresto_user("presto");
 //            PrestoUtil presto=new PrestoUtil();
 //            presto.doJdbcRequest(drop);
 
-            Init.setPresto_user("root");
-            PrestoUtil root=new PrestoUtil();
-            root.doJdbcRequest(drop);
-            Thread.currentThread().sleep(100);
-        }
+//            Init.setPresto_user("root");
+//            PrestoUtil root=new PrestoUtil();
+//            root.doJdbcRequest(drop);
+//            Thread.currentThread().sleep(100);
+//        }
 //        String out="D:\\0_projects\\Kado\\logs";
 //        Init.setCsvlocalPath(out);
 //
 //        Init.setJsonDir(Init.getCsvlocalPath()+Init.getFileseparator()+Init.getTempDir());
-//        boolean writeJSON=util.witerAsJson("presto_temp.temp_12d65e30eeae4ad18dcf92f03b692dd2");
-//        ResultMap resultMap=util.readJsonAsResult("presto_temp.temp_12d65e30eeae4ad18dcf92f03b692dd2",3,0);
+//        boolean writeJSON=util.witerAsJson("ec.orders",3);
+//        ResultMap resultMap=util.readJsonAsResult("ec.ordermap",1,3);
 //        System.out.println(new Gson().toJson(resultMap));
 //        util.writeAsCSV(" presto_temp.temp_12d65e30eeae4ad18dcf92f03b692dd2",out,false);
 
@@ -417,7 +416,10 @@ public class PrestoUtil  implements PrestoResult {
             });
             // add Column Type
             jo.getAsJsonArray("types").forEach((column)->{
-                resultMap.getType().add(column.getAsString());
+                if (column.getAsString().contains("long") || column.getAsString().contains("double") || column.getAsString().contains("boolean"))
+                    resultMap.getType().add(column.getAsString());
+                else
+                    resultMap.getType().add("string");
             });
 
 //            int count=0;
@@ -441,25 +443,13 @@ public class PrestoUtil  implements PrestoResult {
                         rowdata.add(jp.getAsBoolean());
                 }
                 resultMap.getData().add(rowdata);
-//               if (-1==rowCount){
-//                    count++;
-//                }else{
-//                    if (count<rowCount-1)
-//                        count++;
-//                    else
-//                        break;
-//                }
             }
-//            if (-1==rowCount) {
-//                resultMap.setCount(count);
-//            }else
-//                resultMap.setCount(rowCount);
-
-        } catch (FileNotFoundException e) {
+        } catch (Exception e) {
             this.setException(ExceptionUtils.getStackTrace(e));
             this.setSuccess(false);
         }
         return resultMap;
+
     }
 
     /**
@@ -531,14 +521,7 @@ public class PrestoUtil  implements PrestoResult {
                     for (int i = 0; i < rsmd.getColumnCount(); i++) {
                         ja.add(rsmd.getColumnName(i + 1));
                         String cType=rsmd.getColumnTypeName(i+1);
-                        if ("bigint".equalsIgnoreCase(cType))
-                            type.add("long");
-                        else if ("double".equalsIgnoreCase(cType))
-                            type.add("double");
-                        else if ("boolean".equalsIgnoreCase(cType))
-                            type.add("boolean");
-                        else
-                            type.add("string");
+                        type.add(typeCompare(cType));
                     }
                     fw.write("{\"columns\":"+ja.toString()+",");
                     fw.write("\"types\":"+type.toString()+",");
@@ -560,7 +543,23 @@ public class PrestoUtil  implements PrestoResult {
                         ja.add(Double.valueOf(cValue.toString()));
                     else if ("boolean".equalsIgnoreCase(cType))
                         ja.add(Boolean.valueOf(cValue.toString()));
-                    else
+                    else if ("date".equalsIgnoreCase(cType))
+                        ja.add(TimeUtil.toString(((Date)cValue).getTime()));
+                    else if (cType.toLowerCase().contains("array")){
+                        StringBuilder str=new StringBuilder();
+                        str.append("[");
+                        Object[] arrayObj= (Object[]) ((PrestoArray)cValue).getArray();
+                        IntStream.range(0,arrayObj.length).forEach(value -> {
+                            str.append(arrayObj[value]);
+                            if (value<arrayObj.length-1)
+                                str.append(",");
+                        });
+                        str.append("]");
+                        int pause=0;
+                        ja.add(str.toString());
+//                    else if ("timestamp".equalsIgnoreCase(cType))
+//                        ja.addcValue.toString());
+                    }else
                         ja.add(cValue.toString());
                 }
                 fw.write(ja.toString());
@@ -613,9 +612,6 @@ public class PrestoUtil  implements PrestoResult {
             resultPath=outputPath+"@"+ Instant.now().toEpochMilli() +".csv";
         else
             resultPath=outputPath+File.separator+table+"@"+ Instant.now().toEpochMilli() +".csv";
-
-
-
 
         File csvfile =new File(resultPath);
         // create parent dir
@@ -716,6 +712,24 @@ public class PrestoUtil  implements PrestoResult {
 //            return  new ByteArrayInputStream(baos.toByteArray());
 //    }
 
+    private String typeCompare(String type){
+        switch (type.toLowerCase()){
+            case "bigint":
+                return "long";
+            case "double":
+                return "double";
+            case "boolean":
+                return "boolean";
+            case "date":
+                return "date";
+            case "timestamp":
+                return "timestamp";
+        }
+        if (type.toLowerCase().contains("array"))
+            return "array";
+        return "string";
+    }
+
     public ResultMap doJdbcRequest(String jdbcSQL){
         ResultMap resultMap=new ResultMap();
 
@@ -727,10 +741,8 @@ public class PrestoUtil  implements PrestoResult {
         try {
             Class.forName("com.facebook.presto.jdbc.PrestoDriver");
             conn = DriverManager.getConnection(jdbcUrl, prop);
-//            List<String> columns = new ArrayList<>();
             ResultSetMetaData rsmd = null;
             state = conn.createStatement();
-//            state.setFetchSize();
             if (jdbcSQL.toLowerCase().contains("drop table"))
                 state.execute(jdbcSQL);
             else {
@@ -744,29 +756,9 @@ public class PrestoUtil  implements PrestoResult {
 
                     if (flag) {
                         for (int i = 0; i < count; i++) {
-
                             resultMap.getSchema().add(rsmd.getColumnName(i+1));
-//                            Object cValue=resultSet.getObject(i+1);
                             String type=rsmd.getColumnTypeName(i+1);
-                            if ("bigint".equalsIgnoreCase(type))
-                                resultMap.getType().add("long");
-                            else if ("double".equalsIgnoreCase(type))
-                                resultMap.getType().add("double");
-                            else if ("boolean".equalsIgnoreCase(type))
-                                resultMap.getType().add("boolean");
-                            else
-                                resultMap.getType().add("string");
-//                            if ("varchar".equalsIgnoreCase(type) || "timestamp".equalsIgnoreCase(type) )
-//
-//
-//                            if (null==cValue || cValue instanceof String || cValue instanceof Timestamp)
-//                                resultMap.getType().add("string");
-//                            else if (cValue instanceof Boolean)
-//
-//                            else if (cValue instanceof Long)
-//
-//                            else
-
+                            resultMap.getType().add(typeCompare(type));
                         }
                         flag = false;
 
@@ -774,22 +766,24 @@ public class PrestoUtil  implements PrestoResult {
                     rowData=new ArrayList<>();
                     for (int i = 0; i < count; i++) {
                         //todo needs column schema ,
-
-                        if ("string".equalsIgnoreCase(resultMap.getType().get(i))){
-                            if (Strings.isNullOrEmpty(resultSet.getString(i+1)))
-                                rowData.add("");
-                            else
-                                rowData.add(resultSet.getString(i+1));
-                        }
-                        else if ("double".equalsIgnoreCase(resultMap.getType().get(i)))
+                        if ("double".equalsIgnoreCase(resultMap.getType().get(i)))
                             rowData.add(resultSet.getDouble(i+1));
                         else if ("long".equalsIgnoreCase(resultMap.getType().get(i)))
                             rowData.add(resultSet.getLong(i+1));
                         else if ("boolean".equalsIgnoreCase(resultMap.getType().get(i)))
                             rowData.add(resultSet.getBoolean(i+1));
+                        else if ("date".equalsIgnoreCase(resultMap.getType().get(i)))
+                            rowData.add(resultSet.getDate(i+1));
+                        else if ("timestamp".equalsIgnoreCase(resultMap.getType().get(i)))
+                            rowData.add(resultSet.getTimestamp(i+1));
+                        else{ // string type
+                            if (Strings.isNullOrEmpty(resultSet.getString(i+1)))
+                                rowData.add("");
+                            else
+                                rowData.add(resultSet.getString(i+1));
+                        }
                     }
                     resultMap.getData().add(rowData);
-//                    System.out.println("=====================");
                 }
                 resultSet.close();
                 state.close();

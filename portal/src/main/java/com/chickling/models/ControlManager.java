@@ -1,16 +1,16 @@
 package com.chickling.models;
 
 import com.chickling.bean.result.ResultMap;
-import com.chickling.util.PrestoUtil;
+import com.chickling.util.*;
 import com.facebook.presto.hive.$internal.org.apache.commons.lang3.exception.ExceptionUtils;
 import com.google.gson.Gson;
-import com.chickling.sqlite.ConnectionManager;
 import com.chickling.boot.Init;
 import com.chickling.models.job.JobRunner;
 import com.chickling.models.job.PrestoContent;
-import com.chickling.util.JobHistoryCatch;
-import com.chickling.util.TimeUtil;
-import com.chickling.util.YamlLoader;
+import owlstone.dbclient.db.DBClient;
+import owlstone.dbclient.db.module.DBResult;
+import owlstone.dbclient.db.module.PStmt;
+import owlstone.dbclient.db.module.Row;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,8 +18,6 @@ import org.apache.logging.log4j.Logger;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.*;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -42,50 +40,57 @@ public class ControlManager {
      * @throws SQLException
      */
     public String getQueryRunHistory(int limit) {
-        //SQLite
-        PreparedStatement stat = null;
-        ResultSet rs = null;
-        String sql = "SELECT * FROM (SELECT *,jh.JobOwner UID FROM (SELECT * FROM Job_History WHERE JobType=0 ORDER BY JHID DESC limit ?) jh,Job_Log jl WHERE jl.JLID=jh.JobLog) jhr,User u WHERE jhr.JobOwner =u.UID;";
-        try {
-            stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
 
-            stat.setInt(1, limit);
-            rs = stat.executeQuery();
+        //SELECT *,jh.JobOwner UID FROM (SELECT * FROM Job_History WHERE JobType=0 ORDER BY JHID DESC limit 100) jh INNER JOIN Job_Log jl ON jl.JLID=jh.JobLog  INNER JOIN User u ON jh.JobOwner =u.UID
+        String sql = "SELECT *,jh.JobOwner UID FROM (SELECT * FROM Job_History WHERE JobType=0 ORDER BY JHID DESC limit ?) jh INNER JOIN Job_Log jl ON jl.JLID=jh.JobLog  INNER JOIN User u ON jh.JobOwner =u.UID";
+        try {
+            queryBean=PStmt.buildQueryBean("kado-meta",sql,new Object[]{
+                    limit
+            });
+            rs=dbClient.execute(queryBean);
+            if(!rs.isSuccess())
+                throw rs.getException();
+
             List<Map> queryList = new ArrayList<>();
-            while (rs.next()) {
+            for(Row row:rs.getRowList()){
+                KadoRow r=new KadoRow(row);
                 Map<String,Object> queryInfo = new LinkedHashMap<>();
-                queryInfo.put("jobrunid", rs.getInt("JHID"));
-                String jobSql = rs.getString("JobSQL").replace("\n", " ").replace("\r", " ");
+                queryInfo.put("jobrunid", r.getInt("JHID"));
+                String jobSql = r.getString("JobSQL").replace("\n", " ").replace("\r", " ");
                 queryInfo.put("sql", getLimitSQL(jobSql));
-                queryInfo.put("jobLevel", rs.getString("JobLevel"));
-                queryInfo.put("type", rs.getString("JobType"));
-                queryInfo.put("job_status", rs.getString("JobStatus"));
-                queryInfo.put("progress", rs.getString("JobProgress"));
-                queryInfo.put("valid",rs.getInt("Valid"));
-                queryInfo.put("start_time", rs.getString("JobStartTime"));
-                queryInfo.put("stop_time", rs.getString("JobStopTime"));
+                queryInfo.put("jobLevel", r.getString("JobLevel"));
+                queryInfo.put("type", r.getString("JobType"));
+                queryInfo.put("job_status", r.getString("JobStatus"));
+                queryInfo.put("progress", r.getString("JobProgress"));
+                queryInfo.put("valid",r.getInt("Valid"));
+                queryInfo.put("start_time", r.getString("JobStartTime"));
+                queryInfo.put("stop_time", r.getString("JobStopTime"));
                 try {
-                    if (!rs.getString("JobStopTime").equals("")) {
-                        queryInfo.put("runingtime", TimeUtil.getRunTime(TimeUtil.String2DateTime(rs.getString("JobStartTime")),
-                                TimeUtil.String2DateTime(rs.getString("JobStopTime"))));
+                    if (!r.getString("JobStopTime").equals("")) {
+                        queryInfo.put("runingtime", TimeUtil.getRunTime(TimeUtil.String2DateTime(r.getString("JobStartTime")),
+                                TimeUtil.String2DateTime(r.getString("JobStopTime"))));
                     } else {
-                        queryInfo.put("runingtime", TimeUtil.getRunTime(TimeUtil.String2DateTime(rs.getString("JobStartTime")),
+                        queryInfo.put("runingtime", TimeUtil.getRunTime(TimeUtil.String2DateTime(r.getString("JobStartTime")),
                                 TimeUtil.String2DateTime(TimeUtil.getCurrentTime())));
                     }
                 } catch (NullPointerException npe) {
 
-                    queryInfo.put("runingtime", TimeUtil.getRunTime(TimeUtil.String2DateTime(rs.getString("JobStartTime")),
+                    queryInfo.put("runingtime", TimeUtil.getRunTime(TimeUtil.String2DateTime(r.getString("JobStartTime")),
                             TimeUtil.String2DateTime(TimeUtil.getCurrentTime())));
                 }
 
-                queryInfo.put("user", rs.getString("UserName"));
-                queryInfo.put("userid", rs.getString("UID"));
-                queryInfo.put("group", rs.getString("Gid"));
+                queryInfo.put("user", r.getString("UserName"));
+                queryInfo.put("userid", r.getString("UID"));
+                queryInfo.put("group", r.getString("Gid"));
                 queryList.add(queryInfo);
             }
 
             return MessageFactory.messageList("success", "list", queryList);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.error(ExceptionUtils.getStackTrace(e));
             return MessageFactory.message("error", "Sql error");
         }
@@ -105,17 +110,23 @@ public class ControlManager {
         try {
             ver = auth.verify(token);
             if ((Boolean) ver.get(4) != false) {
-                //SQLite
-                PreparedStatement stat = null;
-                ResultSet rs = null;
+                //DBClient
+                PStmt queryBean=null;
+                DBResult rs=null;
+                DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
 
                 String sql = "SELECT JobOwner FROM Job_History WHERE JHID=?;";
-                stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
-                stat.setInt(1, jhid);
-                rs = stat.executeQuery();
+
+                queryBean=PStmt.buildQueryBean("kado-meta",sql,new Object[]{
+                        jhid
+                });
+                rs=dbClient.execute(queryBean);
+                if(!rs.isSuccess())
+                    throw rs.getException();
                 int owner = 0;
-                while (rs.next()) {
-                    owner = rs.getInt("JobOwner");
+                if(rs.getRowSize()>0){
+                    KadoRow r= new KadoRow(rs.getRowList().get(0));
+                    owner = r.getInt("JobOwner");
                 }
                 if ((Integer) ver.get(2) == owner || (Integer) ver.get(1) == 2) {
                     Init.getDeleteJobList().add(jhid);
@@ -127,7 +138,7 @@ public class ControlManager {
                 return MessageFactory.rtnJobMessage("error", "", "Not Login", "");
 
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.error(ExceptionUtils.getStackTrace(e));
             return MessageFactory.message("error", "Sql error");
         }
@@ -244,15 +255,17 @@ public class ControlManager {
      * @throws SQLException
      */
     public String getResultPage(int jhid,int page,int pageRowCount)  {
+
         Map<String,Object> resultInfo=new LinkedHashMap<>();
         int resultCount= 0;
         try {
             resultCount = getResultCount(jhid);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.error("Get Result count Fail!");
             log.error(e);
             return MessageFactory.message("error", "Get Result count Fail!");
         }
+
         if(resultCount>0) {
             int pageCount = (int) Math.ceil((double) resultCount / (double) pageRowCount);
             //real start 0
@@ -266,7 +279,6 @@ public class ControlManager {
                 resultInfo.put("nowPage", page+1);
                 resultInfo.put("startRow", startRow);
                 resultInfo.put("pageRowCount", pageRowCount);
-
                 try {
                     String path=getResultFilePath(jhid);
                     ResultMap resultData=new PrestoUtil().readJsonAsResult(Init.getDatabase()+"."+path.substring(path.lastIndexOf("/")+1,path.length()),page+1,resultCount);
@@ -301,7 +313,7 @@ public class ControlManager {
         int resultCount= 0;
         try {
             resultCount = getResultCount(jhid);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.error("Get Result count Fail!");
             log.error(e);
             return MessageFactory.message("error", "Get Result count Fail!");
@@ -316,7 +328,7 @@ public class ControlManager {
                 try {
                     String path = getResultFilePath(jhid);
                     resultData = new PrestoUtil().readJsonAsResult(Init.getDatabase() + "." + path.substring(path.lastIndexOf("/") + 1, path.length()), page+1,resultCount);
-                } catch (SQLException e) {
+                } catch (Exception e) {
                     log.error("Get ResultFilePath Error");
                     log.error(e);
                     return "Get ResultFilePath Error";
@@ -344,6 +356,7 @@ public class ControlManager {
                     i++;
                 }
 
+
                 return "<table style='border-collapse: collapse;border: 1px solid black;'>" +"<thead>"+tHeader+"</thead>"+"<tbody>"+tBody+"</tbody>"+"</table>";
             } else {
                 return "Page number out of index";
@@ -359,18 +372,23 @@ public class ControlManager {
      * @return [file path]
      * @throws SQLException
      */
-    public String getResultFilePath(int jhid) throws SQLException {
-        //SQLite
-        PreparedStatement stat = null;
-        ResultSet rs = null;
+    public String getResultFilePath(int jhid) throws Exception {
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
 
         String sql = "SELECT JobOutput FROM Job_History,Job_Log WHERE Job_History.JobLog=Job_Log.JLID AND Job_History.JHID=?;";
-        stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
-        stat.setInt(1,jhid);
-        rs = stat.executeQuery();
+        queryBean=PStmt.buildQueryBean("kado-meta",sql,new Object[]{
+                jhid
+        });
+        rs=dbClient.execute(queryBean);
+        if(!rs.isSuccess())
+            throw rs.getException();
         String jobOutput="";
-        while (rs.next()){
-            jobOutput=rs.getString("JobOutput");
+        if(rs.getRowSize()>0){
+            KadoRow r=new KadoRow(rs.getRowList().get(0));
+            jobOutput=r.getString("JobOutput");
         }
         return jobOutput;
     }
@@ -379,7 +397,6 @@ public class ControlManager {
      * Get result csv path
      * @return
      */
-
 //    public String getResultCSVPath(String sourcePath){
 //        OrcFileUtil orcFileUtil=OrcFileUtil.newInstance();
 //
@@ -400,18 +417,23 @@ public class ControlManager {
      * @return [count]
      * @throws SQLException
      */
-    public int getResultCount(int jhid) throws SQLException {
-        //SQLite
-        PreparedStatement stat = null;
-        ResultSet rs = null;
+    public int getResultCount(int jhid) throws Exception {
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
 
         String sql = "SELECT ResultCount FROM Job_History,Job_Log WHERE Job_History.JobLog=Job_Log.JLID AND Job_History.JHID=?;";
-        stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
-        stat.setInt(1,jhid);
-        rs = stat.executeQuery();
+        queryBean=PStmt.buildQueryBean("kado-meta",sql,new Object[]{
+                jhid
+        });
+        rs=dbClient.execute(queryBean);
+        if(!rs.isSuccess())
+            throw rs.getException();
         int resultCount=0;
-        while (rs.next()){
-            resultCount=rs.getInt("ResultCount");
+        if (rs.getRowSize()>0){
+            KadoRow r= new KadoRow(rs.getRowList().get(0));
+            resultCount=r.getInt("ResultCount");
         }
         return resultCount;
     }
@@ -422,7 +444,6 @@ public class ControlManager {
      * @return [file name]
      */
     public String getFilenameFromPath(String Path){
-
         return Path.substring(Path.lastIndexOf("/")+1,Path.length());
     }
 
@@ -461,20 +482,25 @@ public class ControlManager {
      * @return [file path]
      * @throws SQLException
      */
-    public String getJobLogPath(int jhid) throws SQLException {
-        //SQLite
-        PreparedStatement stat = null;
-        ResultSet rs = null;
+    public String getJobLogPath(int jhid) throws Exception {
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
 
         String sql = "SELECT JobLogfile FROM Job_History,Job_Log WHERE Job_History.JobLog=Job_Log.JLID AND Job_History.JHID=?;";
-        stat = ConnectionManager.getInstance().getConnection().prepareStatement(sql);
-        stat.setInt(1,jhid);
-        rs = stat.executeQuery();
-        String logOutput="";
-        while (rs.next()){
-            logOutput=rs.getString("JobLogfile");
-        }
 
+        queryBean=PStmt.buildQueryBean("kado-meta",sql,new Object[]{
+                jhid
+        });
+        rs=dbClient.execute(queryBean);
+        if(!rs.isSuccess())
+            throw rs.getException();
+        String logOutput="";
+        if (rs.getRowSize()>0){
+            KadoRow r=new KadoRow(rs.getRowList().get(0));
+            logOutput=r.getString("JobLogfile");
+        }
 //        if(!logOutput.equals("")){
 //            logOutput=logOutput+logOutput.substring(logOutput.lastIndexOf("/"),logOutput.length())+".log";
 //        }

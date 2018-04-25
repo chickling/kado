@@ -3,7 +3,7 @@
 <configuration monitorInterval="5" status="error">
     <Properties>
         <Property name="logdir">logs</Property>
-        <Property name="smtphost">127.0.0.1</Property>
+        <Property name="smtphost">st01smtp01.buyabs.corp</Property>
     </Properties>
     <appenders>
         <!-- Setting for send Job Report Email-->

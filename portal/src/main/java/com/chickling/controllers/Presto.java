@@ -1,10 +1,12 @@
 package com.chickling.controllers;
 
 
-
 import com.chickling.bean.result.ResultMap;
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
+import com.google.gson.internal.LinkedTreeMap;
 import com.chickling.models.MessageFactory;
+import com.chickling.models.job.PrestoContent;
 import com.chickling.util.JobCRUDUtils;
 import com.chickling.util.PrestoUtil;
 import com.chickling.util.TimeUtil;
@@ -33,7 +35,6 @@ public class Presto {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getTableList(@Context ServletContext context,@HeaderParam("AUTHORIZATION") String token){
 
-
         PrestoUtil prestoUtil=new PrestoUtil();
         String sql="SELECT * FROM information_schema.tables where table_schema<> 'presto_temp'";
         ResultMap resultMap=prestoUtil.doJdbcRequest(sql);
@@ -46,7 +47,6 @@ public class Presto {
             HashMap<String, Object> responseMap = new HashMap<>();
             responseMap.put("status", "error");
             responseMap.put("list", "");
-
 
             ArrayList<HashMap> tableList = new ArrayList<>();
             resultMap.getData().forEach( data ->{
@@ -74,7 +74,6 @@ public class Presto {
             @PathParam("tablename") String tablename,
             @HeaderParam("AUTHORIZATION") String token){
         PrestoUtil prestoUtil=new PrestoUtil();
-
 //        String     responseStr=prestoUtil.post("DESC " +tablename,PrestoContent.QUERY_UI);
         String sql="DESC " +tablename;
         ResultMap resultMap=prestoUtil.doJdbcRequest(sql);
@@ -85,13 +84,13 @@ public class Presto {
             log.error(prestoUtil.getException());
             return Response.ok(MessageFactory.message("error", "get Presto Table Schema Error")).build();
         }else{
+//            HashMap response=gson.fromJson(responseStr,HashMap.class);
             HashMap<String,Object> responseMap=new HashMap<>();
             responseMap.put("partition","");
             responseMap.put("column","");
             responseMap.put("status","error");
             responseMap.put("path","");
             responseMap.put("table_type","");
-
 
 
             ArrayList<String[]> partitionList = new ArrayList<>();
@@ -136,7 +135,6 @@ public class Presto {
         if(jobHistory.get("JobOutput")!=null){
             tablename=(String) jobHistory.get("JobOutput");
             tablename=tablename.substring(tablename.lastIndexOf("/")+1,tablename.length());
-
             if("".equalsIgnoreCase(tablename))
                 return Response.ok(MessageFactory.message("error","tablename is Empty")).build();
         }else {
@@ -144,7 +142,6 @@ public class Presto {
         }
 
         PrestoUtil prestoUtil=new PrestoUtil();
-
         String sql="DESC presto_temp." +tablename;
         ResultMap resultMap=prestoUtil.doJdbcRequest(sql);
 
@@ -159,7 +156,6 @@ public class Presto {
             responseMap.put("status","error");
             responseMap.put("path","");
             responseMap.put("table_type","");
-
 
             ArrayList<String[]> partitionList = new ArrayList<>();
             ArrayList<HashMap> colMaps = new ArrayList<>();
@@ -195,7 +191,6 @@ public class Presto {
             @PathParam("tablename") String tablename,
             @HeaderParam("AUTHORIZATION")String token){
         PrestoUtil prestoUtil=new PrestoUtil();
-
         String sql="SHOW PARTITIONS FROM " + tablename;
         HashMap<String, Object> responseMap = new HashMap<>();
 
@@ -243,6 +238,7 @@ public class Presto {
             @PathParam("limit") String limit,
             @HeaderParam("AUTHORIZATION")String token){
         PrestoUtil prestoUtil=new PrestoUtil();
+//        String responseStr=prestoUtil.post("SELECT*  FROM " + tablename + " limit " + limit, PrestoContent.QUERY_UI);
         String sql="SELECT*  FROM " + tablename + " limit " + limit;
         ResultMap resultMap=prestoUtil.doJdbcRequest(sql);
 
@@ -253,10 +249,10 @@ public class Presto {
             return Response.ok(MessageFactory.message("error", "get Table [ " + tablename + " ] Sample Error")).build();
         }else {
 
+//            HashMap response = gson.fromJson(responseStr, HashMap.class);
             HashMap<String, Object> responseMap = new HashMap<>();
             responseMap.put("status", "error");
             responseMap.put("list", "");
-
 
             // get Column Name With ArrayList
             ArrayList<HashMap> columnsMaps = new ArrayList<>();
@@ -285,7 +281,6 @@ public class Presto {
             @PathParam("tablename") String tablename,
             @HeaderParam("AUTHORIZATION") String token){
         PrestoUtil prestoUtil=new PrestoUtil();
-
         String sql="SELECT COUNT(*)  FROM " + tablename;
         ResultMap resultMap=prestoUtil.doJdbcRequest(sql);
 //        String responseStr=prestoUtil.post("SELECT COUNT(*)  FROM " + tablename, PrestoContent.QUERY_UI);
@@ -294,11 +289,9 @@ public class Presto {
             log.error(prestoUtil.getException());
             return Response.ok(MessageFactory.message("error", "get  Table [ "+tablename+" ]  Count Error")).build();
         }else {
-
             HashMap<String, Object> responseMap = new HashMap<>();
             responseMap.put("status", "error");
             responseMap.put("count", "");
-
 
             responseMap.put("status", "success");
             responseMap.put("count", resultMap.getCount());

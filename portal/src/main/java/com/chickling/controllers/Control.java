@@ -1,6 +1,5 @@
 package com.chickling.controllers;
 
-
 import com.facebook.presto.hive.$internal.org.apache.commons.lang3.exception.ExceptionUtils;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -51,7 +50,6 @@ public class Control {
                 return Response.ok(MessageFactory.rtnJobHistoryMessage("error", "","Permission Denied", "")).build();
             }
         }catch (Exception e) {
-
             return Response.ok(MessageFactory.rtnJobHistoryMessage("error", "", ExceptionUtils.getMessage(e), "")).build();
         }
     }
@@ -152,7 +150,7 @@ public class Control {
         ControlManager controlManager=new ControlManager();
         try {
             return Response.ok(MessageFactory.rtnJobMessage("success", "", controlManager.getLogFile(controlManager.getJobLogPath(jobrunid)), "")).build();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.error("Get Job Log Sql error!");
             log.error(ExceptionUtils.getStackTrace(e));
             return Response.ok(MessageFactory.message("error", "Sql error")).build();

@@ -23,17 +23,21 @@ public class YamlLoader {
 	private  String database="";
 	private  String hivepath="";
 	private  String logpath="";
-	private  String sqliteName="";
 	private  String siteURLBase="";
 	private  String expiration="";
 	private  String prestoCatalog="";
-
 	private  String csvlocalPath="";
 	private  String deleteLogTTL="";
 	private 	 String scheduleLogDir="";
 	private String wrtierinjection="";
 	private String downloadToken="";
+	private Integer downloadLimit=20000;
 	private String presto_hdfs_user="";
+	private  String hdfsHost="";
+	private  String externalTableHDFSRootPath="";
+	private  String hdfsUser="";
+	private String[] prestoDBWhitelist=new String[]{};
+
 	static {
 		loadYaml();
 	}
@@ -140,13 +144,7 @@ public class YamlLoader {
 		this.scheduleLogDir = scheduleLogDir;
 	}
 
-	public String getSqliteName() {
-		return sqliteName;
-	}
 
-	public void setSqliteName(String sqliteName) {
-		this.sqliteName = sqliteName;
-	}
 
 	public String getWrtierinjection() {
 		return wrtierinjection;
@@ -164,12 +162,52 @@ public class YamlLoader {
 		this.downloadToken = downloadToken;
 	}
 
+	public Integer getDownloadLimit() {
+		return downloadLimit;
+	}
+
+	public void setDownloadLimit(Integer downloadLimit) {
+		this.downloadLimit = downloadLimit;
+	}
+
 	public String getPresto_hdfs_user() {
 		return presto_hdfs_user;
 	}
 
 	public void setPresto_hdfs_user(String presto_hdfs_user) {
 		this.presto_hdfs_user = presto_hdfs_user;
+	}
+
+	public String getHdfsHost() {
+		return hdfsHost;
+	}
+
+	public void setHdfsHost(String hdfsHost) {
+		this.hdfsHost = hdfsHost;
+	}
+
+	public String getExternalTableHDFSRootPath() {
+		return externalTableHDFSRootPath;
+	}
+
+	public void setExternalTableHDFSRootPath(String externalTableHDFSRootPath) {
+		this.externalTableHDFSRootPath = externalTableHDFSRootPath;
+	}
+
+	public String getHdfsUser() {
+		return hdfsUser;
+	}
+
+	public void setHdfsUser(String hdfsUser) {
+		this.hdfsUser = hdfsUser;
+	}
+
+	public String[] getPrestoDBWhitelist() {
+		return prestoDBWhitelist;
+	}
+
+	public void setPrestoDBWhitelist(String[] prestoDBWhitelist) {
+		this.prestoDBWhitelist = prestoDBWhitelist;
 	}
 
 	@Override
@@ -179,7 +217,6 @@ public class YamlLoader {
 				", Hive Temp Table Database=" + database +
 				", Hive Table HDFS Path=" + hivepath +
 				", JobLog HDFS Path=" + logpath +
-				", Web Portal SQLite Name=" + sqliteName +
 				", SiteURLBase=" + siteURLBase +
 				", Expiration=" + expiration +
 				", Presto Catalog=" + prestoCatalog +

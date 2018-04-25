@@ -1,4 +1,5 @@
 package com.chickling.models.writer;
+
 import com.chickling.bean.job.JobLog;
 import com.chickling.boot.Init;
 import com.chickling.face.ResultWriter;
@@ -19,7 +20,6 @@ public class LocalWriter implements ResultWriter {
 
     private JobLog jobLog;
 
-
     private String tableName;
     private String exception="";
 
@@ -38,7 +38,6 @@ public class LocalWriter implements ResultWriter {
 
     @Override
     public Integer call()   {
-
         String fs=File.separator;
         String csvResultPath= Init.getCsvlocalPath()+fs+jobLog.getFilepath().trim().replace(" ","");
         while (csvResultPath.endsWith("\\") || csvResultPath.endsWith("/")){

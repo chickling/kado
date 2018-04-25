@@ -1,6 +1,5 @@
 package com.chickling.controllers;
 
-
 import com.facebook.presto.hive.$internal.org.apache.commons.lang3.exception.ExceptionUtils;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -9,7 +8,6 @@ import com.chickling.models.Auth;
 import com.chickling.models.MessageFactory;
 import com.chickling.util.ChartCRUDUtils;
 import com.chickling.util.DrawUtils;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -63,7 +61,7 @@ public class Chart {
             }catch (NumberFormatException e){
                 log.warn(ExceptionUtils.getStackTrace(e));
                 return Response.ok(MessageFactory.rtnChartMessage("error", "","Lost data:"+ e.toString(), "")).build();
-            }catch(SQLException sqle){
+            }catch(Exception sqle){
                 return Response.ok(MessageFactory.rtnChartMessage("error", "", sqle.toString(), "")).build();
             }
 
@@ -101,7 +99,7 @@ public class Chart {
             catch (ClassCastException e){
                 log.warn(ExceptionUtils.getStackTrace(e));
                 return Response.ok(MessageFactory.rtnChartMessage("error", "", "Json Class Cast Exception", "")).build();
-            }catch(SQLException sqle){
+            }catch(Exception sqle){
                 return Response.ok(MessageFactory.rtnChartMessage("error", "", sqle.toString(), "")).build();
             }
 
@@ -158,7 +156,7 @@ public class Chart {
             }catch (ClassCastException e){
                 log.warn(ExceptionUtils.getStackTrace(e));
                 return Response.ok(MessageFactory.rtnChartMessage("error", "", "Json Class Cast Exception", "")).build();
-            }catch(SQLException sqle){
+            }catch(Exception sqle){
                 return Response.ok(MessageFactory.rtnChartMessage("error", "", sqle.toString(), "")).build();
             }
 
@@ -186,7 +184,7 @@ public class Chart {
             }catch (ClassCastException e){
                 log.warn(ExceptionUtils.getStackTrace(e));
                 return Response.ok(MessageFactory.rtnChartListMessage("error", "", "Json Class Cast Exception", "", new ArrayList<>())).build();
-            }catch(SQLException sqle){
+            }catch(Exception sqle){
                 return Response.ok(MessageFactory.rtnChartMessage("error", "", sqle.toString(), "")).build();
             }
 
@@ -228,7 +226,7 @@ public class Chart {
             log.warn(ExceptionUtils.getStackTrace(e));
             return Response.ok(MessageFactory.rtnDrawMessage(null, 0, "failed", e.toString())).build();
         }
-        catch(SQLException e){
+        catch(Exception e){
             log.warn(ExceptionUtils.getStackTrace(e));
             return Response.ok(MessageFactory.rtnDrawMessage(null, 0, "failed", e.toString())).build();
         }
@@ -280,7 +278,7 @@ public class Chart {
         catch (ClassCastException e){
             log.warn(ExceptionUtils.getStackTrace(e));
             return Response.ok(MessageFactory.rtnDrawMessage(null, 0, "failed", e.toString())).build();
-        }catch(SQLException e){
+        }catch(Exception e){
             log.warn(ExceptionUtils.getStackTrace(e));
             return Response.ok(MessageFactory.rtnDrawMessage(null, 0, "failed", e.toString())).build();
         }
@@ -326,7 +324,7 @@ public class Chart {
             log.warn(ExceptionUtils.getStackTrace(e));
             return Response.ok(MessageFactory.rtnPieMessage(null,"failed", e.toString())).build();
         }
-        catch(SQLException e){
+        catch(Exception e){
             log.warn(ExceptionUtils.getStackTrace(e));
             return Response.ok(MessageFactory.rtnPieMessage(null,"failed",  e.toString())).build();
         }

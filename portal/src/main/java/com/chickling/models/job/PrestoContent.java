@@ -1,5 +1,7 @@
 package com.chickling.models.job;
 
+import com.chickling.util.YamlLoader;
+
 import java.util.regex.Pattern;
 
 /**
@@ -27,7 +29,6 @@ public class PrestoContent {
     public final static Long JOB_STATUS_INTERVAL = 1000L;
     public final static Long JOB_START_WAIT_TIME = 1000L;
 
-
     public final static Long POST_STATUS_WAIT_TIME = 500L;
     public final static Long POST_START_WAIT_TIME = 1000L;
 
@@ -39,7 +40,7 @@ public class PrestoContent {
 
     public final static String CSV_TTL="-1";
     public final static int JSON_SIZE=100;
-    public final static int RESULT_LIMIT=20000;
+    public final static int RESULT_LIMIT= YamlLoader.instance.getDownloadLimit();
 
 
 

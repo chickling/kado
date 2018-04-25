@@ -1,7 +1,6 @@
 package com.chickling.controllers;
 
 
-
 import com.facebook.presto.hive.$internal.org.apache.commons.lang3.exception.ExceptionUtils;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -11,7 +10,6 @@ import com.chickling.models.Auth;
 import com.chickling.util.JobCRUDUtils;
 import com.chickling.models.MessageFactory;
 import com.chickling.util.TemplateCRUDUtils;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -224,11 +222,12 @@ public class Job {
     @GET
     @Path("/manage/run/list/{limit}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getJobStatusList(@PathParam("limit") String limit,@HeaderParam("AUTHORIZATION") String token){
+    public Response getJobStatusList(@PathParam("limit") Integer limit,@HeaderParam("AUTHORIZATION") String token){
 
         try {
 
-            return Response.ok(JobCRUDUtils.getJobStatusList(limit, token)).build();
+            //return Response.ok(JobCRUDUtils.getJobStatusList(limit, token)).build();
+            return Response.ok(JobCRUDUtils.getJobStatusListFromCatch(limit, token)).build();
         }catch (JsonSyntaxException e){
             log.warn(ExceptionUtils.getStackTrace(e));
             return Response.ok(MessageFactory.rtnJobMessage("error", "", e.getMessage(), "")).build();
@@ -415,7 +414,7 @@ public class Job {
         }catch (ClassCastException e){
             log.warn(ExceptionUtils.getStackTrace(e));
             return Response.ok(MessageFactory.rtnJobMessage("error", "", "Json Class Cast Exception", "")).build();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.warn(ExceptionUtils.getStackTrace(e));
             return Response.ok(MessageFactory.rtnJobMessage("error", "", "sql error", "")).build();
         }

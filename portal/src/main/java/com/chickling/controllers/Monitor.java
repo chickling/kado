@@ -28,10 +28,10 @@ public class Monitor {
     @Produces(MediaType.APPLICATION_JSON)
     public Response monitorNode(@Context ServletContext context){
         PrestoUtil prestoUtil=new PrestoUtil();
-        String json=prestoUtil.getNode(0,null);
+        String json=prestoUtil.getNode(0);
         Type stringStringMap = new TypeToken<Map<String, String>>(){}.getType();
         Map<String,String> map = gson.fromJson(json, stringStringMap);
-        return Response.ok(gson.toJson(prestoUtil.getNode(0,null))).build();
+        return Response.ok(gson.toJson(prestoUtil.getNode(0))).build();
     }
 
     @GET
@@ -39,7 +39,7 @@ public class Monitor {
     @Produces(MediaType.APPLICATION_JSON)
     public Response monitoQuery(@Context ServletContext context){
         PrestoUtil prestoUtil=new PrestoUtil();
-        return Response.ok(gson.toJson(prestoUtil.getQuery(0,null))).build();
+        return Response.ok(gson.toJson(prestoUtil.getQuery(0))).build();
     }
 }
 

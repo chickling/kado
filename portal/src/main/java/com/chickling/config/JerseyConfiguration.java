@@ -31,6 +31,7 @@ public class JerseyConfiguration extends ResourceConfig {
         controllerClazz.add(Control.class);
         controllerClazz.add(Monitor.class);
         controllerClazz.add(Chart.class);
+        controllerClazz.add(TableTool.class);
         registerClasses(controllerClazz);
         register(FreemarkerMvcFeature.class);
     }

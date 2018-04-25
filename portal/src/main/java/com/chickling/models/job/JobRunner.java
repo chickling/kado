@@ -1,10 +1,9 @@
 package com.chickling.models.job;
 
-import com.amazonaws.util.json.JSONException;
-import com.amazonaws.util.json.JSONObject;
+//import com.amazonaws.util.json.JSONException;
+//import com.amazonaws.util.json.JSONObject;
 import com.chickling.bean.job.Job;
 import com.chickling.bean.job.JobLog;
-
 import com.chickling.bean.result.ResultMap;
 import com.chickling.face.ResultWriter;
 import com.google.common.base.Strings;
@@ -19,8 +18,13 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
+import org.apache.logging.log4j.core.util.UuidUtil;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
+
 import java.sql.SQLException;
 import java.text.DecimalFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -57,10 +61,12 @@ public class JobRunner   implements Callable<Boolean> {
         boolean isAdmin=false;
         boolean isManager=false;
         String result = "";
-        String jobUUID=UUID.randomUUID().toString().replaceAll("-","");
+//        String unique=String.valueOf(this.jobid)+String.valueOf(System.currentTimeMillis())+this.job.getJobname();
+//        String jobUUID= UUID.nameUUIDFromBytes(unique.getBytes()).toString().replaceAll("-","");
+        String jobUUID=String.valueOf(this.jobid)+"_"+LocalDateTime.now().toString().replaceAll("-","_").replaceAll(":","_").replaceAll("\\.","_");
+        // key | timestamp | jobid
         String tempdb=Init.getDatabase();
         String tempTableName =tempdb+ ".temp_" + jobUUID;
-
 
         // if user is Admin
         if (PrestoContent.ADMIN.equals(userLevel))
@@ -184,6 +190,7 @@ public class JobRunner   implements Callable<Boolean> {
                     jobLogid =JobCRUDUtils.InsertJobLog(jobLog.getInsertList());
                     JobHistory jobHistory=new JobHistory(jobid, "job_error",job.getJobowner(),job.getJobLevel(), TimeUtil.getCurrentTime(),TimeUtil.getCurrentTime(),PrestoContent.FAILED,"0", jobLogid,String.valueOf(jobType),job.getReport(),job.getReportEmail(),job.getReportLength(),job.getReportFileType(),job.getReportTitle(),job.getReporWhileEmpty());
                     jobHistoryid =JobCRUDUtils.InsertJobHistory(jobHistory.getInsertList());
+                    JobHistoryCatch.getInstance().updateJobStatusList();
                     if(!Strings.isNullOrEmpty(jobHistoryCatchKey)){
                         JobHistoryCatch.getInstance().jobHistoryIDs.put(jobHistoryCatchKey,jobHistoryid);
                         log.info("Put JobHistoryID to JobHistoryCatch,Key:"+jobHistoryCatchKey+" Value:"+jobHistoryid);
@@ -193,7 +200,7 @@ public class JobRunner   implements Callable<Boolean> {
                         log.info("Insert New Record to Schedule_History");
                         log.info(ScheduleCRUDUtils.insertScheduleJobHistory(scheduleHistoryID, jobHistoryid, jobid, jobSortIndex));
                     }
-                } catch (SQLException e1) {
+                } catch (Exception e1) {
                     log.error("Insert Job Log  Error  : " + ExceptionUtils.getStackTrace(e1));
                     this.exception.append(ExceptionUtils.getStackTrace(e1)).append("\n");
                 }
@@ -232,6 +239,7 @@ public class JobRunner   implements Callable<Boolean> {
             try {
                 log.info("Insert New Record to Job_History");
                 jobHistoryid =JobCRUDUtils.InsertJobHistory(jobHistory.getInsertList());
+                JobHistoryCatch.getInstance().updateJobStatusList();
                 log.info("jobHistoryid:"+jobHistoryid);
                 if(!Strings.isNullOrEmpty(jobHistoryCatchKey)){
                     JobHistoryCatch.getInstance().jobHistoryIDs.put(jobHistoryCatchKey,jobHistoryid);
@@ -242,11 +250,10 @@ public class JobRunner   implements Callable<Boolean> {
                     log.info(ScheduleCRUDUtils.insertScheduleJobHistory(scheduleHistoryID, jobHistoryid, jobid, jobSortIndex));
                 }
 
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 log.error("Insert Job History Error  : "+ ExceptionUtils.getStackTrace(e));
                 try {
                     prestoUtil.delete(prestoid,jobType);
-
                     prestoUtil.doJdbcRequest(dropTable);
 //                    prestoUtil.post(dropTable, jobType, Init.getDatabase());
                 } catch (Exception e1) {
@@ -303,7 +310,7 @@ public class JobRunner   implements Callable<Boolean> {
                         if (queryMap.containsKey("error") || "FAILED".equals(jobstatus)) {
                             log.error("Query Error , Kill this Job !!!!");
                             prestoUtil.delete(prestoid, jobType);
-                            prestoUtil.doJdbcRequest(dropTable);
+//                            prestoUtil.doJdbcRequest(dropTable);
 //                            prestoUtil.post(dropTable, jobType, Init.getDatabase());
                             jobHistory.setStatus(PrestoContent.FAILED.toString());
                             isdelete=true;
@@ -351,6 +358,8 @@ public class JobRunner   implements Callable<Boolean> {
                     // Update Job_History
                     //******************************************************************************************
                     JobCRUDUtils.UpdateJobHistory(jobHistoryid,jobHistory.getStart_time(),"",Integer.parseInt(jobHistory.getJob_status()),Integer.parseInt(jobHistory.getProgress()));
+                    //JobHistoryCatch.getInstance().updateJobStatusList();
+                    JobHistoryCatch.getInstance().updateJobStatus(jobHistoryid,jobHistory.getStart_time(),"",Integer.parseInt(jobHistory.getJob_status()),Integer.parseInt(jobHistory.getProgress()));
                     // sleep Thread , and go on next
                     Thread.sleep(PrestoContent.JOB_STATUS_INTERVAL);
 
@@ -424,6 +433,8 @@ public class JobRunner   implements Callable<Boolean> {
                     log.info("Job Status is  : ["+("1".equalsIgnoreCase(jobHistory.getJob_status()) ? "Success" : "Failed")+"] and Job Process is : ["+jobHistory.getProgress()+"% ]");
                     JobCRUDUtils.UpdateJobHistory(jobHistoryid, jobHistory.getStart_time(), TimeUtil.getCurrentTime(), Integer.parseInt(jobHistory.getJob_status()), Integer.parseInt(jobHistory.getProgress()));
                     JobCRUDUtils.UpdateJobLog(jobLogid, resultCount, jobOutPut, true);
+                    //JobHistoryCatch.getInstance().updateJobStatusList();
+                    JobHistoryCatch.getInstance().updateJobStatus(jobHistoryid,jobHistory.getStart_time(),"",Integer.parseInt(jobHistory.getJob_status()),Integer.parseInt(jobHistory.getProgress()));
                     log.info("Finished Last Update JobHistory and JobLog");
                 } catch (Exception e) {
                     log.error("Close Job  Error : " + e);
@@ -496,7 +507,6 @@ public class JobRunner   implements Callable<Boolean> {
         return rtnSql;
     }
 
-
     private HashMap<String,String> checkmap(List<Map> list,Map inputMap){
         //TODO test
         HashMap<String, String> rtnMap=new HashMap<String, String>();
@@ -510,7 +520,6 @@ public class JobRunner   implements Callable<Boolean> {
         }
         return rtnMap;
     }
-
 
     /**
      * @param jobID         must set this , if use by QueryUI set zero
@@ -616,6 +625,7 @@ public class JobRunner   implements Callable<Boolean> {
         this.job.setSql(new String(Base64.getDecoder().decode(this.job.getSql()), "UTF-8"));
 
     }
+
     public JobRunner(Integer jobID,Integer jobType,String UserLevel,int ScheduleHistoryID,int JobSortIndex,int jobOwner,String jobHistoryCatchKey) throws Exception {
         assert jobID!=null;
         assert jobType!=null;
@@ -665,7 +675,14 @@ public class JobRunner   implements Callable<Boolean> {
     private boolean doWriter(List<String> activeWriter , Map parameter) throws Exception {
 
         int resultCode = 0;
+//            HDFS binary  100
         String name = "";
+//        if ("1".equals(activeWriter.get(0))) {
+//            name = "com.chickling.models.writer.HdfsWriter";
+//            ResultWriter hdfsWriter =Init.getInjectionInstance(name);
+//            hdfsWriter.init(parameter);
+//            resultCode += (int) hdfsWriter.call();
+//        }
         //LOCAL  binary 010
         //
         if ("1".equals(activeWriter.get(1))) {
@@ -675,6 +692,18 @@ public class JobRunner   implements Callable<Boolean> {
             localWriter.init(parameter);
             resultCode += (int) localWriter.call();
         }
+//            DB binary 001
+        if ("1".equals(activeWriter.get(2))) {
+            log.info("do [ DB ]  Writer");
+            name = "com.chickling.writer.DBWriter";
+            ResultWriter dbWriter =Init.getInjectionInstance(name);
+            dbWriter.init(parameter);
+            resultCode += (int) dbWriter.call();
+        }
+        if (resultCode==0)
+            log.warn("Do Writer Error !! ");
         return resultCode > 0;
     }
+
+
 }

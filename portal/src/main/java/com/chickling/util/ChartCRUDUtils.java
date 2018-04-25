@@ -1,14 +1,13 @@
 package com.chickling.util;
 
-import com.chickling.sqlite.ConnectionManager;
 import com.chickling.models.Auth;
 import com.chickling.models.MessageFactory;
+import owlstone.dbclient.db.DBClient;
+import owlstone.dbclient.db.module.DBResult;
+import owlstone.dbclient.db.module.PStmt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,18 +18,21 @@ import java.util.Map;
  */
 public class ChartCRUDUtils {
 
-    private final static String InsertChart="INSERT INTO `main`.`Chart` (`JobID`,`Type`,`Chart_Name`,`Chart_Setting`) VALUES (?,?,?,?);";
-    private final static String DeleteChart="DELETE FROM `main`.`Chart` WHERE `Number`=?;";
-    private final static String DeleteChartbyJob="DELETE FROM `main`.`Chart` WHERE `JobID`=?;";
-    private final static String GetChart="SELECT * FROM `main`.`Chart` WHERE `JobID`=?;";
-    private final static String GetChartbyNumber="SELECT * FROM `main`.`Chart` WHERE `Number`=?;";
-    private final static String UpdateChart="UPDATE `main`.`Chart` SET `Type`=?,`Chart_Name`=?,`Chart_Setting`=? WHERE `Number`=?;";
+    private final static String InsertChart="INSERT INTO `Chart` (`JobID`,`Type`,`Chart_Name`,`Chart_Setting`) VALUES (?,?,?,?);";
+    private final static String DeleteChart="DELETE FROM `Chart` WHERE `Number`=?;";
+    private final static String DeleteChartbyJob="DELETE FROM `Chart` WHERE `JobID`=?;";
+    private final static String GetChart="SELECT * FROM `Chart` WHERE `JobID`=?;";
+    private final static String GetChartbyNumber="SELECT * FROM `Chart` WHERE `Number`=?;";
+    private final static String UpdateChart="UPDATE `Chart` SET `Type`=?,`Chart_Name`=?,`Chart_Setting`=? WHERE `Number`=?;";
 
 
     private static Logger log = LogManager.getLogger(ChartCRUDUtils.class);
 
     public synchronized static String addChart(Map<String,String> input,String token){
-        PreparedStatement stat = null;
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
         String QuerySQL="";
 
         try {
@@ -40,23 +42,29 @@ public class ChartCRUDUtils {
                 return MessageFactory.rtnChartMessage("error", TimeUtil.getCurrentTime(), "Permission denied", "");
             } else if (((Integer) userInfo.get(0)) > 0) {//Not a general user
                 QuerySQL=InsertChart;
-                stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
-                stat.setString(1, (String) input.get("JobID"));//userID
-                stat.setString(2, (String) input.get("Type"));
-                stat.setString(3, (String) input.get("Chart_Name"));
-                stat.setString(4, (String) input.get("Chart_Setting"));
-                stat.executeUpdate();
-                QuerySQL = stat.toString();
-                String key = Integer.toString(stat.getGeneratedKeys().getInt(1));
+                queryBean=PStmt.buildBatchUpdateBean("kado-meta",QuerySQL,new ArrayList<Object[]>() {{
+                    add(new Object[]{
+                            (String) input.get("JobID"),
+                            (String) input.get("Type"),
+                            (String) input.get("Chart_Name"),
+                            (String) input.get("Chart_Setting")
+                    });
+                }});
+                rs=dbClient.execute(queryBean);
 
-                stat.close();
+                if(!rs.isSuccess())
+                    throw rs.getException();
+
+                QuerySQL =queryBean.getSql();
+                String key = rs.getGeneratedPKList().get(0).toString();
+
                 log.info("Status:success; TimeStamp:" + TimeUtil.getCurrentTime() + "; ChartID:" + key);
                 return MessageFactory.rtnChartMessage("success", TimeUtil.getCurrentTime(), "", key);
             }else {
                 return MessageFactory.rtnChartMessage("error", TimeUtil.getCurrentTime(), "Permission denied", "");
 
             }
-        }catch(SQLException sqle){
+        }catch(Exception sqle){
             log.error(sqle.toString() + ";SQL:" + QuerySQL);
             return MessageFactory.rtnChartMessage("error", TimeUtil.getCurrentTime(), sqle.getMessage(), "");
         }
@@ -64,7 +72,10 @@ public class ChartCRUDUtils {
     }
 
     public synchronized static String deleteChart(int ChartID,int jobID,String token){
-        PreparedStatement stat = null;
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
 
         String QuerySQL = "";
         try {
@@ -73,25 +84,30 @@ public class ChartCRUDUtils {
                 return MessageFactory.rtnChartMessage("error", TimeUtil.getCurrentTime(), "Permission denied", "");
             } else if ((au.jobMatch(token, Integer.toString(jobID))) || ((Integer) au.verify(token).get(0) == 2)) {
                 QuerySQL = DeleteChart;
-                stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
+                queryBean=PStmt.buildQueryBean("kado-meta",QuerySQL,new Object[]{
+                        ChartID
+                });
+                rs=dbClient.execute(queryBean);
 
-
+                if(!rs.isSuccess())
+                    throw rs.getException();
+                QuerySQL=queryBean.getSql();
+                log.info( "Status:success; TimeStamp:"+TimeUtil.getCurrentTime()+"; ChartID:"+ChartID);
+                return MessageFactory.rtnChartMessage("success", TimeUtil.getCurrentTime(), "", Integer.toString(ChartID));
             } else {
                 return MessageFactory.rtnChartMessage("error", TimeUtil.getCurrentTime(), "Permission Denied", Integer.toString(ChartID));
             }
-            QuerySQL=stat.toString();
-            stat.setInt(1, ChartID);
-            stat.execute();
-            stat.close();
-            log.info( "Status:success; TimeStamp:"+TimeUtil.getCurrentTime()+"; ChartID:"+ChartID);
-            return MessageFactory.rtnChartMessage("success", TimeUtil.getCurrentTime(), "", Integer.toString(ChartID));
-        }catch(SQLException sqle){
+
+        }catch(Exception sqle){
             log.error(sqle.toString()+";SQL:"+QuerySQL);
             return MessageFactory.rtnChartMessage("error", TimeUtil.getCurrentTime(), sqle.getMessage(), "");
         }
     }
     public synchronized static String deleteChartbyJob(int jobID,String token){
-        PreparedStatement stat = null;
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
 
         String QuerySQL = "";
         try {
@@ -100,24 +116,27 @@ public class ChartCRUDUtils {
                 return MessageFactory.rtnJobMessage("error", TimeUtil.getCurrentTime(), "Permission denied", "");
             } else if ((au.jobMatch(token, Integer.toString(jobID))) || ((Integer) au.verify(token).get(0) == 2)) {
                 QuerySQL = DeleteChartbyJob;
-                stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
-
+                queryBean=PStmt.buildQueryBean("kado-meta",QuerySQL,new Object[]{
+                        jobID
+                });
+                rs=dbClient.execute(queryBean);
+                if(!rs.isSuccess())
+                    throw rs.getException();
+                log.info( "Status:success; TimeStamp:"+TimeUtil.getCurrentTime()+"; JobID:"+jobID);
+                return MessageFactory.rtnJobMessage("success", TimeUtil.getCurrentTime(), "", Integer.toString(jobID));
             } else {
                 return MessageFactory.rtnJobMessage("error", TimeUtil.getCurrentTime(), "Permission Denied", Integer.toString(jobID));
             }
-            QuerySQL=stat.toString();
-            stat.setInt(1, jobID);
-            stat.execute();
-            stat.close();
-            log.info( "Status:success; TimeStamp:"+TimeUtil.getCurrentTime()+"; JobID:"+jobID);
-            return MessageFactory.rtnJobMessage("success", TimeUtil.getCurrentTime(), "", Integer.toString(jobID));
-        }catch(SQLException sqle){
+        }catch(Exception sqle){
             log.error(sqle.toString()+";SQL:"+QuerySQL);
             return MessageFactory.rtnJobMessage("error", TimeUtil.getCurrentTime(), sqle.getMessage(), Integer.toString(jobID));
         }
     }
     public synchronized static String updateChart( Map input,int jobID,String token){
-        PreparedStatement stat = null;
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
         String QuerySQL ="";
         try {
             //INSERT SQL
@@ -127,21 +146,22 @@ public class ChartCRUDUtils {
             } else if ((au.jobMatch(token, Integer.toString(jobID))) || ((Integer) au.verify(token).get(0) == 2)) {
 
                 QuerySQL = UpdateChart;
-                stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
+                queryBean=PStmt.buildQueryBean("kado-meta",QuerySQL,new Object[]{
+                        input.get("Type").toString(),
+                        input.get("Chart_Name").toString(),
+                        input.get("Chart_Setting").toString(),
+                        ((Double) input.get("ChartID")).intValue()
+                });
+                rs=dbClient.execute(queryBean);
+                if(!rs.isSuccess())
+                    throw rs.getException();
+                log.info( "Status:success; TimeStamp:"+TimeUtil.getCurrentTime());
+                return MessageFactory.rtnChartMessage("success", TimeUtil.getCurrentTime(), "", "");
             } else {
                 return MessageFactory.rtnJobMessage("error", TimeUtil.getCurrentTime(), "Permission denied", Integer.toString(jobID));
             }
-
-            stat.setString(1, input.get("Type").toString());
-            stat.setString(2, input.get("Chart_Name").toString());
-            stat.setString(3,input.get("Chart_Setting").toString());
-            stat.setInt(4, ((Double) input.get("ChartID")).intValue());
-            stat.executeUpdate();
-            stat.close();
-            log.info( "Status:success; TimeStamp:"+TimeUtil.getCurrentTime());
-            return MessageFactory.rtnChartMessage("success", TimeUtil.getCurrentTime(), "", "");
         }
-        catch(SQLException sqle){
+        catch(Exception sqle){
             log.error(sqle.toString()+";SQL:"+QuerySQL);
             return MessageFactory.rtnChartMessage("error", TimeUtil.getCurrentTime(), sqle.getMessage(), "");
         }
@@ -150,26 +170,30 @@ public class ChartCRUDUtils {
     public synchronized static String readChartbyJobID(int JobID,String token){
         //todo
         String QuerySQL =GetChart;
-        PreparedStatement stat = null;
-        ResultSet rs = null;
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
         try {
             Auth au = new Auth();
             ArrayList<Object> info = au.verify(token);
             if (!(Boolean) au.verify(token).get(4)) {// check login
                 return MessageFactory.rtnChartListMessage("error", "","permission denied", "",new ArrayList());
             } else if(((Integer) au.verify(token).get(0) == 2)||(au.groupMatch(token, JobID))){
-                stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
-                stat.setInt(1, JobID);
-                QuerySQL=stat.toString();
-                rs = stat.executeQuery();
+                queryBean=PStmt.buildQueryBean("kado-meta",QuerySQL,new Object[]{
+                        JobID
+                });
+                rs=dbClient.execute(queryBean);
+                if(!rs.isSuccess())
+                    throw rs.getException();
+                QuerySQL=queryBean.getSql();
                 List<Map> rtn = MessageFactory.rtnChartMessage(rs);
-                stat.close();
                 return MessageFactory.rtnChartListMessage("success", "","", "",rtn);
             }else{
                 return MessageFactory.rtnChartListMessage("error", "","permission denied", "",new ArrayList());
             }
         }
-        catch(SQLException sqle){
+        catch(Exception sqle){
             log.error(sqle.toString()+";SQL:"+QuerySQL);
             return MessageFactory.rtnChartListMessage("error", "",sqle.toString(), "",new ArrayList());
         }
@@ -178,28 +202,34 @@ public class ChartCRUDUtils {
 
     public synchronized static String readChart(int ChartID,String token){
         String QuerySQL =GetChartbyNumber;
-        PreparedStatement stat = null;
-        ResultSet rs = null;
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
         try {
             Auth au = new Auth();
             ArrayList<Object> info = au.verify(token);
             if (!(Boolean) au.verify(token).get(4)) {
                 return MessageFactory.rtnChartInfoMessage("error", "","permission denied", "",new HashMap());
             } else{
-                stat = ConnectionManager.getInstance().getConnection().prepareStatement(QuerySQL);
-                stat.setInt(1, ChartID);
-                QuerySQL=stat.toString();
-                rs = stat.executeQuery();
+                queryBean=PStmt.buildQueryBean("kado-meta",QuerySQL,new Object[]{
+                        ChartID
+                });
+                rs=dbClient.execute(queryBean);
+                if(!rs.isSuccess())
+                    throw rs.getException();
+                QuerySQL=queryBean.getSql();
+
                 int jobID=0;
                 HashMap<String,String> rtn = new HashMap<>();
-                if(rs.next()){
-                    jobID=rs.getInt("Number");
-                    rtn.put("ChartID",Integer.toString(rs.getInt("Number")));
-                    rtn.put("JobID",Integer.toString(rs.getInt("JobID")));
-                    rtn.put("Type",rs.getString("Type"));
-                    rtn.put("Chart_Name",rs.getString("Chart_Name"));
-                    rtn.put("Chart_Setting",rs.getString("Chart_Setting"));
-                    stat.close();
+                if(rs.getRowSize()>0){
+                    KadoRow r=new KadoRow(rs.getRowList().get(0));
+                    jobID=r.getInt("Number");
+                    rtn.put("ChartID",Integer.toString(r.getInt("Number")));
+                    rtn.put("JobID",Integer.toString(r.getInt("JobID")));
+                    rtn.put("Type",r.getString("Type"));
+                    rtn.put("Chart_Name",r.getString("Chart_Name"));
+                    rtn.put("Chart_Setting",r.getString("Chart_Setting"));
                 }
                 if(((Integer) au.verify(token).get(0) == 2)||(au.groupMatch(token, jobID))){
                     return MessageFactory.rtnChartInfoMessage("success","","","",rtn);
@@ -208,7 +238,7 @@ public class ChartCRUDUtils {
                 }
             }
         }
-        catch(SQLException sqle){
+        catch(Exception sqle){
             log.error(sqle.toString()+";SQL:"+QuerySQL);
             return MessageFactory.rtnChartInfoMessage("error", "",sqle.toString(), "",new HashMap());
         }
