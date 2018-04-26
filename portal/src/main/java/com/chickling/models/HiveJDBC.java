@@ -1,5 +1,7 @@
 package com.chickling.models;
 
+import com.chickling.boot.Init;
+
 import java.sql.*;
 import java.util.Properties;
 
@@ -12,7 +14,7 @@ public class HiveJDBC {
     private void init(){
         try {
             Class.forName("org.apache.hive.jdbc.HiveDriver");
-            conn = DriverManager.getConnection("jdbc:hive2://172.16.157.11:10000");
+            conn = DriverManager.getConnection(Init.getHiveJDBC());
         } catch (SQLException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {

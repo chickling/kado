@@ -1,0 +1,2 @@
+INSERT INTO `User` (`UID`, `AccountID`, `UserName`, `Password`, `Gid`, `Admin`, `General`, `Email`, `Enable`, `ChartBuilder`) VALUES
+(1, 'admin', 'admin', '21232f297a57a5a743894a0e4a801fc3', 1, 1, 0, '', 1, 1);

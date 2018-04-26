@@ -12,10 +12,10 @@ import org.yaml.snakeyaml.error.YAMLException;
 
 /**
  * load ItemService.yaml and initialize. 
- * 
+ *
  * @author ay21
  * @date 2015-01-21
-*/
+ */
 public class YamlLoader {
 	public static final Logger logger = LogManager.getLogger(YamlLoader.class);
 	public static YamlLoader instance;
@@ -36,6 +36,7 @@ public class YamlLoader {
 	private  String hdfsHost="";
 	private  String externalTableHDFSRootPath="";
 	private  String hdfsUser="";
+	private  String hiveJDBC="";
 	private String[] prestoDBWhitelist=new String[]{};
 
 	static {
@@ -43,15 +44,15 @@ public class YamlLoader {
 	}
 
 	private static void loadYaml() {
-	    String yamlPath =YamlLoader.class.getResource("/").getPath()+"config.yaml";
+		String yamlPath =YamlLoader.class.getResource("/").getPath()+"config.yaml";
 		try {
 			logger.info("Loading configuration from " + yamlPath);
 			InputStream input;
 			try{
-			    input = new FileInputStream(yamlPath);
+				input = new FileInputStream(yamlPath);
 			}catch (FileNotFoundException e){
-			    logger.error("Ymal file not found at " + yamlPath);
-			    throw new AssertionError(e);
+				logger.error("Ymal file not found at " + yamlPath);
+				throw new AssertionError(e);
 			}
 			Constructor constructor = new Constructor(YamlLoader.class);
 			Yaml yaml = new Yaml(constructor);
@@ -200,6 +201,14 @@ public class YamlLoader {
 
 	public void setHdfsUser(String hdfsUser) {
 		this.hdfsUser = hdfsUser;
+	}
+
+	public String getHiveJDBC() {
+		return hiveJDBC;
+	}
+
+	public void setHiveJDBC(String hiveJDBC) {
+		this.hiveJDBC = hiveJDBC;
 	}
 
 	public String[] getPrestoDBWhitelist() {

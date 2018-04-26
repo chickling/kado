@@ -14,6 +14,7 @@ downloadLimit: 40000
 #HDFS Upload Setting
 hdfsHost: "http://{hdfs_namenode}:50070"
 hdfsUser: "hdfs"
+hiveJDBC: "jdbc:hive2://{hive_jdbc_location}:10000"
 externalTableHDFSRootPath: "/user/ec/kado_external"
 prestoDBWhitelist:
  - test

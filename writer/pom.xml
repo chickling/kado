@@ -17,11 +17,6 @@
             <version>0.4.0</version>
         </dependency>
 
-        <!--<dependency>-->
-            <!--<groupId>com.newegg.ec.bigdata</groupId>-->
-            <!--<artifactId>dbclient</artifactId>-->
-            <!--<version>1.1.2</version>-->
-        <!--</dependency>-->
         <dependency>
             <groupId>owlstone.dbclient</groupId>
             <artifactId>dbclient</artifactId>
@@ -30,7 +25,6 @@
             <systemPath>${basedir}/src/main/resources/dbclient-1.1.2.jar</systemPath>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
 
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>

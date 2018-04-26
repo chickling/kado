@@ -7,10 +7,6 @@ import com.chickling.util.YamlLoader;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 
-import owlstone.dbclient.db.DBClient;
-import owlstone.dbclient.db.DBConnectionManager;
-import owlstone.dbclient.db.module.DBResult;
-import owlstone.dbclient.db.module.Query;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -46,6 +42,7 @@ public class Init implements ServletContextListener{
     private static String hdfsHost="http://172.16.156.11:50070";
     private static String externalTableHDFSRootPath="/user/ec/kado_external";
     private static String hdfsUser="hdfs";
+    private static String hiveJDBC="";
     private static String[] prestoDBWhitelist=new String[]{};
 
     public static String getDeleteLogTTL() {
@@ -188,6 +185,7 @@ public class Init implements ServletContextListener{
         String writerinjection=YamlLoader.instance.getWrtierinjection();
         String presto_user=YamlLoader.instance.getPresto_hdfs_user();
         String hdfsUser=YamlLoader.instance.getHdfsUser();
+        String hiveJDBC=YamlLoader.instance.getHiveJDBC();
         String hdfsHost=YamlLoader.instance.getHdfsHost();
         String externalTableHDFSRootPath=YamlLoader.instance.getExternalTableHDFSRootPath();
         String[] prestoDBWhitelist=YamlLoader.instance.getPrestoDBWhitelist();
@@ -271,6 +269,12 @@ public class Init implements ServletContextListener{
                 sce.getServletContext().setAttribute("hdfsUser", "hdfs");
             }
 
+            if (!Strings.isNullOrEmpty(hiveJDBC)) {
+                sce.getServletContext().setAttribute("hiveJDBC", hiveJDBC);
+            } else {
+                sce.getServletContext().setAttribute("hiveJDBC", "hive");
+            }
+
             if (!Strings.isNullOrEmpty(externalTableHDFSRootPath)) {
                 sce.getServletContext().setAttribute("externalTableHDFSRootPath", externalTableHDFSRootPath);
             } else {
@@ -298,6 +302,7 @@ public class Init implements ServletContextListener{
             setJsonDir(csvlocalPath+fileseparator+tempDir);
             setHdfsHost(hdfsHost);
             setHdfsUser(hdfsUser);
+            setHiveJDBC(hiveJDBC);
             setExternalTableHDFSRootPath(externalTableHDFSRootPath);
             setPrestoDBWhitelist(prestoDBWhitelist);
             DBmaintenance dbm=new DBmaintenance();
@@ -335,6 +340,14 @@ public class Init implements ServletContextListener{
         Init.hdfsUser = hdfsUser;
     }
 
+    public static String getHiveJDBC() {
+        return hiveJDBC;
+    }
+
+    public static void setHiveJDBC(String hiveJDBC) {
+        Init.hiveJDBC = hiveJDBC;
+    }
+
     public static String[] getPrestoDBWhitelist() {
         return prestoDBWhitelist;
     }
@@ -353,47 +366,4 @@ public class Init implements ServletContextListener{
     }
 
 
-//    private  void checkHDFSPath(){
-//        FSFile fsFile=FSFile.newInstance(FSFile.FSType.HDFS);
-//        FsShell fsShell=new FsShell(fsFile.getFs().getConf());
-//        try {
-//
-//            // check log dilr
-//            //
-//            if (! fsFile.getFs().exists(new Path(logpath))){
-//                fsFile.getFs().mkdirs(new Path(logpath));
-//                fsShell.run(new String[]{"-chmod","-R","775",logpath});
-//                log.warn("Create [ Job Log ]  HDFS Dir!");
-//            }else
-//                log.info("Check [ Job Log ] HDFS path Exist !!!!");
-//            //check csv temp dir
-//            //
-//            if (! fsFile.getFs().exists(new Path(csvtmphdfsPath))){
-//                fsFile.getFs().mkdirs(new Path(csvtmphdfsPath));
-//                fsShell.run(new String[]{"-chmod","-R","775",csvtmphdfsPath});
-//                log.warn("Create [ CSV  Temp  ]  HDFS Dir!");
-//            }else
-//                log.info("Check [ CSV  Temp ] HDFS path Exist !!!!");
-//            //check SQLite backup dir
-//            //
-//            if (! fsFile.getFs().exists(new Path( YamlLoader.instance.getSqliteHDFSpath()))){
-//                fsFile.getFs().mkdirs(new Path( YamlLoader.instance.getSqliteHDFSpath()));
-//                fsShell.run(new String[]{"-chmod","-R","775", YamlLoader.instance.getSqliteHDFSpath()});
-//                log.warn("Create [ SQLite backup ]  HDFS Dir!");
-//            }else
-//                log.info("Check [ SQLite backup ] HDFS path Exist !!!!");
-//        } catch (Exception e) {
-//            log.error("check hdfs dir Error : "+ExceptionUtils.getStackTrace(e));
-//        }
-//
-//
-//    }
-    public static void main(String[] args) {
-        DBConnectionManager dbcm=new DBConnectionManager(Thread.currentThread().getContextClassLoader().getResourceAsStream("mariadb-config.yaml"));
-        DBClient dbClient=new DBClient(dbcm);
-        DBResult dbResult=dbClient.execute(new Query("kado-meta","show tables"));
-        if(!dbResult.isSuccess())
-            System.out.println(dbResult.getException().getMessage());
-        System.out.println(dbResult.toJson());
-    }
 }

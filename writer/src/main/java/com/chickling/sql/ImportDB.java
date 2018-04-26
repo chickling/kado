@@ -3,6 +3,7 @@ package com.chickling.sql;
 
 import com.chickling.bean.result.ResultMap;
 import com.chickling.face.PrestoResult;
+import com.chickling.util.WriterDBClientUtil;
 import owlstone.dbclient.db.DBConnectionManager;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
@@ -182,13 +183,8 @@ public class ImportDB {
         /**
          * Create DB Connection  and execute Batch Statement
          */
-        DBConnectionManager dbconn = null;
-        try {
-            dbconn = new DBConnectionManager();
-        } catch (Exception e) {
-            setException(e.getMessage());
-            return false;
-        }
+        DBConnectionManager dbconn = WriterDBClientUtil.getDbConnectionManager();
+
         SQLoption sqlOption = new SQLoption(dbconn, getConnName());
         boolean isSuccess=sqlOption.batchExecute(sqlList);
 

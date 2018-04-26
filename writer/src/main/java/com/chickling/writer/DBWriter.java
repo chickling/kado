@@ -35,7 +35,7 @@ public class DBWriter implements ResultWriter {
     private ArrayList<String> locationList=new ArrayList<>();
 
     {
-//        DBConnectionManager dbconnmgr=DBConnectionManager.getSingletonInstance();
+
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
         InputStream input = classloader.getResourceAsStream("dbclient-config.yaml");
         Yaml yaml = new Yaml();
