@@ -16,6 +16,7 @@ More information in the [Wiki](https://github.com/chickling/kado/wiki)
 - Put the job status in the cache,increase page loading speed
 - SQL query optimization to increase speed
 - Fixed various UI bugs
+- Use [DBClient](https://github.com/aames0130/dbclient) connection management
 
 ## Overview
 <div style="text-align:center">
