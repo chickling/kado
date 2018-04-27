@@ -16,6 +16,7 @@ public class MScheRunner implements Job {
         dbm.deleteLocalLogOverTTL();
         dbm.deleteSQLiteLogOverTTL();
         dbm.deleteLocalTempFileOverTTL();
+        dbm.deleteUploadTempFileOverTTL();
 //        dbm.backupSQLiteDB();
 //        dbm.deleteTempHDFSCSVdaily();
     }

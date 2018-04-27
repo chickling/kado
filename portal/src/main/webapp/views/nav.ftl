@@ -8,6 +8,7 @@
         <a href="${layer}joblist" class="item <#if job??>${job}</#if>"> <i class="icon large suitcase"></i>Job</a>
         <a href="${layer}schedulelist" class="item <#if schedule??>${schedule}</#if>"> <i class="icon large wait"></i>Schedule</a>
         <a href="${layer}queryui" class="item <#if queryui??>${queryui}</#if>"> <i class="icon large rocket"></i>QueryUI</a>
+        <a href="${layer}tabletool/create" class="item <#if tabletool??>${tabletool}</#if>"> <i class="icon large paint brush"></i>Table Tool</a>
         <div class=" right ui simple dropdown item">
             <i class="icon user large"></i>
             <font id="displayName">Eugene</font><i class="dropdown icon"></i>

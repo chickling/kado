@@ -204,8 +204,8 @@
             if(JData["status"]!="error"){ 
               //check system limit
               
-              if(JData["resultCount"]>20000){
-                $(".item.download").html('<font color="red">The result rows is out of system limit, just display 20000 row</font>');
+              if(JData["resultCount"]>${limit}){
+                $(".item.download").html('<font color="red">The result rows is out of system limit, just display ${limit} row</font>');
                 $(".item.download").attr("onclick","");
               }
               //update page info

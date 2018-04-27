@@ -302,6 +302,7 @@ function insertText(text) {
  * @return 
  */
 function loadTableAutoCom() {
+
     var rhymeCompleter = {
         getCompletions: function(editor, session, pos, prefix, callback) {
             if (prefix.length === 0) {
@@ -323,6 +324,7 @@ function loadTableAutoCom() {
 
     langTools.addCompleter(rhymeCompleter);
     rhymeCompleter=null;
+
 }
 /**
  * load table schema to AutoComplete Keyword LIST
@@ -331,6 +333,8 @@ function loadTableAutoCom() {
  */
 function loadTableSchemaAutoCom(table) {
     if (table != "" && $.inArray(table, autoCom_table) == -1) {
+
+        //var jsonUrls = "./presto/table/schemas/" + table;
         var rhymeCompleters = {
             getCompletions: function(editor, session, pos, prefix, callback) {
                 if (prefix.length === 0) {
@@ -340,6 +344,7 @@ function loadTableSchemaAutoCom(table) {
                 console.log(prefix);
                 $.getJSON("./presto/table/schemas/" + table, function(wordLists) {
                     callback(null, wordLists.column.map(function(ea) {
+
                         return {
                             name: ea.column,
                             value: ea.column,
@@ -352,6 +357,7 @@ function loadTableSchemaAutoCom(table) {
         }
         autoCom_table.push(table);
         langTools.addCompleter(rhymeCompleters);
+
         rhymeCompleters=null;
     }
 }
@@ -378,10 +384,9 @@ function loadQueryStatus() {
                         var htmlTmp="";
                         //htmlTmp += "<tr>";
                         htmlTmp +="<td>" + JData["list"][i]["jobrunid"] + "</td>";
-                        if (isBase64(JData["list"][i]["sql"]))
-                            htmlTmp +='<td class="sqlcontent hidd" style="word-break: break-all;"><p>' + $.base64Decode(JData["list"][i]["sql"]) + "</p></td>";
-                        else
-                            htmlTmp +='<td class="sqlcontent hidd"><p>' + JData["list"][i]["sql"] + "</p></td>";
+
+                        htmlTmp +='<td class="sqlcontent hidd" style="word-break: break-all;"><p>' + $.base64Decode(JData["list"][i]["sql"]) + "</p></td>";
+
                         var valid='1';
                         if (JData["list"][i]["valid"]!= null)
                             valid=JData["list"][i]["valid"];
@@ -402,6 +407,7 @@ function loadQueryStatus() {
                         updateTableRow($(".ui.celled.table.query tbody"),tableHtml,10);
                     }else{
                         $(".ui.celled.table.query tbody").html(convArrayToHtmlString(tableHtml));
+                        bindDoubleClickSQL();
                     }
                     $(".button.query.stop").unbind("click");
                     $(".button.query.stop").click(function() {
@@ -442,7 +448,7 @@ function loadQueryStatus() {
     });
 }
 function updateTableRow(table,dataRows,count){
-    var flag=false;
+    var updateClickEvent=false;
     if($(table).children("tr").length==dataRows.length&&dataRows.length==count){
         $(table).children("tr").each(function(key,value){
         var mark='<span style="display: none; width: 0px; height: 0px;" id="transmark"></span>';
@@ -461,7 +467,6 @@ function updateTableRow(table,dataRows,count){
                         //console.log($(v).html().replace(mark,"").replace(mark2,"")+"->"+$(cell).eq(i).html());
                         //console.log("UPDATE CELL");
                         $(v).html($(cell).eq(i).html());
-                        flag=true;
                     }
                     flag++;
                 });
@@ -469,7 +474,7 @@ function updateTableRow(table,dataRows,count){
                 if(flag==0){
                     //console.log("UPDATE LINE");
                     $(value).html(dataRows[key]);
-                    flag=true;
+                    updateClickEvent=true;
                 }
                     
             }
@@ -477,7 +482,7 @@ function updateTableRow(table,dataRows,count){
             mark2=null;
         });
     }
-    if(flag){
+    if(updateClickEvent){
        bindDoubleClickSQL();
     }
 }
@@ -566,15 +571,14 @@ function runPrestoSQL() {
  * @return 
  */
 function editSQL(sql) {
-    if (isBase64(sql)){
-        sqlDecode=$.base64Decode(sql);
-        if(sqlDecode.indexOf("CREATE TABLE presto_temp")==0){            
-            editor.setValue(sqlDecode.substring(sqlDecode.indexOf("WITH (format='ORC' ) AS")+23,sqlDecode.length));
-        }else{
-            editor.setValue(sqlDecode);
-        }        
-    }else
-        editor.setValue(sql);
+
+    sqlDecode=$.base64Decode(sql);
+    if(sqlDecode.indexOf("CREATE TABLE presto_temp")==0){
+        editor.setValue(sqlDecode.substring(sqlDecode.indexOf("WITH (format='ORC' ) AS")+23,sqlDecode.length));
+    }else{
+        editor.setValue(sqlDecode);
+    }
+
 }
 /**
  * Push Query SQL to add Job
@@ -884,11 +888,13 @@ $(".dropdown.prestotable").dropdown({
     onChange: function(value, text) {
 
         if (value != "") {
+
             $(".dropdown.partition").dropdown('clear');
             $('#tableCount').attr("tablename", value);
             showSchema();
             loadPartition();
             loadTableSchemaAutoCom(value);
+
         }
     }
 });

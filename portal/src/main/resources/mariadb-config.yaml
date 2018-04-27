@@ -1,0 +1,10 @@
+!dbclient-config
+DBType: MariaDB
+maxThreadNum: 20
+checkPeriod: 20
+dataSourceList:
+  - name: kado-meta
+    url: 'jdbc:mysql://{db_host}:3306/kado'
+    username: kado
+    passwd: ***
+    poolSize: 10

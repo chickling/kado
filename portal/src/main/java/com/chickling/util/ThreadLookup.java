@@ -18,6 +18,6 @@ public class ThreadLookup implements StrLookup {
 
     @Override
     public String lookup(LogEvent logEvent, String s) {
-        return Strings.isNullOrEmpty(logEvent.getContextMap().get(s)) ?"init":logEvent.getContextMap().get(s);
+        return Strings.isNullOrEmpty(logEvent.getContextData().toMap().get(s)) ?"init":logEvent.getContextData().toMap().get(s);
     }
 }

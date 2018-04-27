@@ -391,6 +391,7 @@
              message += "File Name can not be empty \n";
              $(".input.file.fname").addClass("error");
          }
+
     }
     if ($(".checkbox.db").checkbox("is checked")) {
          if ($(".input.insert.sql input").val() == "") {
@@ -753,8 +754,9 @@ function setStorageStatusBySaveType(save_type,JData){
          $(".db.dropdown").dropdown('set selected',JData["location_id"].toString());
     }
     if(((stype%4)/2)>=1){
-        $(".checkbox.csv").checkbox('check');
+        $(".checkbox.csv").checkbox('check');        
         $(".input.file.fpath input").val(JData["filepath"]);
         $(".input.file.fname input").val(JData["filename"]);
     }
+
 }

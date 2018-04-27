@@ -148,7 +148,7 @@ public class ScheduleRunner implements Job{
             //update schedule history
             log.info(ThreadContext.get("logFileName"));
         }
-        catch(SQLException e){
+        catch(Exception e){
             log.error(e.toString());
             // ThreadContext.remove("logFileName");
             //ScheduleCRUDUtils.UpdateScheduleHistory(ScheduleHistoryID,TimeUtil.getCurrentTime(),0,logPath);
@@ -180,7 +180,7 @@ public class ScheduleRunner implements Job{
         ScheduleHistoryInput.add((String) info.get("memo"));//memo
         ScheduleHistoryInput.add("0");
         ScheduleHistoryInput.add(TimeUtil.getCurrentTime());//ScheduleStartTime
-        ScheduleHistoryInput.add("N/A");//ScheduleStopTime
+        ScheduleHistoryInput.add("0000-00-00 00:00:00");//ScheduleStopTime
         ScheduleHistoryInput.add("N/A");//todo ScheduleLog
         ScheduleHistoryInput.add((String) info.get("schedule_mode"));//ScheduleTimeType
         ScheduleHistoryInput.add((String) info.get("startwith"));//startWith

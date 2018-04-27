@@ -29,7 +29,7 @@ private static final HashMap<String,Integer> TimeIndex=new HashMap<>();
 
     public static String cronGenerator(String type, String[] args,Date startDate) {
             String[] crone=new String[6];
-        int[] DateFormat=new int[3];
+        int[] DateFormat=new int[4];
         HashMap<String,Integer> TimeIndex=new HashMap<>();
         TimeIndex.put("Minute",1);
         TimeIndex.put("Hour",2);
@@ -44,6 +44,7 @@ private static final HashMap<String,Integer> TimeIndex=new HashMap<>();
         WeekDay.put(6,"SAT");
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(startDate);
+        DateFormat[3] = calendar.get(Calendar.DAY_OF_MONTH);
         DateFormat[2] = calendar.get(Calendar.HOUR_OF_DAY);
         DateFormat[1] = calendar.get(Calendar.MINUTE);
         DateFormat[0] = calendar.get(Calendar.SECOND);

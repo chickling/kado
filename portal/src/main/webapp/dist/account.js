@@ -327,6 +327,8 @@ function secondFloor() {
         return true
     else if (url.indexOf("charts/draw") >= 0)
         return true
+    else if (url.indexOf("tabletool/create") >= 0)
+        return true
     else
         return false
 }

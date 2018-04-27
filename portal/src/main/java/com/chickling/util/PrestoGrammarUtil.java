@@ -1,14 +1,15 @@
 package com.chickling.util;
 
-import com.amazonaws.util.json.JSONException;
-import com.amazonaws.util.json.JSONObject;
+//import com.amazonaws.util.json.JSONException;
+//import com.amazonaws.util.json.JSONObject;
 import com.chickling.models.job.PrestoContent;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 
 import java.text.ParseException;
 import java.util.*;

@@ -1,15 +1,22 @@
-# Local
-prestoURL: "http://localhost:8080"
-siteURLBase: "http://localhost:8889"
-csvlocalPath: "/jetty/csv_temp"
-logpath: "/jetty/logs"
-# Hive
+prestoURL: "http://{presto_host}:8080"
 database: "presto_temp"
+hivepath: "/user/hive/warehouse"
+logpath: "/jetty/logs"
+siteURLBase: "http://{app_host}:8889"
 expiration: "7"
 prestoCatalog: "hive"
-hivepath: "/user/hive/warehouse"
+csvlocalPath: "/jetty/csv_temp"
 deleteLogTTL: "30"
-downloadToken: "a206379f7bffdcd01613869c448073ef98bfae8de4e17102b90f4758b2f316b7"
-sqliteName: "Kado.sqlite"
+wrtierinjection: "com.chickling.writer.DBWriter$com.chickling.models.writer.LocalWriter"
 presto_hdfs_user: "presto"
-wrtierinjection: "com.chickling.models.writer.LocalWriter"
+downloadToken: "a206379f7bffdcd01613869c448073ef98bfae8de4e17102b90f4758b2f0000"
+downloadLimit: 40000
+#HDFS Upload Setting
+hdfsHost: "http://{hdfs_namenode}:50070"
+hdfsUser: "hdfs"
+hiveJDBC: "jdbc:hive2://{hive_jdbc_location}:10000"
+externalTableHDFSRootPath: "/user/ec/kado_external"
+prestoDBWhitelist:
+ - test
+ - tmp
+

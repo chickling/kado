@@ -1,6 +1,5 @@
 package com.chickling.controllers;
 
-
 import com.facebook.presto.hive.$internal.org.apache.commons.lang3.exception.ExceptionUtils;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -108,7 +107,7 @@ public class Schedule {
         }catch (ClassCastException e){
             log.warn(ExceptionUtils.getStackTrace(e));
             return Response.ok(MessageFactory.rtnJobMessage("error", "", "Json Class Cast Exception", "")).build();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.warn(ExceptionUtils.getStackTrace(e));
             return Response.ok(MessageFactory.message("error", "Sql error")).build();
         }

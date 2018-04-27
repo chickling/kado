@@ -1,6 +1,7 @@
 package com.chickling.controllers;
 
 import com.chickling.boot.Init;
+import com.chickling.util.YamlLoader;
 import org.glassfish.jersey.server.mvc.Template;
 import org.glassfish.jersey.server.mvc.Viewable;
 
@@ -111,6 +112,7 @@ public class LoadPage {
     public Response getResult(){
         Map pageSetting=new HashMap();
         pageSetting.put("layer","");
+        pageSetting.put("limit", YamlLoader.instance.getDownloadLimit().toString());
         return Response.ok(new Viewable("/resultviewer.ftl",pageSetting)).build();
     }
     @GET
@@ -139,4 +141,22 @@ public class LoadPage {
         pageSetting.put("layer","../");
         return Response.ok(new Viewable("/chartpage.ftl",pageSetting)).build();
     }
+    @GET
+    @Path("/tabletool/create")
+    public Response getCreateTable(){
+        Map pageSetting=new HashMap();
+        pageSetting.put("layer","../");
+        pageSetting.put("tabletool","active");
+        return Response.ok(new Viewable("/tabletool_internal.ftl",pageSetting)).build();
+    }
+
+    @GET
+    @Path("/tabletool/external")
+    public Response getCreateExternalTable(){
+        Map pageSetting=new HashMap();
+        pageSetting.put("layer","../");
+        pageSetting.put("tabletool","active");
+        return Response.ok(new Viewable("/tabletool_external.ftl",pageSetting)).build();
+    }
+
 }

@@ -1,6 +1,5 @@
 package com.chickling.controllers;
 
-
 import com.chickling.boot.Init;
 import com.chickling.util.PrestoUtil;
 import com.facebook.presto.hive.$internal.org.apache.commons.lang3.exception.ExceptionUtils;
@@ -15,8 +14,8 @@ import com.chickling.util.JobHistoryCatch;
 import com.chickling.util.TimeUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.apache.commons.codec.binary.Base64;
+import org.glassfish.jersey.media.multipart.ContentDisposition;
 
 import javax.ws.rs.*;
 import javax.ws.rs.Path;
@@ -61,7 +60,6 @@ public class QueryUI {
         try {
             if ((Boolean) auth.verify(token).get(4) == true) {
                 Map datas = gson.fromJson(json, type);
-
                 String sql = new String(base64.decode( ((String)datas.get("sql")).getBytes()),"UTF-8");
                 String jobHistoryCatchKey=TimeUtil.getCurrentTime()+":QueryUI:"+sql.hashCode();
                 System.out.println(sql);
@@ -111,7 +109,6 @@ public class QueryUI {
         try {
             if ((Boolean) auth.verify(token).get(4) == true) {
                 Map datas = gson.fromJson(json, type);
-
                 String sql = new String(base64.decode( ((String)datas.get("sql")).getBytes()),"UTF-8");
                 String jobHistoryCatchKey=TimeUtil.getCurrentTime()+":QueryUI:"+sql.hashCode();
                 executor.submit(new JobRunner(0, PrestoContent.QUERY_UI, token,jobHistoryCatchKey, sql));
@@ -155,7 +152,7 @@ public class QueryUI {
             }else {
                 return Response.ok(MessageFactory.message("error", "Permission Denied")).build();
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.warn(e);
             return Response.ok(MessageFactory.message("error", "Permission Denied")).build();
         }
@@ -179,7 +176,7 @@ public class QueryUI {
             }else {
                 return Response.ok(MessageFactory.message("error", "Permission Denied")).build();
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.warn(ExceptionUtils.getStackTrace(e));
             return Response.ok(MessageFactory.message("error", "Permission Denied")).build();
         }
@@ -218,7 +215,6 @@ public class QueryUI {
                 ControlManager controlManager = new ControlManager();
                 String filePath = "";
                 filePath = controlManager.getResultFilePath(jobrunid);
-
                 String fileName=controlManager.getFilenameFromPath(filePath);
                 ContentDisposition contentDisposition = ContentDisposition.type("attachment")
                         .fileName(fileName + ".csv").creationDate(new Date()).build();
@@ -228,7 +224,7 @@ public class QueryUI {
                 log.warn("JHID->"+jobrunid+";Token->"+token);
                 return Response.status(404).build();
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.error("Get Result File SQL Error");
             log.error(ExceptionUtils.getStackTrace(e));
             return Response.status(404).build();

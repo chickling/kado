@@ -5,7 +5,18 @@
   src="https://github.com/chickling/kado/raw/master/doc/images/kado_start.png" 
 />
 
-More information in the [Wiki](https://github.com/chickling/kado/wiki) 
+More information in the [Wiki](https://github.com/chickling/kado/wiki)
+
+## Version 0.4.0
+### New features
+- Replace SQLite to MariaDB store kado metadata
+- Supports storing Job results in the database
+- Supports the use the TableTool to create hive internal and external tables
+### Other modifications
+- Put the job status in the cache,increase page loading speed
+- SQL query optimization to increase speed
+- Fixed various UI bugs
+- Use [DBClient](https://github.com/aames0130/dbclient) connection management
 
 ## Overview
 <div style="text-align:center">

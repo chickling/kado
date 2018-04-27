@@ -1,12 +1,12 @@
 package com.chickling.boot;
 
 import com.chickling.face.ResultWriter;
-
 import com.chickling.maintenance.DBmaintenance;
 import com.chickling.schedule.ScheduleMgr;
 import com.chickling.util.YamlLoader;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
+
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,7 +28,7 @@ public class Init implements ServletContextListener{
     private static String database="";
     private static String hivepath="";
     private static String logpath="";
-    private static String sqliteName="";
+
     private static String SiteURLBase="";
     private static String Expiration="";
     private static String prestoCatalog="";
@@ -39,6 +39,11 @@ public class Init implements ServletContextListener{
     private static String jsonDir="";
     private static String tempDir="json";
     private static Map<String,ResultWriter> injectionMap;
+    private static String hdfsHost="http://172.16.156.11:50070";
+    private static String externalTableHDFSRootPath="/user/ec/kado_external";
+    private static String hdfsUser="hdfs";
+    private static String hiveJDBC="";
+    private static String[] prestoDBWhitelist=new String[]{};
 
     public static String getDeleteLogTTL() {
         return deleteLogTTL;
@@ -108,14 +113,6 @@ public class Init implements ServletContextListener{
         return prestoURL;
     }
 
-    public static String getSqliteName() {
-        return sqliteName;
-    }
-
-    public static void setSqliteName(String sqliteName) {
-        Init.sqliteName = sqliteName;
-    }
-
     public static ArrayList<Integer> getDeleteJobList() {
         return deleteJobList;
     }
@@ -124,7 +121,6 @@ public class Init implements ServletContextListener{
 
     public static void setExpiration(String expiration){Init.Expiration=expiration;}
     public static String getExpiration(){return Expiration;}
-
 
 
     public static void setPrestoCatalog(String prestoCatalog){Init.prestoCatalog=prestoCatalog;}
@@ -176,20 +172,23 @@ public class Init implements ServletContextListener{
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
-
+        log.info("Start Service Initial~");
         String siteURLBase=YamlLoader.instance.getSiteURLBase()+sce.getServletContext().getContextPath();
         String expiration=YamlLoader.instance.getExpiration();
         String prestoURL=YamlLoader.instance.getPrestoURL();
         String database=YamlLoader.instance.getDatabase();
         String hivepath=YamlLoader.instance.getHivepath();
         String logpath=YamlLoader.instance.getLogpath();
-        String sqliteName=YamlLoader.instance.getSqliteName();
         String prestoCatalog=YamlLoader.instance.getPrestoCatalog();
-
         String csvlocalpath=YamlLoader.instance.getCsvlocalPath();
         String deleteLogTTL=YamlLoader.instance.getDeleteLogTTL();
         String writerinjection=YamlLoader.instance.getWrtierinjection();
         String presto_user=YamlLoader.instance.getPresto_hdfs_user();
+        String hdfsUser=YamlLoader.instance.getHdfsUser();
+        String hiveJDBC=YamlLoader.instance.getHiveJDBC();
+        String hdfsHost=YamlLoader.instance.getHdfsHost();
+        String externalTableHDFSRootPath=YamlLoader.instance.getExternalTableHDFSRootPath();
+        String[] prestoDBWhitelist=YamlLoader.instance.getPrestoDBWhitelist();
 
         try {
 
@@ -226,16 +225,12 @@ public class Init implements ServletContextListener{
                 sce.getServletContext().setAttribute("logpath", "/tmp/presto-joblog");
                 throw new Exception("logpath not set Error , please check your config.yaml");
             }
-            if (!Strings.isNullOrEmpty(sqliteName)) {
-                sce.getServletContext().setAttribute("sqliteName", sqliteName);
-            } else {
-                sce.getServletContext().setAttribute("sqliteName", "Kado.sqlite");
-                throw new Exception("dbLocation not set Error , please check your config.yaml");
-            }
+
             if (!Strings.isNullOrEmpty(siteURLBase)) {
                 sce.getServletContext().setAttribute("SiteURLBase", SiteURLBase);
             } else {
                 sce.getServletContext().setAttribute("SiteURLBase", "");
+                throw new Exception("SiteURLBase set Error , please check your config.yaml");
             }
             if (!Strings.isNullOrEmpty(expiration)) {
                 sce.getServletContext().setAttribute("expiration", Expiration);
@@ -249,6 +244,7 @@ public class Init implements ServletContextListener{
                 sce.getServletContext().setAttribute("prestoCatalog", "");
                 throw new Exception("prestoCatalog set Error , please check your config.yaml");
             }
+
             if (!Strings.isNullOrEmpty(deleteLogTTL)) {
                 sce.getServletContext().setAttribute("deleteLogTTL", deleteLogTTL);
             } else {
@@ -261,18 +257,54 @@ public class Init implements ServletContextListener{
                 sce.getServletContext().setAttribute("presto_user", "root");
             }
 
+            if (!Strings.isNullOrEmpty(hdfsHost)) {
+                sce.getServletContext().setAttribute("hdfsHost", hdfsHost);
+            } else {
+                sce.getServletContext().setAttribute("hdfsHost", "http://172.16.156.12:50070");
+            }
+
+            if (!Strings.isNullOrEmpty(hdfsUser)) {
+                sce.getServletContext().setAttribute("hdfsUser", hdfsUser);
+            } else {
+                sce.getServletContext().setAttribute("hdfsUser", "hdfs");
+            }
+
+            if (!Strings.isNullOrEmpty(hiveJDBC)) {
+                sce.getServletContext().setAttribute("hiveJDBC", hiveJDBC);
+            } else {
+                sce.getServletContext().setAttribute("hiveJDBC", "hive");
+            }
+
+            if (!Strings.isNullOrEmpty(externalTableHDFSRootPath)) {
+                sce.getServletContext().setAttribute("externalTableHDFSRootPath", externalTableHDFSRootPath);
+            } else {
+                sce.getServletContext().setAttribute("externalTableHDFSRootPath", "/user/ec/kado_external");
+            }
+
+            if (prestoDBWhitelist!=null) {
+                sce.getServletContext().setAttribute("prestoDBWhitelist", prestoDBWhitelist);
+            } else {
+                sce.getServletContext().setAttribute("prestoDBWhitelist", new String[]{});
+            }
+
+
+
             setCsvlocalPath(csvlocalpath);
             setHivepath(hivepath);
             setDatabase(database);
             setPrestoURL(prestoURL);
             setLogpath(logpath);
-            setSqliteName(sqliteName);
             setSiteURLBase(siteURLBase);
             setExpiration(expiration);
             setDeleteLogTTL(deleteLogTTL);
             setPrestoCatalog(prestoCatalog);
             setPresto_user(presto_user);
             setJsonDir(csvlocalPath+fileseparator+tempDir);
+            setHdfsHost(hdfsHost);
+            setHdfsUser(hdfsUser);
+            setHiveJDBC(hiveJDBC);
+            setExternalTableHDFSRootPath(externalTableHDFSRootPath);
+            setPrestoDBWhitelist(prestoDBWhitelist);
             DBmaintenance dbm=new DBmaintenance();
             dbm.maintain();
             ScheduleMgr smgr=new ScheduleMgr();
@@ -284,6 +316,46 @@ public class Init implements ServletContextListener{
 
     }
 
+    public static String getHdfsHost() {
+        return hdfsHost;
+    }
+
+    public static void setHdfsHost(String hdfsHost) {
+        Init.hdfsHost = hdfsHost;
+    }
+
+    public static String getExternalTableHDFSRootPath() {
+        return externalTableHDFSRootPath;
+    }
+
+    public static void setExternalTableHDFSRootPath(String externalTableHDFSRootPath) {
+        Init.externalTableHDFSRootPath = externalTableHDFSRootPath;
+    }
+
+    public static String getHdfsUser() {
+        return hdfsUser;
+    }
+
+    public static void setHdfsUser(String hdfsUser) {
+        Init.hdfsUser = hdfsUser;
+    }
+
+    public static String getHiveJDBC() {
+        return hiveJDBC;
+    }
+
+    public static void setHiveJDBC(String hiveJDBC) {
+        Init.hiveJDBC = hiveJDBC;
+    }
+
+    public static String[] getPrestoDBWhitelist() {
+        return prestoDBWhitelist;
+    }
+
+    public static void setPrestoDBWhitelist(String[] prestoDBWhitelist) {
+        Init.prestoDBWhitelist = prestoDBWhitelist;
+    }
+
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
         ServletContext sc = sce.getServletContext();
@@ -292,5 +364,6 @@ public class Init implements ServletContextListener{
             sc.removeAttribute(attrNames.nextElement().toString());
         }
     }
+
 
 }

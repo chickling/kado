@@ -13,6 +13,7 @@ import java.security.ProtectionDomain;
 public class JettyMain {
 
    public static  void main(String [] args) throws Exception {
+
        final int port = 8889;
        Server server = new Server(port);
        WebAppContext app = new WebAppContext();
@@ -23,6 +24,7 @@ public class JettyMain {
        System.out.println(warLocation.getPath() + "web.xml");
        app.setServer(server);
        app.setWar(warLocation.toExternalForm());
+       app.setMaxFormContentSize(2048000000);
        server.setHandler(app);
        server.start();
        server.join();

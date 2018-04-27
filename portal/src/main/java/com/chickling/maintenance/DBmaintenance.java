@@ -1,11 +1,16 @@
 package com.chickling.maintenance;
 
 import com.chickling.models.job.PrestoContent;
-import com.chickling.sqlite.ConnectionManager;
 import com.chickling.boot.Init;
-
+import com.chickling.util.DBClientUtil;
+import com.chickling.util.KadoRow;
 import com.chickling.util.PrestoUtil;
 import com.chickling.util.TimeUtil;
+import owlstone.dbclient.db.DBClient;
+import owlstone.dbclient.db.module.DBResult;
+import owlstone.dbclient.db.module.PStmt;
+import owlstone.dbclient.db.module.Query;
+import owlstone.dbclient.db.module.Row;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,14 +18,12 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.RollingFileAppender;
 import org.apache.logging.log4j.core.config.Configuration;
 
-
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.*;
-
 import java.time.*;
 import java.util.ArrayList;
 
@@ -48,85 +51,126 @@ public class DBmaintenance {
     }
 
     public void jobMaintain(){
-        String CheckQueryUIJob="INSERT OR IGNORE INTO `main`.`Job` (`JobID`,`JobName`,`JobLevel`) VALUES ( 0,\"QueryUI\",1 )";
-        PreparedStatement stat = null;
-        ResultSet rs = null;
+        //DBClient
+        Query queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
+
+        String CheckQueryUIJob="INSERT  INTO `Job` (`JobID`,`JobName`,`JobLevel`) SELECT  0,\"QueryUI\",1 FROM DUAL WHERE NOT EXISTS( SELECT `JobID` FROM `Job` WHERE `JobID`=0);";
+
         try {
-            stat = ConnectionManager.getInstance().getConnection().prepareStatement(CheckQueryUIJob);
-            stat.execute();
-            stat.close();
+            queryBean=new Query("kado-meta",CheckQueryUIJob);
+
+            rs=dbClient.execute(queryBean);
+
+            if(!rs.isSuccess())
+                throw rs.getException();
         }
-        catch(SQLException e){
+        catch(Exception e){
             log.error("Default Job Insert Failed cause: "+e.toString());
         }
     }
 
     public void jobHistoryMaintain(){
-        String JobMaintain="UPDATE `main`.`Job_History` SET `JobStopTime`=CASE WHEN `JobStopTime` IS NULL or `JobStopTime`='' THEN ? ELSE `JobStopTime` END, `JobStatus`= CASE WHEN `JobStatus`=0 THEN 2 WHEN `JobStatus` IS NULL THEN 2 ELSE `JobStatus` END ";
-        PreparedStatement stat = null;
-        ResultSet rs = null;
+        //DBClient
+        Query queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
+
+        String JobMaintain="UPDATE `Job_History` SET `JobStopTime`=CASE WHEN `JobStopTime` IS NULL or `JobStopTime`='0000-00-00 00:00:00' THEN '"+TimeUtil.getCurrentTime()+"' ELSE `JobStopTime` END, `JobStatus`= CASE WHEN `JobStatus`=0 THEN 2 WHEN `JobStatus` IS NULL THEN 2 ELSE `JobStatus` END ";
+
         try {
-            stat = ConnectionManager.getInstance().getConnection().prepareStatement(JobMaintain);
-            stat.setString(1, TimeUtil.getCurrentTime());
-            stat.execute();
-            stat.close();
+
+            queryBean=new Query("kado-meta",JobMaintain);
+
+            rs=dbClient.execute(queryBean);
+
+            if(!rs.isSuccess())
+                throw rs.getException();
+
         }
-        catch(SQLException e){
+        catch(Exception e){
             log.error("Job maintenance is failed cause: "+e.toString());
         }
     }
 
     public void scheduleMaintain(){
-        String ScheduleMaintain="UPDATE `main`.`Schedule_History` SET `ScheduleStopTime`= ? WHERE `ScheduleStopTime` IS NULL";
-        PreparedStatement stat = null;
-        ResultSet rs = null;
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
+
+        String ScheduleMaintain="UPDATE `Schedule_History` SET `ScheduleStopTime`= ? WHERE `ScheduleStopTime` IS NULL";
+
         try {
-            stat = ConnectionManager.getInstance().getConnection().prepareStatement(ScheduleMaintain);
-            stat.setString(1, TimeUtil.getCurrentTime());
-            stat.execute();
-            stat.close();
+            queryBean=PStmt.buildQueryBean("kado-meta",ScheduleMaintain,new Object[]{
+                    TimeUtil.getCurrentTime()
+            });
+
+            rs=dbClient.execute(queryBean);
+
+            if(!rs.isSuccess())
+                throw rs.getException();
         }
-        catch(SQLException e){
+        catch(Exception e){
             log.error("Schedule maintenance is failed cause: "+e.toString());
         }
     }
 
     public void  deleteTempTableOverTTL(){
+        //DBClient
+        Query queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
+
         String deleteTempTableSql="select JLID,JobOutput from Job_Log where Valid=0";
-        PreparedStatement stat = null;
+
         ArrayList<Integer > JLID=new ArrayList<>();
         ArrayList<String>  tableList=new ArrayList<>();
 
         try {
-            Connection conn=ConnectionManager.getInstance().getConnection();
-            stat = conn.prepareStatement(deleteTempTableSql);
-            ResultSet rs=stat.executeQuery();
-            while (rs.next()){
-                JLID.add(rs.getInt("JLID"));
-                String[] output=rs.getString("JobOutput").split("/");
+            queryBean=new Query("kado-meta",deleteTempTableSql);
+
+            rs=dbClient.execute(queryBean);
+
+            if(!rs.isSuccess())
+                throw rs.getException();
+
+            for(Row row:rs.getRowList()){
+                KadoRow r=new KadoRow(row);
+                JLID.add(r.getInt("JLID"));
+                String[] output=r.getString("JobOutput").split("/");
                 tableList.add(output[output.length-1]);
             }
-            rs.close();
-            stat.close();
+
 
             log.info("Start Drop Temp Table and Update Record");
 
             PrestoUtil prestoutil=new PrestoUtil();
             for (int i = 0; i < JLID.size() ; i++) {
                 String droptable="DROP TABLE if EXISTS "+Init.getDatabase()+"."+tableList.get(i);
+//                prestoutil.post(droptable, PrestoContent.SCHEDULE, Init.getDatabase());
                 prestoutil.doJdbcRequest(droptable);
-                String JobResultMaintain="UPDATE `main`.`Job_Log` SET `Valid`= 2 WHERE JLID="+JLID.get(i);
-                stat= conn.prepareStatement(JobResultMaintain);
-                stat.execute();
-                stat.close();
+                String JobResultMaintain="UPDATE `Job_Log` SET `Valid`= 2 WHERE JLID="+JLID.get(i);
+                queryBean=new Query("kado-meta",JobResultMaintain);
+
+                rs=dbClient.execute(queryBean);
+
+                if(!rs.isSuccess())
+                    throw rs.getException();
+
+                try {
+                    Thread.currentThread().sleep(100);
+                } catch (InterruptedException e) {
+                    /*do noting*/
+                }
 
             }
         }
-        catch(SQLException e){
+        catch(Exception e){
             log.error("Job Log maintenance is failed cause: "+e.toString());
         }
     }
-
 
 //    public void deleteTempHDFSCSVdaily(){
 //        log.info("====== Start Daily Delete HDFS Temp CSV file ====== ");
@@ -214,7 +258,6 @@ public class DBmaintenance {
         File dir=null;
         try {
             int  deleteCount=0;
-
             ZonedDateTime znow=ZonedDateTime.now();
             dir = new File(logDirPath);
             if (null!=dir.listFiles()){
@@ -253,21 +296,38 @@ public class DBmaintenance {
         delete_Job_Log=delete_Job_Log.replace("?","\'"+TimeUtil.beforeDate(logTTL)+"\'");
 
 
-        Statement stat=null;
+        //DBClient
+        Query queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
+
         try {
-            stat=ConnectionManager.getInstance().getConnection().createStatement();
-            stat.execute(delete_Schedule_Job_History);
-            stat.execute(delete_Schedule_History);
-            stat.execute(delete_Job_History);
-            stat.execute(delete_Job_Log);
-            stat.close();
-        } catch (SQLException e) {
+            queryBean=new Query("kado-meta",delete_Schedule_Job_History);
+            rs=dbClient.execute(queryBean);
+            if(!rs.isSuccess())
+                throw rs.getException();
+
+            queryBean=new Query("kado-meta",delete_Schedule_History);
+            rs=dbClient.execute(queryBean);
+            if(!rs.isSuccess())
+                throw rs.getException();
+
+            queryBean=new Query("kado-meta",delete_Job_History);
+            rs=dbClient.execute(queryBean);
+            if(!rs.isSuccess())
+                throw rs.getException();
+
+            queryBean=new Query("kado-meta",delete_Job_Log);
+            rs=dbClient.execute(queryBean);
+            if(!rs.isSuccess())
+                throw rs.getException();
+
+        } catch (Exception e) {
             log.error(ExceptionUtils.getStackTrace(e));
         }
         log.info("====== Finished Log Maintain ====== ");
 
     }
-
 
 //    public  void backupSQLiteDB(){
 //        String hdfsPath= YamlLoader.instance.getSqliteHDFSpath();
@@ -289,28 +349,75 @@ public class DBmaintenance {
 
 
     public void jobResultMaintain(){
-        String JobResultMaintain="UPDATE `main`.`Job_Log` SET `Valid`= 0 WHERE `CRTIME`<?";
-        PreparedStatement stat = null;
+        //DBClient
+        PStmt queryBean=null;
+        DBResult rs=null;
+        DBClient dbClient=new DBClient(DBClientUtil.getDbConnectionManager());
+
+        String JobResultMaintain="UPDATE `Job_Log` SET `Valid`= 0 WHERE `CRTIME`<?";
+
         String period= Init.getExpiration();
         log.info("TTL : "+period +" days  , delete day before "+TimeUtil.beforeDate(period));
         try {
-            stat = ConnectionManager.getInstance().getConnection().prepareStatement(JobResultMaintain);
-            stat.setString(1, TimeUtil.beforeDate(period));
-            stat.execute();
-            stat.close();
+            queryBean=PStmt.buildQueryBean("kado-meta",JobResultMaintain,new Object[]{
+                    TimeUtil.beforeDate(period)
+            });
+            rs=dbClient.execute(queryBean);
+            if(!rs.isSuccess())
+                throw rs.getException();
         }
-        catch(SQLException e){
+        catch(Exception e){
             log.error("Job Log maintenance is failed cause: "+e.toString());
         }
     }
-
+    public void deleteUploadTempFileOverTTL(){
+        log.info("====== Start Upload  Local Temp  file ====== ");
+        String uploadTTL= "1";
+        String uploadDirPath="upload";
+        log.info("Temp File  Dir  : " +uploadDirPath);
+        File dir=null;
+        try {
+            int  deleteCount=0;
+            ZonedDateTime znow=ZonedDateTime.now();
+//            DateTime now=DateTime.now();
+            dir = new File(uploadDirPath);
+            if (null!=dir.listFiles()){
+                for (File localfiles: dir.listFiles()){
+                    //delete temp
+                    if(!localfiles.isDirectory()) {
+                        String fileName = localfiles.getName();
+                        Path path = Paths.get(localfiles.toURI());
+                        BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class);
+                        //System.out.println(fileName+"-"+attr.creationTime().toMillis());
+                        if (attr.creationTime().toMillis() < znow.minusDays(Integer.parseInt(uploadTTL)).toInstant().toEpochMilli()) {
+                            if (localfiles.delete()) {
+                                log.info("Delete upload File is : [ " + fileName + " ] ");
+                                deleteCount++;
+                                if (0 == deleteCount % 50 && deleteCount > 0)
+                                    log.info("Delete " + deleteCount + "  Files !! ");
+                            }
+                            //System.out.println(fileName+"-"+attr.creationTime().toMillis());
+                        }
+                    }
+                }
+            }
+            log.info("====== Delete Local Temp  Files Finish , Delete  files is [ "+deleteCount +" ] ====== ");
+        } catch (Exception e) {
+            log.error(ExceptionUtils.getStackTrace(e));
+        }
+    }
     public static void main(String[] args) {
+//        DBmaintenance maintain=new DBmaintenance();
+//        Init.setCsvlocalPath("D:\\0_projects\\Kado\\logs");
+//        Init.setExpiration("1");
+//
+//
+//        maintain.deleteLocalTempFileOverTTL();
+
         DBmaintenance maintain=new DBmaintenance();
-        Init.setCsvlocalPath("D:\\0_projects\\Kado\\logs");
-        Init.setExpiration("1");
 
 
-        maintain.deleteLocalTempFileOverTTL();
+        maintain.deleteUploadTempFileOverTTL();
 
 
 
